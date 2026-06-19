@@ -1,0 +1,55 @@
+services:
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mongo:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/voda_ai_homework
+      APP_DATABASE_URL: postgres://voda_app:voda_app@postgres:5432/voda_ai_homework
+      REDIS_URL: redis://redis:6379
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_DB: voda_assets
+      PORT: "3000"
+      JWT_SECRET: change-me-in-production
+      JWT_EXPIRES_IN: 24h
+      SEED_ON_START: "true"
+      SEED_PASSWORD: password123
+    ports:
+      - "3000:3000"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: voda_ai_homework
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d voda_ai_homework"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+
+volumes:
+  pgdata:
+  mongodata:

@@ -1,6 +1,12 @@
 import { getTenantId } from "../context/authContext.js";
-import { query } from "../db.js";
+import { query, queryWithoutTenantContext } from "../db.js";
 import type { Asset } from "../types.js";
+
+export interface PendingAsset {
+  id: string;
+  tenant_id: string;
+  created_by: string;
+}
 
 const assetColumns = "id, tenant_id, status, data, created_by, created_at";
 
@@ -54,4 +60,22 @@ export async function updateAsset(
 export async function deleteAsset(id: string): Promise<boolean> {
   const { rowCount } = await query("DELETE FROM assets WHERE id = $1", [id]);
   return (rowCount ?? 0) > 0;
+}
+
+export async function markAssetSynced(id: string): Promise<void> {
+  await query("UPDATE assets SET status = $2 WHERE id = $1", [id, "synced"]);
+}
+
+// Outbox poll: reads pending rows across all tenants (a trusted system process),
+// so it bypasses RLS. The actual sync/update runs per-tenant in the worker.
+export async function findPendingAssets(limit: number): Promise<PendingAsset[]> {
+  const { rows } = await queryWithoutTenantContext<PendingAsset>(
+    `SELECT id, tenant_id, created_by
+       FROM assets
+      WHERE status = 'pending'
+      ORDER BY created_at
+      LIMIT $1`,
+    [limit]
+  );
+  return rows;
 }

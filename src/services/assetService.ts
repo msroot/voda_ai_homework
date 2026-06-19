@@ -45,6 +45,9 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
     throw new AppError(400, "Asset validation failed", validation.errors);
   }
 
+  // The row itself is the outbox entry: status "pending" is picked up by the
+  // listener (polling) and synced to MongoDB by the worker, which flips it to
+  // "synced". No separate event publish is needed.
   try {
     return await createAssetRecord(assetId, "pending", assetData, userId);
   } catch (err) {

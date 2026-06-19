@@ -4,17 +4,25 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:listener": "tsx watch src/listener.ts",
+    "dev:worker": "tsx watch src/worker.ts",
     "build": "tsc",
     "start": "node dist/src/index.js",
+    "start:listener": "node dist/src/listener.js",
+    "start:worker": "node dist/src/worker.js",
+    "start:pm2": "pm2-runtime ecosystem.config.cjs",
     "seed": "tsx seed/index.ts"
   },
   "dependencies": {
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.79.0",
     "dotenv": "^17.4.2",
     "express": "^4.21.2",
+    "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.3.0",
     "pg": "^8.22.0",
     "zod": "^4.4.3"
   },
