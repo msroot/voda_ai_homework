@@ -4,32 +4,24 @@ import type { Asset } from "../types.js";
 
 const COLLECTION = "assets";
 
-// Base fields that get promoted to dedicated document fields. Everything else
-// in the asset data (status, installed_at, ...) plus extra_fields lands in the
-// polymorphic custom_fields bucket.
-const PROMOTED_FIELDS = new Set([
-  "id",
-  "tenant_id",
-  "name",
-  "type",
-  "lat",
-  "lng",
-  "extra_fields",
-]);
-
 export interface AssetLocation {
   type: "Point";
   coordinates: [number, number]; // [longitude, latitude]
 }
 
+// The base asset fields map to dedicated document fields; lat/lng become the
+// GeoJSON `location`. Only tenant-defined extension fields (the asset's
+// extra_fields) land in the polymorphic custom_fields bucket.
 export interface AssetDocument {
   _id: string; // mirrors asset_id, keeps the upsert idempotent
   asset_id: string; // relational pointer to the PostgreSQL UUID
   tenant_id: string; // data isolation partition boundary
   name: string;
   type: string;
+  status: string | null;
   location: AssetLocation | null;
-  custom_fields: Record<string, unknown>; // polymorphic bucket for extensions
+  installed_at: string | null;
+  custom_fields: Record<string, unknown>; // tenant-defined extension fields
   created_at: Date;
   updated_at: Date;
 }
@@ -44,7 +36,7 @@ export async function ensureAssetIndexes(): Promise<void> {
   await db.collection<AssetDocument>(COLLECTION).createIndexes([
     { key: { tenant_id: 1, created_at: -1 }, name: "tenant_created_at" },
     { key: { tenant_id: 1, type: 1 }, name: "tenant_type" },
-    { key: { tenant_id: 1, "custom_fields.status": 1 }, name: "tenant_status" },
+    { key: { tenant_id: 1, status: 1 }, name: "tenant_status" },
   ]);
 }
 
@@ -65,21 +57,16 @@ function buildLocation(data: Record<string, unknown>): AssetLocation | null {
 function toDocument(asset: Asset): AssetDocument {
   const data = asset.data;
 
-  const customFields: Record<string, unknown> = { ...asRecord(data.extra_fields) };
-  for (const [key, value] of Object.entries(data)) {
-    if (!PROMOTED_FIELDS.has(key)) {
-      customFields[key] = value;
-    }
-  }
-
   return {
     _id: asset.id,
     asset_id: asset.id,
     tenant_id: asset.tenant_id,
     name: typeof data.name === "string" ? data.name : "",
     type: typeof data.type === "string" ? data.type : "",
+    status: typeof data.status === "string" ? data.status : null,
     location: buildLocation(data),
-    custom_fields: customFields,
+    installed_at: typeof data.installed_at === "string" ? data.installed_at : null,
+    custom_fields: asRecord(data.extra_fields),
     created_at: asset.created_at,
     updated_at: new Date(),
   };
@@ -113,7 +100,7 @@ export async function findAssetDocuments(
     queryFilter.type = filter.type;
   }
   if (filter.status) {
-    queryFilter["custom_fields.status"] = filter.status;
+    queryFilter.status = filter.status;
   }
 
   const collection = db.collection<AssetDocument>(COLLECTION);
@@ -136,7 +123,6 @@ export interface AssetStatusCount {
 
 // Cross-store report input: asset counts grouped by business status for one
 // tenant, read from MongoDB. Tenant isolation is enforced via the $match.
-// `status` lives inside the custom_fields bucket.
 export async function aggregateAssetStatusCounts(
   tenantId: string
 ): Promise<AssetStatusCount[]> {
@@ -146,7 +132,7 @@ export async function aggregateAssetStatusCounts(
     .collection<AssetDocument>(COLLECTION)
     .aggregate<{ _id: string | null; count: number }>([
       { $match: { tenant_id: tenantId } },
-      { $group: { _id: "$custom_fields.status", count: { $sum: 1 } } },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
     ])
     .toArray();
 

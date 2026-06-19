@@ -10,13 +10,6 @@ export interface PendingAsset {
 
 const assetColumns = "id, tenant_id, status, data, created_by, created_at";
 
-export async function findAllAssets(): Promise<Asset[]> {
-  const { rows } = await query<Asset>(
-    `SELECT ${assetColumns} FROM assets ORDER BY created_at DESC`
-  );
-  return rows;
-}
-
 export async function findAssetById(id: string): Promise<Asset | null> {
   const { rows } = await query<Asset>(
     `SELECT ${assetColumns} FROM assets WHERE id = $1`,

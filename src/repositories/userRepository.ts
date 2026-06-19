@@ -41,6 +41,10 @@ export async function findUserByEmail(email: string): Promise<UserWithPassword |
   return rows[0] ?? null;
 }
 
+// Authenticated user creation. RLS enforces tenant_id = current tenant via the
+// WITH CHECK policy; tenant_id is passed explicitly only because the column is
+// NOT NULL. (Onboarding's first user is inserted separately, inside the tenant
+// creation transaction, since there is no tenant context yet.)
 export async function createUser(
   id: string,
   name: string,
@@ -48,24 +52,11 @@ export async function createUser(
   passwordHash: string,
   role: UserRole
 ): Promise<User> {
-  return createUserForTenant(id, getTenantId(), name, email, passwordHash, role);
-}
-
-// Used by tenant onboarding, which runs without a tenant context and inserts the
-// first user into a brand-new tenant, so it bypasses RLS with an explicit tenant.
-export async function createUserForTenant(
-  id: string,
-  tenantId: string,
-  name: string,
-  email: string,
-  passwordHash: string,
-  role: UserRole
-): Promise<User> {
-  const { rows } = await queryWithoutTenantContext<User>(
+  const { rows } = await query<User>(
     `INSERT INTO users (id, tenant_id, name, email, password_hash, role)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING ${userColumns}`,
-    [id, tenantId, name, email, passwordHash, role]
+    [id, getTenantId(), name, email, passwordHash, role]
   );
   return rows[0];
 }

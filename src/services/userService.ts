@@ -77,7 +77,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
     return user;
   } catch (err) {
     if (isUniqueViolation(err)) {
-      throw new AppError(409, "email already exists for this tenant");
+      throw new AppError(409, "email already exists");
     }
     if (isForeignKeyViolation(err)) {
       throw new AppError(400, "tenant not found");
@@ -112,7 +112,7 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
       throw err;
     }
     if (isUniqueViolation(err)) {
-      throw new AppError(409, "email already exists for this tenant");
+      throw new AppError(409, "email already exists");
     }
     throw err;
   }
