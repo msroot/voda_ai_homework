@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import pool from "../src/db.js";
 import { hashPassword } from "../src/auth/password.js";
+import { normalizeAssetData } from "../src/assetData.js";
 import { tenants } from "./tenants.js";
 import { users } from "./users.js";
 
@@ -90,6 +91,8 @@ async function seedAssets() {
       throw new Error(`No seed user found for tenant ${asset.tenant_id}`);
     }
 
+    const normalizedAsset = normalizeAssetData(asset, asset.tenant_id, asset.id);
+
     await pool.query(
       `INSERT INTO assets (id, tenant_id, status, data, created_by)
        VALUES ($1, $2, $3, $4, $5)
@@ -98,7 +101,13 @@ async function seedAssets() {
          status = EXCLUDED.status,
          data = EXCLUDED.data,
          created_by = EXCLUDED.created_by`,
-      [asset.id, asset.tenant_id, "active", JSON.stringify(asset), createdBy]
+      [
+        asset.id,
+        asset.tenant_id,
+        "active",
+        JSON.stringify(normalizedAsset),
+        createdBy,
+      ]
     );
   }
 

@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { mergeAssetData, normalizeAssetData } from "../assetData.js";
 import { getTenantId, getUserId } from "../context/authContext.js";
 import { AppError, isDuplicateKeyViolation } from "../errors/appError.js";
 import {
@@ -40,11 +41,8 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
     throw new AppError(404, "Tenant not found");
   }
 
-  const assetData = {
-    ...data,
-    tenant_id: tenantId,
-    id: typeof data.id === "string" ? data.id : randomUUID(),
-  };
+  const assetId = typeof data.id === "string" ? data.id : randomUUID();
+  const assetData = normalizeAssetData(data, tenantId, assetId);
 
   const validation = validateAssetData(schema, assetData);
   if (!validation.valid) {
@@ -53,7 +51,7 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
 
   try {
     return await createAssetRecord(
-      assetData.id as string,
+      assetId,
       tenantId,
       "pending",
       assetData,
@@ -96,11 +94,7 @@ export async function updateAsset(
       throw new AppError(404, "Tenant not found");
     }
 
-    nextData = {
-      ...data,
-      tenant_id: tenantId,
-      id,
-    };
+    nextData = mergeAssetData(existing.data, data);
 
     const validation = validateAssetData(schema, nextData);
     if (!validation.valid) {
