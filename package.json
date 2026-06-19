@@ -6,7 +6,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/src/index.js",
-    "seed": "tsx seed/run.ts"
+    "seed": "tsx seed/index.ts"
   },
   "dependencies": {
     "ajv": "^8.20.0",

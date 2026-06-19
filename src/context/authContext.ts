@@ -14,7 +14,7 @@ export function runWithAuthContext<T>(context: AuthContext, fn: () => T): T {
   return authStorage.run(context, fn);
 }
 
-export function getAuthContext(): AuthContext {
+function getAuthContext(): AuthContext {
   const context = authStorage.getStore();
 
   if (!context) {

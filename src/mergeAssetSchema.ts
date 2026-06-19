@@ -1,6 +1,11 @@
-import defaultAssetSchema from "./defaultAssetSchema.js";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 type SchemaObject = Record<string, unknown>;
+
+const defaultAssetSchema = JSON.parse(
+  readFileSync(join(process.cwd(), "seed/schemas/default-asset.schema.json"), "utf-8")
+) as SchemaObject;
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -45,7 +50,7 @@ export function extendAssetSchema(
 }
 
 export function createDefaultAssetSchema(): SchemaObject {
-  return structuredClone(defaultAssetSchema) as SchemaObject;
+  return structuredClone(defaultAssetSchema);
 }
 
 export function buildTenantAssetSchema(extension: SchemaObject): SchemaObject {

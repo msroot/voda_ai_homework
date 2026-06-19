@@ -37,7 +37,9 @@ app.use(
 );
 
 async function start() {
-  await runSeed();
+  if (process.env.SEED_ON_START === "true") {
+    await runSeed();
+  }
 
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);

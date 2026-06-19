@@ -6,7 +6,7 @@ import { tenants } from "./tenants.js";
 import { users } from "./users.js";
 
 const SEED_DIR = join(process.cwd(), "seed");
-const DEFAULT_SEED_PASSWORD = "password123";
+const DEFAULT_SEED_PASSWORD = process.env.SEED_PASSWORD ?? "password123";
 
 interface AssetSeed {
   id: string;
@@ -114,4 +114,17 @@ export async function runSeed() {
   console.log(
     `Seeded ${tenants.length} tenants, ${users.length} users, ${assetCount} assets`
   );
+}
+
+const isDirectRun = /seed\/index\.(t|j)sx?$/.test(process.argv[1] ?? "");
+
+if (isDirectRun) {
+  import("dotenv/config").then(() => {
+    runSeed()
+      .catch((err) => {
+        console.error(err);
+        process.exit(1);
+      })
+      .finally(() => pool.end());
+  });
 }
