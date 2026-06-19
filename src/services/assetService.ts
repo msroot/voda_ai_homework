@@ -6,19 +6,26 @@ import {
   createAsset as createAssetRecord,
   deleteAsset as deleteAssetRecord,
   findAssetById,
-  findAllAssets,
   updateAsset as updateAssetRecord,
 } from "../repositories/assetRepository.js";
+import {
+  deleteAssetDocument,
+  findAssetDocumentById,
+  findAssetDocuments,
+} from "../repositories/assetMongoRepository.js";
 import { findTenantAssetSchema } from "../repositories/tenantRepository.js";
 import { validateAssetData } from "../validateAsset.js";
 import type { Asset, CreateAssetInput, UpdateAssetInput } from "../types.js";
 
+// Reads are served from MongoDB. An asset only appears here once the outbox
+// worker has synced it from Postgres, so freshly created assets become readable
+// after the sync completes (eventual consistency).
 export async function listAssets(): Promise<Asset[]> {
-  return findAllAssets();
+  return findAssetDocuments();
 }
 
 export async function getAsset(id: string): Promise<Asset> {
-  const asset = await findAssetById(id);
+  const asset = await findAssetDocumentById(id);
 
   if (!asset) {
     throw new AppError(404, "Asset not found");
@@ -86,10 +93,12 @@ export async function updateAsset(
     }
   }
 
+  // A data change must re-enter the outbox (status -> "pending") so the worker
+  // re-syncs it to MongoDB; otherwise the Mongo-backed reads would stay stale.
   const asset = await updateAssetRecord(
     id,
     data !== undefined ? JSON.stringify(nextData) : null,
-    status ?? null
+    data !== undefined ? "pending" : status ?? null
   );
 
   if (!asset) {
@@ -105,4 +114,7 @@ export async function deleteAsset(id: string): Promise<void> {
   if (!deleted) {
     throw new AppError(404, "Asset not found");
   }
+
+  // Keep the Mongo read model in sync with the Postgres source of truth.
+  await deleteAssetDocument(id);
 }
