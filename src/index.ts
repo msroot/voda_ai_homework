@@ -1,6 +1,9 @@
+import "dotenv/config";
 import express from "express";
+import pool from "./db.js";
 import tenantRoutes from "./routes/tenants.js";
 import userRoutes from "./routes/users.js";
+import { runSeed } from "../seed/index.js";
 
 const app = express();
 const port = process.env.PORT ?? 3000;
@@ -26,6 +29,15 @@ app.use(
   }
 );
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+async function start() {
+  await runSeed();
+
+  app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+  });
+}
+
+start().catch((err) => {
+  console.error(err);
+  pool.end().finally(() => process.exit(1));
 });

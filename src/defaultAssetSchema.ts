@@ -1,3 +1,6 @@
-import defaultAssetSchema from "./schemas/default-asset.schema.json";
+import { readFileSync } from "fs";
+import { join } from "path";
 
-export default defaultAssetSchema;
+const schemaPath = join(process.cwd(), "seed/schemas/default-asset.schema.json");
+
+export default JSON.parse(readFileSync(schemaPath, "utf-8"));

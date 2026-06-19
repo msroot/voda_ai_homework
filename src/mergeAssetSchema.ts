@@ -47,3 +47,7 @@ export function extendAssetSchema(
 export function createDefaultAssetSchema(): SchemaObject {
   return structuredClone(defaultAssetSchema) as SchemaObject;
 }
+
+export function buildTenantAssetSchema(extension: SchemaObject): SchemaObject {
+  return extendAssetSchema(createDefaultAssetSchema(), extension);
+}
