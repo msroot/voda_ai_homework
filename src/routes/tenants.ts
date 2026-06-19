@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
-import pool from "../db.js";
+import {
+  createTenant,
+  deleteTenant,
+  findAllTenants,
+  findTenantById,
+  updateTenant,
+} from "../repositories/tenantRepository.js";
 import {
   createDefaultAssetSchema,
   extendAssetSchema,
@@ -9,27 +15,20 @@ import type { CreateTenantInput, UpdateTenantInput } from "../types.js";
 
 const router = Router();
 
-const tenantColumns = "id, name, slug, asset_schema, created_at";
-
 router.get("/", async (_req, res) => {
-  const { rows } = await pool.query(
-    `SELECT ${tenantColumns} FROM tenants ORDER BY created_at`
-  );
-  res.json(rows);
+  const tenants = await findAllTenants();
+  res.json(tenants);
 });
 
 router.get("/:id", async (req, res) => {
-  const { rows } = await pool.query(
-    `SELECT ${tenantColumns} FROM tenants WHERE id = $1`,
-    [req.params.id]
-  );
+  const tenant = await findTenantById(req.params.id);
 
-  if (rows.length === 0) {
+  if (!tenant) {
     res.status(404).json({ error: "Tenant not found" });
     return;
   }
 
-  res.json(rows[0]);
+  res.json(tenant);
 });
 
 router.post("/", async (req, res) => {
@@ -41,11 +40,13 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const { rows } = await pool.query(
-      `INSERT INTO tenants (id, name, slug, asset_schema) VALUES ($1, $2, $3, $4) RETURNING ${tenantColumns}`,
-      [randomUUID(), name, slug, JSON.stringify(createDefaultAssetSchema())]
+    const tenant = await createTenant(
+      randomUUID(),
+      name,
+      slug,
+      createDefaultAssetSchema()
     );
-    res.status(201).json(rows[0]);
+    res.status(201).json(tenant);
   } catch (err) {
     if (err instanceof Error && err.message.includes("unique")) {
       res.status(409).json({ error: "slug already exists" });
@@ -77,37 +78,31 @@ router.put("/:id", async (req, res) => {
     let mergedAssetSchema: string | null = null;
 
     if (asset_schema !== undefined) {
-      const existing = await pool.query(
-        "SELECT asset_schema FROM tenants WHERE id = $1",
-        [req.params.id]
-      );
+      const existing = await findTenantById(req.params.id);
 
-      if (existing.rows.length === 0) {
+      if (!existing) {
         res.status(404).json({ error: "Tenant not found" });
         return;
       }
 
       mergedAssetSchema = JSON.stringify(
-        extendAssetSchema(existing.rows[0].asset_schema, asset_schema)
+        extendAssetSchema(existing.asset_schema, asset_schema)
       );
     }
 
-    const { rows } = await pool.query(
-      `UPDATE tenants
-       SET name = COALESCE($2, name),
-           slug = COALESCE($3, slug),
-           asset_schema = COALESCE($4, asset_schema)
-       WHERE id = $1
-       RETURNING ${tenantColumns}`,
-      [req.params.id, name ?? null, slug ?? null, mergedAssetSchema]
+    const tenant = await updateTenant(
+      req.params.id,
+      name ?? null,
+      slug ?? null,
+      mergedAssetSchema
     );
 
-    if (rows.length === 0) {
+    if (!tenant) {
       res.status(404).json({ error: "Tenant not found" });
       return;
     }
 
-    res.json(rows[0]);
+    res.json(tenant);
   } catch (err) {
     if (err instanceof Error && err.message.includes("unique")) {
       res.status(409).json({ error: "slug already exists" });
@@ -118,11 +113,9 @@ router.put("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
-  const { rowCount } = await pool.query("DELETE FROM tenants WHERE id = $1", [
-    req.params.id,
-  ]);
+  const deleted = await deleteTenant(req.params.id);
 
-  if (rowCount === 0) {
+  if (!deleted) {
     res.status(404).json({ error: "Tenant not found" });
     return;
   }

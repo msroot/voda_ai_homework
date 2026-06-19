@@ -1,7 +1,7 @@
 import { Router } from "express";
-import pool from "../db.js";
 import { signToken } from "../auth/jwt.js";
 import { verifyPassword } from "../auth/password.js";
+import { findUserByEmail } from "../repositories/userRepository.js";
 import type { LoginInput } from "../types.js";
 
 const router = Router();
@@ -14,24 +14,13 @@ router.post("/login", async (req, res) => {
     return;
   }
 
-  const { rows } = await pool.query<{
-    id: string;
-    tenant_id: string;
-    name: string;
-    email: string;
-    password_hash: string;
-    role: "admin" | "editor" | "viewer";
-  }>(
-    "SELECT id, tenant_id, name, email, password_hash, role FROM users WHERE email = $1",
-    [email]
-  );
+  const user = await findUserByEmail(email);
 
-  if (rows.length === 0) {
+  if (!user) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
 
-  const user = rows[0];
   const validPassword = await verifyPassword(password, user.password_hash);
 
   if (!validPassword) {

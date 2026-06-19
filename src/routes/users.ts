@@ -1,43 +1,41 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
-import pool from "../db.js";
 import { hashPassword } from "../auth/password.js";
+import {
+  createUser,
+  deleteUser,
+  findAllUsers,
+  findUserById,
+  findUsersByTenantId,
+  updateUser,
+} from "../repositories/userRepository.js";
 import type { CreateUserInput, UpdateUserInput, UserRole } from "../types.js";
 
 const router = Router();
 const validRoles: UserRole[] = ["admin", "editor", "viewer"];
-const userColumns = "id, tenant_id, name, email, role, created_at";
 
 router.get("/", async (req, res) => {
   const { tenant_id } = req.query;
 
   if (tenant_id) {
-    const { rows } = await pool.query(
-      `SELECT ${userColumns} FROM users WHERE tenant_id = $1 ORDER BY created_at`,
-      [tenant_id]
-    );
-    res.json(rows);
+    const users = await findUsersByTenantId(String(tenant_id));
+    res.json(users);
     return;
   }
 
-  const { rows } = await pool.query(
-    `SELECT ${userColumns} FROM users ORDER BY created_at`
-  );
-  res.json(rows);
+  const users = await findAllUsers();
+  res.json(users);
 });
 
 router.get("/:id", async (req, res) => {
-  const { rows } = await pool.query(
-    `SELECT ${userColumns} FROM users WHERE id = $1`,
-    [req.params.id]
-  );
+  const user = await findUserById(req.params.id);
 
-  if (rows.length === 0) {
+  if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
   }
 
-  res.json(rows[0]);
+  res.json(user);
 });
 
 router.post("/", async (req, res) => {
@@ -57,13 +55,15 @@ router.post("/", async (req, res) => {
 
   try {
     const passwordHash = await hashPassword(password);
-    const { rows } = await pool.query(
-      `INSERT INTO users (id, tenant_id, name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING ${userColumns}`,
-      [randomUUID(), tenant_id, name, email, passwordHash, role]
+    const user = await createUser(
+      randomUUID(),
+      tenant_id,
+      name,
+      email,
+      passwordHash,
+      role
     );
-    res.status(201).json(rows[0]);
+    res.status(201).json(user);
   } catch (err) {
     if (err instanceof Error) {
       if (err.message.includes("unique")) {
@@ -103,23 +103,20 @@ router.put("/:id", async (req, res) => {
     const passwordHash =
       password !== undefined ? await hashPassword(password) : null;
 
-    const { rows } = await pool.query(
-      `UPDATE users
-       SET name = COALESCE($2, name),
-           email = COALESCE($3, email),
-           password_hash = COALESCE($4, password_hash),
-           role = COALESCE($5, role)
-       WHERE id = $1
-       RETURNING ${userColumns}`,
-      [req.params.id, name ?? null, email ?? null, passwordHash, role ?? null]
+    const user = await updateUser(
+      req.params.id,
+      name ?? null,
+      email ?? null,
+      passwordHash,
+      role ?? null
     );
 
-    if (rows.length === 0) {
+    if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
-    res.json(rows[0]);
+    res.json(user);
   } catch (err) {
     if (err instanceof Error && err.message.includes("unique")) {
       res.status(409).json({ error: "email already exists for this tenant" });
@@ -130,11 +127,9 @@ router.put("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
-  const { rowCount } = await pool.query("DELETE FROM users WHERE id = $1", [
-    req.params.id,
-  ]);
+  const deleted = await deleteUser(req.params.id);
 
-  if (rowCount === 0) {
+  if (!deleted) {
     res.status(404).json({ error: "User not found" });
     return;
   }
