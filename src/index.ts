@@ -5,21 +5,20 @@ import authRoutes from "./routes/auth.js";
 import tenantRoutes from "./routes/tenants.js";
 import userRoutes from "./routes/users.js";
 import assetRoutes from "./routes/assets.js";
-import { authenticate } from "./middleware/auth.js";
+import { requireAuthUnlessPublic } from "./middleware/auth.js";
 import { runSeed } from "../seed/index.js";
 
 const app = express();
 const port = process.env.PORT ?? 3000;
 
 app.use(express.json());
+app.use(requireAuthUnlessPublic);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
 app.use("/auth", authRoutes);
-
-app.use(authenticate);
 app.use("/tenants", tenantRoutes);
 app.use("/users", userRoutes);
 app.use("/assets", assetRoutes);
