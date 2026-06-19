@@ -12,19 +12,20 @@ import {
   deleteAssetDocument,
   findAssetDocumentById,
   findAssetDocuments,
+  type AssetView,
 } from "../repositories/assetMongoRepository.js";
 import { findTenantAssetSchema } from "../repositories/tenantRepository.js";
 import { validateAssetData } from "../validateAsset.js";
 import type { Asset, CreateAssetInput, UpdateAssetInput } from "../types.js";
 
-// Reads are served from MongoDB. An asset only appears here once the outbox
-// worker has synced it from Postgres, so freshly created assets become readable
-// after the sync completes (eventual consistency).
-export async function listAssets(): Promise<Asset[]> {
+// Reads are served from MongoDB in the structured read model. An asset only
+// appears here once the outbox worker has synced it from Postgres, so freshly
+// created assets become readable after the sync completes (eventual consistency).
+export async function listAssets(): Promise<AssetView[]> {
   return findAssetDocuments();
 }
 
-export async function getAsset(id: string): Promise<Asset> {
+export async function getAsset(id: string): Promise<AssetView> {
   const asset = await findAssetDocumentById(id);
 
   if (!asset) {

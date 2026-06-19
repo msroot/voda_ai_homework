@@ -4,31 +4,85 @@ import type { Asset } from "../types.js";
 
 const COLLECTION = "assets";
 
-interface AssetDocument {
-  _id: string;
-  tenant_id: string;
-  status: string;
-  data: Record<string, unknown>;
-  created_by: string;
-  created_at: Date;
-  synced_at: Date;
+// Base fields that get promoted to dedicated document fields. Everything else
+// in the asset data (status, installed_at, ...) plus extra_fields lands in the
+// polymorphic custom_fields bucket.
+const PROMOTED_FIELDS = new Set([
+  "id",
+  "tenant_id",
+  "name",
+  "type",
+  "lat",
+  "lng",
+  "extra_fields",
+]);
+
+export interface AssetLocation {
+  type: "Point";
+  coordinates: [number, number]; // [longitude, latitude]
 }
 
-function fromDocument(doc: AssetDocument): Asset {
+export interface AssetDocument {
+  _id: string; // mirrors asset_id, keeps the upsert idempotent
+  asset_id: string; // relational pointer to the PostgreSQL UUID
+  tenant_id: string; // data isolation partition boundary
+  name: string;
+  type: string;
+  location: AssetLocation | null;
+  custom_fields: Record<string, unknown>; // polymorphic bucket for extensions
+  created_at: Date;
+  updated_at: Date;
+}
+
+export type AssetView = Omit<AssetDocument, "_id">;
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function buildLocation(data: Record<string, unknown>): AssetLocation | null {
+  const { lng, lat } = data;
+  if (typeof lng === "number" && typeof lat === "number") {
+    return { type: "Point", coordinates: [lng, lat] };
+  }
+  return null;
+}
+
+function toDocument(asset: Asset): AssetDocument {
+  const data = asset.data;
+
+  const customFields: Record<string, unknown> = { ...asRecord(data.extra_fields) };
+  for (const [key, value] of Object.entries(data)) {
+    if (!PROMOTED_FIELDS.has(key)) {
+      customFields[key] = value;
+    }
+  }
+
   return {
-    id: doc._id,
-    tenant_id: doc.tenant_id,
-    status: doc.status,
-    data: doc.data,
-    created_by: doc.created_by,
-    created_at: doc.created_at,
+    _id: asset.id,
+    asset_id: asset.id,
+    tenant_id: asset.tenant_id,
+    name: typeof data.name === "string" ? data.name : "",
+    type: typeof data.type === "string" ? data.type : "",
+    location: buildLocation(data),
+    custom_fields: customFields,
+    created_at: asset.created_at,
+    updated_at: new Date(),
   };
+}
+
+function toView(doc: AssetDocument): AssetView {
+  const { _id, ...view } = doc;
+  void _id;
+  return view;
 }
 
 // Read path: assets are served from MongoDB (the synced copy). Mongo has no
 // row-level security, so every read is explicitly scoped to the caller's tenant
 // using the tenant id from the request context.
-export async function findAssetDocuments(): Promise<Asset[]> {
+export async function findAssetDocuments(): Promise<AssetView[]> {
   const tenantId = getTenantId();
   const db = await getMongoDb();
 
@@ -38,10 +92,12 @@ export async function findAssetDocuments(): Promise<Asset[]> {
     .sort({ created_at: -1 })
     .toArray();
 
-  return docs.map(fromDocument);
+  return docs.map(toView);
 }
 
-export async function findAssetDocumentById(id: string): Promise<Asset | null> {
+export async function findAssetDocumentById(
+  id: string
+): Promise<AssetView | null> {
   const tenantId = getTenantId();
   const db = await getMongoDb();
 
@@ -49,7 +105,7 @@ export async function findAssetDocumentById(id: string): Promise<Asset | null> {
     .collection<AssetDocument>(COLLECTION)
     .findOne({ _id: id, tenant_id: tenantId });
 
-  return doc ? fromDocument(doc) : null;
+  return doc ? toView(doc) : null;
 }
 
 export async function deleteAssetDocument(id: string): Promise<void> {
@@ -63,19 +119,9 @@ export async function deleteAssetDocument(id: string): Promise<void> {
 
 export async function upsertAssetDocument(asset: Asset): Promise<void> {
   const db = await getMongoDb();
+  const { _id, ...fields } = toDocument(asset);
 
-  await db.collection<AssetDocument>(COLLECTION).updateOne(
-    { _id: asset.id },
-    {
-      $set: {
-        tenant_id: asset.tenant_id,
-        status: asset.status,
-        data: asset.data,
-        created_by: asset.created_by,
-        created_at: asset.created_at,
-        synced_at: new Date(),
-      },
-    },
-    { upsert: true }
-  );
+  await db
+    .collection<AssetDocument>(COLLECTION)
+    .updateOne({ _id }, { $set: fields }, { upsert: true });
 }
