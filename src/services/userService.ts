@@ -1,0 +1,125 @@
+import { randomUUID } from "crypto";
+import { hashPassword } from "../auth/password.js";
+import {
+  AppError,
+  isForeignKeyViolation,
+  isUniqueViolation,
+} from "../errors/appError.js";
+import {
+  createUser as createUserRecord,
+  deleteUser as deleteUserRecord,
+  findAllUsers,
+  findUserById,
+  findUsersByTenantId,
+  updateUser as updateUserRecord,
+} from "../repositories/userRepository.js";
+import type {
+  CreateUserInput,
+  UpdateUserInput,
+  User,
+  UserRole,
+} from "../types.js";
+
+const validRoles: UserRole[] = ["admin", "editor", "viewer"];
+
+export async function listUsers(tenantId?: string): Promise<User[]> {
+  if (tenantId) {
+    return findUsersByTenantId(tenantId);
+  }
+
+  return findAllUsers();
+}
+
+export async function getUser(id: string): Promise<User> {
+  const user = await findUserById(id);
+
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+
+  return user;
+}
+
+export async function createUser(input: CreateUserInput): Promise<User> {
+  const { tenant_id, name, email, password, role } = input;
+
+  if (!tenant_id || !name || !email || !password || !role) {
+    throw new AppError(400, "tenant_id, name, email, password, and role are required");
+  }
+
+  if (!validRoles.includes(role)) {
+    throw new AppError(400, "role must be admin, editor, or viewer");
+  }
+
+  try {
+    const passwordHash = await hashPassword(password);
+    return await createUserRecord(
+      randomUUID(),
+      tenant_id,
+      name,
+      email,
+      passwordHash,
+      role
+    );
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      throw new AppError(409, "email already exists for this tenant");
+    }
+    if (isForeignKeyViolation(err)) {
+      throw new AppError(400, "tenant not found");
+    }
+    throw err;
+  }
+}
+
+export async function updateUser(id: string, input: UpdateUserInput): Promise<User> {
+  const { name, email, password, role } = input;
+
+  if (
+    name === undefined &&
+    email === undefined &&
+    password === undefined &&
+    role === undefined
+  ) {
+    throw new AppError(400, "at least one of name, email, password, or role is required");
+  }
+
+  if (role !== undefined && !validRoles.includes(role)) {
+    throw new AppError(400, "role must be admin, editor, or viewer");
+  }
+
+  try {
+    const passwordHash =
+      password !== undefined ? await hashPassword(password) : null;
+
+    const user = await updateUserRecord(
+      id,
+      name ?? null,
+      email ?? null,
+      passwordHash,
+      role ?? null
+    );
+
+    if (!user) {
+      throw new AppError(404, "User not found");
+    }
+
+    return user;
+  } catch (err) {
+    if (err instanceof AppError) {
+      throw err;
+    }
+    if (isUniqueViolation(err)) {
+      throw new AppError(409, "email already exists for this tenant");
+    }
+    throw err;
+  }
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  const deleted = await deleteUserRecord(id);
+
+  if (!deleted) {
+    throw new AppError(404, "User not found");
+  }
+}
