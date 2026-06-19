@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { mergeAssetData, normalizeAssetData } from "../assetData.js";
 import { getTenantId, getUserId } from "../context/authContext.js";
-import { AppError, isDuplicateKeyViolation } from "../errors/appError.js";
+import { AppError, isUniqueViolation } from "../errors/appError.js";
 import {
   createAsset as createAssetRecord,
   deleteAsset as deleteAssetRecord,
@@ -48,7 +48,7 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
   try {
     return await createAssetRecord(assetId, "pending", assetData, userId);
   } catch (err) {
-    if (isDuplicateKeyViolation(err)) {
+    if (isUniqueViolation(err)) {
       throw new AppError(409, "Asset id already exists");
     }
     throw err;

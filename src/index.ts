@@ -6,6 +6,7 @@ import tenantRoutes from "./routes/tenants.js";
 import userRoutes from "./routes/users.js";
 import assetRoutes from "./routes/assets.js";
 import { requireAuthUnlessPublic } from "./middleware/auth.js";
+import { AppError } from "./errors/appError.js";
 import { runSeed } from "../seed/index.js";
 
 const app = express();
@@ -25,11 +26,20 @@ app.use("/assets", assetRoutes);
 
 app.use(
   (
-    err: Error,
+    err: unknown,
     _req: express.Request,
     res: express.Response,
     _next: express.NextFunction
   ) => {
+    if (err instanceof AppError) {
+      res.status(err.statusCode).json(
+        err.details !== undefined
+          ? { error: err.message, details: err.details }
+          : { error: err.message }
+      );
+      return;
+    }
+
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }

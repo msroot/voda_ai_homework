@@ -14,6 +14,8 @@ export const DEFAULT_ASSET_BASE_FIELDS = [
   "installed_at",
 ] as const;
 
+const baseFields = new Set<string>(DEFAULT_ASSET_BASE_FIELDS);
+
 const defaultAssetSchema = JSON.parse(
   readFileSync(join(process.cwd(), "seed/schemas/default-asset.schema.json"), "utf-8")
 ) as SchemaObject;
@@ -30,130 +32,54 @@ function asStringArray(value: unknown): string[] {
     : [];
 }
 
-function isBaseField(key: string): boolean {
-  return (DEFAULT_ASSET_BASE_FIELDS as readonly string[]).includes(key);
+export function createDefaultAssetSchema(): SchemaObject {
+  return structuredClone(defaultAssetSchema);
 }
 
-function defaultExtraFieldsSchema(): Record<string, unknown> {
-  return asRecord(asRecord(defaultAssetSchema.properties).extra_fields);
-}
-
-function mergeExtraFieldsSchema(
-  current: Record<string, unknown>,
-  extension: SchemaObject
-): Record<string, unknown> {
-  const extensionProps = asRecord(extension.properties);
-  const extensionRequired = asStringArray(extension.required).filter(
-    (field) => !isBaseField(field) && field !== "extra_fields"
-  );
-
-  if (Object.keys(extensionProps).length === 0 && extensionRequired.length === 0) {
-    return current;
-  }
-
-  const mergedProperties = {
-    ...asRecord(current.properties),
-    ...extensionProps,
-  };
-
-  const mergedRequired = [
-    ...new Set([...asStringArray(current.required), ...extensionRequired]),
-  ];
-
-  return {
-    type: "object",
-    properties: mergedProperties,
-    ...(mergedRequired.length > 0 ? { required: mergedRequired } : {}),
-    additionalProperties: false,
-  };
-}
-
-function extractExtraFieldsExtension(extension: SchemaObject): SchemaObject {
-  const extensionProps = asRecord(extension.properties);
-  const extraFromNested = asRecord(extensionProps.extra_fields);
-  const nestedProps = asRecord(extraFromNested.properties);
-  const nestedRequired = asStringArray(extraFromNested.required);
-
-  const flatProps: Record<string, unknown> = { ...nestedProps };
-  const flatRequired: string[] = [...nestedRequired];
-
-  for (const [key, value] of Object.entries(extensionProps)) {
-    if (key === "extra_fields" || isBaseField(key)) {
-      continue;
-    }
-    flatProps[key] = value;
-  }
-
-  for (const field of asStringArray(extension.required)) {
-    if (!isBaseField(field) && field !== "extra_fields") {
-      flatRequired.push(field);
-    }
-  }
-
-  return {
-    properties: flatProps,
-    required: [...new Set(flatRequired)],
-  };
-}
-
+/**
+ * Merges tenant-specific fields (`{ properties, required }`) into the schema's
+ * `extra_fields`. Base fields are never added or removed.
+ */
 export function extendAssetSchema(
   current: SchemaObject,
   extension: SchemaObject
 ): SchemaObject {
-  const defaultProperties = asRecord(defaultAssetSchema.properties);
-  const defaultRequired = asStringArray(defaultAssetSchema.required);
-  const currentProperties = asRecord(current.properties);
-  const extraFieldsExtension = extractExtraFieldsExtension(extension);
+  const properties = { ...asRecord(current.properties) };
+  const currentExtra = asRecord(properties.extra_fields);
 
-  const mergedExtraFields = mergeExtraFieldsSchema(
-    asRecord(currentProperties.extra_fields) || defaultExtraFieldsSchema(),
-    extraFieldsExtension
-  );
+  const mergedProps = { ...asRecord(currentExtra.properties) };
+  for (const [key, value] of Object.entries(asRecord(extension.properties))) {
+    if (!baseFields.has(key) && key !== "extra_fields") {
+      mergedProps[key] = value;
+    }
+  }
 
-  const properties = {
-    ...currentProperties,
-    ...defaultProperties,
-    extra_fields: mergedExtraFields,
+  const mergedRequired = [
+    ...new Set([
+      ...asStringArray(currentExtra.required),
+      ...asStringArray(extension.required).filter(
+        (field) => !baseFields.has(field) && field !== "extra_fields"
+      ),
+    ]),
+  ];
+
+  const hasExtraFields = Object.keys(mergedProps).length > 0;
+
+  properties.extra_fields = {
+    type: "object",
+    properties: mergedProps,
+    ...(mergedRequired.length > 0 ? { required: mergedRequired } : {}),
+    additionalProperties: !hasExtraFields,
   };
 
-  const required = [...new Set([...asStringArray(current.required), ...defaultRequired])];
-
-  if (asStringArray(mergedExtraFields.required).length > 0) {
+  const required = [...asStringArray(defaultAssetSchema.required)];
+  if (mergedRequired.length > 0) {
     required.push("extra_fields");
   }
 
-  return {
-    ...defaultAssetSchema,
-    ...current,
-    ...extension,
-    properties,
-    required: [...new Set(required)],
-  };
+  return { ...defaultAssetSchema, properties, required };
 }
 
-export function createDefaultAssetSchema(): SchemaObject {
-  return structuredClone(defaultAssetSchema) as SchemaObject;
-}
-
-export function buildTenantAssetSchema(extraFieldsExtension: SchemaObject): SchemaObject {
-  const schema = createDefaultAssetSchema();
-  const properties = asRecord(schema.properties);
-  const extraExtension = extractExtraFieldsExtension(extraFieldsExtension);
-
-  properties.extra_fields = mergeExtraFieldsSchema(
-    defaultExtraFieldsSchema(),
-    extraExtension
-  );
-
-  const required = [...asStringArray(schema.required)];
-
-  if (asStringArray(asRecord(properties.extra_fields).required).length > 0) {
-    required.push("extra_fields");
-  }
-
-  return {
-    ...schema,
-    properties,
-    required: [...new Set(required)],
-  };
+export function buildTenantAssetSchema(extension: SchemaObject): SchemaObject {
+  return extendAssetSchema(createDefaultAssetSchema(), extension);
 }

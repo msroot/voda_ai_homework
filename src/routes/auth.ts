@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { validateBody } from "../middleware/validate.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { validate } from "../middleware/validate.js";
 import { loginSchema } from "../schemas.js";
-import { runHandler } from "../utils/asyncHandler.js";
 import { login } from "../services/authService.js";
-import type { LoginInput } from "../types.js";
 
 const router = Router();
 
-router.post("/login", validateBody(loginSchema), async (req, res, next) => {
-  await runHandler(async () => {
-    const result = await login(req.body as LoginInput);
-    res.json(result);
-  }, res, next);
-});
+router.post(
+  "/login",
+  validate(loginSchema),
+  asyncHandler(async (req, res) => {
+    res.json(await login(req.body));
+  })
+);
 
 export default router;

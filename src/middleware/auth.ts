@@ -18,12 +18,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
     const payload = verifyToken(token);
 
     runWithAuthContext(
-      {
-        userId: payload.sub,
-        tenantId: payload.tenant_id,
-        email: payload.email,
-        role: payload.role,
-      },
+      { userId: payload.sub, tenantId: payload.tenant_id },
       () => next()
     );
   } catch {

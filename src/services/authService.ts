@@ -2,7 +2,7 @@ import { signToken } from "../auth/jwt.js";
 import { verifyPassword } from "../auth/password.js";
 import { AppError } from "../errors/appError.js";
 import { findUserByEmail } from "../repositories/userRepository.js";
-import type { LoginInput, User, UserRole } from "../types.js";
+import type { LoginInput, User } from "../types.js";
 
 export interface LoginResult {
   token: string;
@@ -10,36 +10,20 @@ export interface LoginResult {
 }
 
 export async function login(input: LoginInput): Promise<LoginResult> {
-  const { email, password } = input;
+  const found = await findUserByEmail(input.email);
 
-  const user = await findUserByEmail(email);
-
-  if (!user) {
+  if (!found || !(await verifyPassword(input.password, found.password_hash))) {
     throw new AppError(401, "Invalid credentials");
   }
 
-  const validPassword = await verifyPassword(password, user.password_hash);
-
-  if (!validPassword) {
-    throw new AppError(401, "Invalid credentials");
-  }
+  const { password_hash, ...user } = found;
 
   const token = signToken({
     sub: user.id,
     tenant_id: user.tenant_id,
     email: user.email,
-    role: user.role as UserRole,
+    role: user.role,
   });
 
-  return {
-    token,
-    user: {
-      id: user.id,
-      tenant_id: user.tenant_id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      created_at: user.created_at,
-    },
-  };
+  return { token, user };
 }

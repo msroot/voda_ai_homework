@@ -8,14 +8,13 @@ export class AppError extends Error {
   }
 }
 
-export function isUniqueViolation(err: unknown): boolean {
-  return err instanceof Error && err.message.includes("unique");
+function hasCode(err: unknown, code: string): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as { code?: unknown }).code === code
+  );
 }
 
-export function isForeignKeyViolation(err: unknown): boolean {
-  return err instanceof Error && err.message.includes("foreign key");
-}
-
-export function isDuplicateKeyViolation(err: unknown): boolean {
-  return err instanceof Error && err.message.includes("duplicate key");
-}
+export const isUniqueViolation = (err: unknown) => hasCode(err, "23505");
+export const isForeignKeyViolation = (err: unknown) => hasCode(err, "23503");

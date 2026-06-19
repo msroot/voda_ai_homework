@@ -1,13 +1,4 @@
-import type {
-  CreateAssetInput,
-  CreateTenantInput,
-  CreateUserInput,
-  LoginInput,
-  UpdateAssetInput,
-  UpdateTenantInput,
-  UpdateUserInput,
-  UserRole,
-} from "./schemas.js";
+import type { UserRole } from "./schemas.js";
 
 export type {
   CreateAssetInput,
@@ -18,7 +9,7 @@ export type {
   UpdateTenantInput,
   UpdateUserInput,
   UserRole,
-};
+} from "./schemas.js";
 
 export interface Tenant {
   id: string;

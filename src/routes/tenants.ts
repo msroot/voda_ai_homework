@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { validateBody, validateParams, validateUpdateTenantBody } from "../middleware/validate.js";
-import { createTenantSchema, idParamSchema } from "../schemas.js";
-import { runHandler } from "../utils/asyncHandler.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { validate } from "../middleware/validate.js";
+import { createTenantSchema, idParamSchema, updateTenantSchema } from "../schemas.js";
 import {
   createTenant,
   deleteTenant,
@@ -9,46 +9,48 @@ import {
   listTenants,
   updateTenant,
 } from "../services/tenantService.js";
-import type { CreateTenantInput, UpdateTenantInput } from "../types.js";
 
 const router = Router();
 
-router.get("/", async (_req, res, next) => {
-  await runHandler(async () => {
+router.get(
+  "/",
+  asyncHandler(async (_req, res) => {
     res.json(await listTenants());
-  }, res, next);
-});
+  })
+);
 
-router.get("/:id", validateParams(idParamSchema), async (req, res, next) => {
-  await runHandler(async () => {
+router.get(
+  "/:id",
+  validate(idParamSchema, "params"),
+  asyncHandler(async (req, res) => {
     res.json(await getTenant(req.params.id));
-  }, res, next);
-});
+  })
+);
 
-router.post("/", validateBody(createTenantSchema), async (req, res, next) => {
-  await runHandler(async () => {
-    const tenant = await createTenant(req.body as CreateTenantInput);
-    res.status(201).json(tenant);
-  }, res, next);
-});
+router.post(
+  "/",
+  validate(createTenantSchema),
+  asyncHandler(async (req, res) => {
+    res.status(201).json(await createTenant(req.body));
+  })
+);
 
 router.put(
   "/:id",
-  validateParams(idParamSchema),
-  validateUpdateTenantBody,
-  async (req, res, next) => {
-    await runHandler(async () => {
-      const tenant = await updateTenant(req.params.id, req.body as UpdateTenantInput);
-      res.json(tenant);
-    }, res, next);
-  }
+  validate(idParamSchema, "params"),
+  validate(updateTenantSchema),
+  asyncHandler(async (req, res) => {
+    res.json(await updateTenant(req.params.id, req.body));
+  })
 );
 
-router.delete("/:id", validateParams(idParamSchema), async (req, res, next) => {
-  await runHandler(async () => {
+router.delete(
+  "/:id",
+  validate(idParamSchema, "params"),
+  asyncHandler(async (req, res) => {
     await deleteTenant(req.params.id);
     res.status(204).send();
-  }, res, next);
-});
+  })
+);
 
 export default router;

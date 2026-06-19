@@ -6,7 +6,6 @@ export type UserRole = z.infer<typeof userRoleSchema>;
 export const idParamSchema = z.object({
   id: z.string().uuid(),
 });
-export type IdParam = z.infer<typeof idParamSchema>;
 
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -20,18 +19,22 @@ export const createTenantSchema = z.object({
 });
 export type CreateTenantInput = z.infer<typeof createTenantSchema>;
 
-export const updateTenantFieldsSchema = z
+// asset_schema is passed through as-is (only checked to be an object); its JSON
+// Schema structure is intentionally not validated by zod.
+export const updateTenantSchema = z
   .object({
     name: z.string().min(1).optional(),
     slug: z.string().min(1).optional(),
+    asset_schema: z.record(z.string(), z.unknown()).optional(),
   })
-  .strict();
-
-export type UpdateTenantFields = z.infer<typeof updateTenantFieldsSchema>;
-
-export interface UpdateTenantInput extends UpdateTenantFields {
-  asset_schema?: Record<string, unknown>;
-}
+  .refine(
+    (data) =>
+      data.name !== undefined ||
+      data.slug !== undefined ||
+      data.asset_schema !== undefined,
+    { message: "at least one of name, slug, or asset_schema is required" }
+  );
+export type UpdateTenantInput = z.infer<typeof updateTenantSchema>;
 
 export const createUserSchema = z.object({
   name: z.string().min(1),

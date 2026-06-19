@@ -63,3 +63,17 @@ CREATE POLICY assets_tenant_isolation ON assets
   FOR ALL
   USING (app_bypass_rls() OR tenant_id = app_current_tenant_id())
   WITH CHECK (app_bypass_rls() OR tenant_id = app_current_tenant_id());
+
+-- Dedicated non-superuser application role. RLS is bypassed by superusers and by
+-- BYPASSRLS/owner roles, so the app must connect as a plain role for the policies
+-- above to actually take effect.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'voda_app') THEN
+    CREATE ROLE voda_app LOGIN PASSWORD 'voda_app';
+  END IF;
+END
+$$;
+
+GRANT USAGE ON SCHEMA public TO voda_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO voda_app;
