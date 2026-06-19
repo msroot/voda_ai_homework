@@ -1,9 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import type { ZodType } from "zod";
 
-export function validate<T>(schema: ZodType<T>, source: "body" | "params" = "body") {
+export function validate<T>(
+  schema: ZodType<T>,
+  source: "body" | "params" | "query" = "body"
+) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const target = req as { body: unknown; params: unknown };
+    const target = req as { body: unknown; params: unknown; query: unknown };
     const result = schema.safeParse(target[source]);
 
     if (!result.success) {

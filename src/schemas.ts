@@ -66,6 +66,12 @@ export const createAssetSchema = z.object({
 });
 export type CreateAssetInput = z.infer<typeof createAssetSchema>;
 
+export const assetFilterSchema = z.object({
+  type: z.string().min(1).optional(),
+  status: z.string().min(1).optional(),
+});
+export type AssetFilter = z.infer<typeof assetFilterSchema>;
+
 export const updateAssetSchema = z
   .object({
     data: z.record(z.string(), z.unknown()).optional(),

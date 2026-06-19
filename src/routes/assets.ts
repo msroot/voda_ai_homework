@@ -1,7 +1,13 @@
 import { Router } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validate } from "../middleware/validate.js";
-import { createAssetSchema, idParamSchema, updateAssetSchema } from "../schemas.js";
+import {
+  assetFilterSchema,
+  createAssetSchema,
+  idParamSchema,
+  updateAssetSchema,
+  type AssetFilter,
+} from "../schemas.js";
 import {
   createAsset,
   deleteAsset,
@@ -14,8 +20,9 @@ const router = Router();
 
 router.get(
   "/",
-  asyncHandler(async (_req, res) => {
-    res.json(await listAssets());
+  validate(assetFilterSchema, "query"),
+  asyncHandler(async (req, res) => {
+    res.json(await listAssets(req.query as unknown as AssetFilter));
   })
 );
 

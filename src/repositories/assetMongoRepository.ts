@@ -79,16 +79,32 @@ function toView(doc: AssetDocument): AssetView {
   return view;
 }
 
+export interface AssetFilter {
+  type?: string;
+  status?: string;
+}
+
 // Read path: assets are served from MongoDB (the synced copy). Mongo has no
 // row-level security, so every read is explicitly scoped to the caller's tenant
-// using the tenant id from the request context.
-export async function findAssetDocuments(): Promise<AssetView[]> {
+// using the tenant id from the request context. `type` is a top-level field;
+// `status` lives inside the custom_fields bucket.
+export async function findAssetDocuments(
+  filter: AssetFilter = {}
+): Promise<AssetView[]> {
   const tenantId = getTenantId();
   const db = await getMongoDb();
 
+  const queryFilter: Record<string, unknown> = { tenant_id: tenantId };
+  if (filter.type) {
+    queryFilter.type = filter.type;
+  }
+  if (filter.status) {
+    queryFilter["custom_fields.status"] = filter.status;
+  }
+
   const docs = await db
     .collection<AssetDocument>(COLLECTION)
-    .find({ tenant_id: tenantId })
+    .find(queryFilter)
     .sort({ created_at: -1 })
     .toArray();
 
