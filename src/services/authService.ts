@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { signToken } from "../auth/jwt.js";
 import { verifyPassword } from "../auth/password.js";
 import { AppError } from "../errors/appError.js";
@@ -12,10 +11,6 @@ export interface LoginResult {
 
 export async function login(input: LoginInput): Promise<LoginResult> {
   const { email, password } = input;
-
-  if (!email || !password) {
-    throw new AppError(400, "email and password are required");
-  }
 
   const user = await findUserByEmail(email);
 

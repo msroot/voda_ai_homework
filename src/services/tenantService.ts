@@ -33,10 +33,6 @@ export async function getTenant(id: string): Promise<Tenant> {
 export async function createTenant(input: CreateTenantInput): Promise<Tenant> {
   const { name, slug } = input;
 
-  if (!name || !slug) {
-    throw new AppError(400, "name and slug are required");
-  }
-
   try {
     return await createTenantRecord(
       randomUUID(),
@@ -57,17 +53,6 @@ export async function updateTenant(
   input: UpdateTenantInput
 ): Promise<Tenant> {
   const { name, slug, asset_schema } = input;
-
-  if (name === undefined && slug === undefined && asset_schema === undefined) {
-    throw new AppError(400, "at least one of name, slug, or asset_schema is required");
-  }
-
-  if (
-    asset_schema !== undefined &&
-    (typeof asset_schema !== "object" || asset_schema === null || Array.isArray(asset_schema))
-  ) {
-    throw new AppError(400, "asset_schema must be a JSON object");
-  }
 
   let mergedAssetSchema: string | null = null;
 

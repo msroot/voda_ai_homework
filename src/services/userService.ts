@@ -12,14 +12,7 @@ import {
   findUserById,
   updateUser as updateUserRecord,
 } from "../repositories/userRepository.js";
-import type {
-  CreateUserInput,
-  UpdateUserInput,
-  User,
-  UserRole,
-} from "../types.js";
-
-const validRoles: UserRole[] = ["admin", "editor", "viewer"];
+import type { CreateUserInput, UpdateUserInput, User } from "../types.js";
 
 export async function listUsers(): Promise<User[]> {
   return findAllUsers();
@@ -38,14 +31,6 @@ export async function getUser(id: string): Promise<User> {
 export async function createUser(input: CreateUserInput): Promise<User> {
   const { name, email, password, role } = input;
 
-  if (!name || !email || !password || !role) {
-    throw new AppError(400, "name, email, password, and role are required");
-  }
-
-  if (!validRoles.includes(role)) {
-    throw new AppError(400, "role must be admin, editor, or viewer");
-  }
-
   try {
     const passwordHash = await hashPassword(password);
     return await createUserRecord(randomUUID(), name, email, passwordHash, role);
@@ -62,19 +47,6 @@ export async function createUser(input: CreateUserInput): Promise<User> {
 
 export async function updateUser(id: string, input: UpdateUserInput): Promise<User> {
   const { name, email, password, role } = input;
-
-  if (
-    name === undefined &&
-    email === undefined &&
-    password === undefined &&
-    role === undefined
-  ) {
-    throw new AppError(400, "at least one of name, email, password, or role is required");
-  }
-
-  if (role !== undefined && !validRoles.includes(role)) {
-    throw new AppError(400, "role must be admin, editor, or viewer");
-  }
 
   try {
     const passwordHash =

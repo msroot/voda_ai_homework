@@ -1,4 +1,24 @@
-export type UserRole = "admin" | "editor" | "viewer";
+import type {
+  CreateAssetInput,
+  CreateTenantInput,
+  CreateUserInput,
+  LoginInput,
+  UpdateAssetInput,
+  UpdateTenantInput,
+  UpdateUserInput,
+  UserRole,
+} from "./schemas.js";
+
+export type {
+  CreateAssetInput,
+  CreateTenantInput,
+  CreateUserInput,
+  LoginInput,
+  UpdateAssetInput,
+  UpdateTenantInput,
+  UpdateUserInput,
+  UserRole,
+};
 
 export interface Tenant {
   id: string;
@@ -17,32 +37,6 @@ export interface User {
   created_at: Date;
 }
 
-export interface CreateTenantInput {
-  name: string;
-  slug: string;
-}
-
-export interface UpdateTenantInput {
-  name?: string;
-  slug?: string;
-  /** Additional JSON Schema fields merged into the tenant schema. Base fields are never removed. */
-  asset_schema?: Record<string, unknown>;
-}
-
-export interface CreateUserInput {
-  name: string;
-  email: string;
-  password: string;
-  role: UserRole;
-}
-
-export interface UpdateUserInput {
-  name?: string;
-  email?: string;
-  password?: string;
-  role?: UserRole;
-}
-
 export interface Asset {
   id: string;
   tenant_id: string;
@@ -50,18 +44,4 @@ export interface Asset {
   data: Record<string, unknown>;
   created_by: string;
   created_at: Date;
-}
-
-export interface CreateAssetInput {
-  data: Record<string, unknown>;
-}
-
-export interface UpdateAssetInput {
-  data?: Record<string, unknown>;
-  status?: string;
-}
-
-export interface LoginInput {
-  email: string;
-  password: string;
 }

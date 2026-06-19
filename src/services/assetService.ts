@@ -32,10 +32,6 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
   const userId = getUserId();
   const tenantId = getTenantId();
 
-  if (!data || typeof data !== "object" || Array.isArray(data)) {
-    throw new AppError(400, "data object is required");
-  }
-
   const schema = await findTenantAssetSchema();
   if (!schema) {
     throw new AppError(404, "Tenant not found");
@@ -64,14 +60,6 @@ export async function updateAsset(
   input: UpdateAssetInput
 ): Promise<Asset> {
   const { data, status } = input;
-
-  if (data === undefined && status === undefined) {
-    throw new AppError(400, "at least one of data or status is required");
-  }
-
-  if (data !== undefined && (typeof data !== "object" || data === null || Array.isArray(data))) {
-    throw new AppError(400, "data must be a JSON object");
-  }
 
   const existing = await findAssetById(id);
 
