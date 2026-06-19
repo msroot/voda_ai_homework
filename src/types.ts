@@ -33,12 +33,14 @@ export interface CreateUserInput {
   tenant_id: string;
   name: string;
   email: string;
+  password: string;
   role: UserRole;
 }
 
 export interface UpdateUserInput {
   name?: string;
   email?: string;
+  password?: string;
   role?: UserRole;
 }
 
@@ -62,4 +64,5 @@ export interface UpdateAssetInput {
 
 export interface LoginInput {
   email: string;
+  password: string;
 }

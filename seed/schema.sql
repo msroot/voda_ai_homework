@@ -7,12 +7,13 @@ CREATE TABLE IF NOT EXISTS tenants (
 );
 
 CREATE TABLE IF NOT EXISTS users (
-    id          UUID PRIMARY KEY,
-    tenant_id   UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    name        TEXT NOT NULL,
-    email       TEXT NOT NULL,
-    role        TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'viewer')),
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    id              UUID PRIMARY KEY,
+    tenant_id       UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    name            TEXT NOT NULL,
+    email           TEXT NOT NULL,
+    password_hash   TEXT NOT NULL,
+    role            TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'viewer')),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (tenant_id, email)
 );
 

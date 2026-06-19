@@ -1,15 +1,16 @@
 import { Router } from "express";
 import pool from "../db.js";
 import { signToken } from "../auth/jwt.js";
+import { verifyPassword } from "../auth/password.js";
 import type { LoginInput } from "../types.js";
 
 const router = Router();
 
 router.post("/login", async (req, res) => {
-  const { email } = req.body as LoginInput;
+  const { email, password } = req.body as LoginInput;
 
-  if (!email) {
-    res.status(400).json({ error: "email is required" });
+  if (!email || !password) {
+    res.status(400).json({ error: "email and password are required" });
     return;
   }
 
@@ -18,8 +19,12 @@ router.post("/login", async (req, res) => {
     tenant_id: string;
     name: string;
     email: string;
+    password_hash: string;
     role: "admin" | "editor" | "viewer";
-  }>("SELECT id, tenant_id, name, email, role FROM users WHERE email = $1", [email]);
+  }>(
+    "SELECT id, tenant_id, name, email, password_hash, role FROM users WHERE email = $1",
+    [email]
+  );
 
   if (rows.length === 0) {
     res.status(401).json({ error: "Invalid credentials" });
@@ -27,6 +32,13 @@ router.post("/login", async (req, res) => {
   }
 
   const user = rows[0];
+  const validPassword = await verifyPassword(password, user.password_hash);
+
+  if (!validPassword) {
+    res.status(401).json({ error: "Invalid credentials" });
+    return;
+  }
+
   const token = signToken({
     sub: user.id,
     tenant_id: user.tenant_id,

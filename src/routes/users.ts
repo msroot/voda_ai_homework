@@ -1,17 +1,19 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
 import pool from "../db.js";
+import { hashPassword } from "../auth/password.js";
 import type { CreateUserInput, UpdateUserInput, UserRole } from "../types.js";
 
 const router = Router();
 const validRoles: UserRole[] = ["admin", "editor", "viewer"];
+const userColumns = "id, tenant_id, name, email, role, created_at";
 
 router.get("/", async (req, res) => {
   const { tenant_id } = req.query;
 
   if (tenant_id) {
     const { rows } = await pool.query(
-      "SELECT id, tenant_id, name, email, role, created_at FROM users WHERE tenant_id = $1 ORDER BY created_at",
+      `SELECT ${userColumns} FROM users WHERE tenant_id = $1 ORDER BY created_at`,
       [tenant_id]
     );
     res.json(rows);
@@ -19,14 +21,14 @@ router.get("/", async (req, res) => {
   }
 
   const { rows } = await pool.query(
-    "SELECT id, tenant_id, name, email, role, created_at FROM users ORDER BY created_at"
+    `SELECT ${userColumns} FROM users ORDER BY created_at`
   );
   res.json(rows);
 });
 
 router.get("/:id", async (req, res) => {
   const { rows } = await pool.query(
-    "SELECT id, tenant_id, name, email, role, created_at FROM users WHERE id = $1",
+    `SELECT ${userColumns} FROM users WHERE id = $1`,
     [req.params.id]
   );
 
@@ -39,10 +41,12 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { tenant_id, name, email, role } = req.body as CreateUserInput;
+  const { tenant_id, name, email, password, role } = req.body as CreateUserInput;
 
-  if (!tenant_id || !name || !email || !role) {
-    res.status(400).json({ error: "tenant_id, name, email, and role are required" });
+  if (!tenant_id || !name || !email || !password || !role) {
+    res.status(400).json({
+      error: "tenant_id, name, email, password, and role are required",
+    });
     return;
   }
 
@@ -52,9 +56,12 @@ router.post("/", async (req, res) => {
   }
 
   try {
+    const passwordHash = await hashPassword(password);
     const { rows } = await pool.query(
-      "INSERT INTO users (id, tenant_id, name, email, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, tenant_id, name, email, role, created_at",
-      [randomUUID(), tenant_id, name, email, role]
+      `INSERT INTO users (id, tenant_id, name, email, password_hash, role)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING ${userColumns}`,
+      [randomUUID(), tenant_id, name, email, passwordHash, role]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -73,10 +80,17 @@ router.post("/", async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  const { name, email, role } = req.body as UpdateUserInput;
+  const { name, email, password, role } = req.body as UpdateUserInput;
 
-  if (name === undefined && email === undefined && role === undefined) {
-    res.status(400).json({ error: "at least one of name, email, or role is required" });
+  if (
+    name === undefined &&
+    email === undefined &&
+    password === undefined &&
+    role === undefined
+  ) {
+    res.status(400).json({
+      error: "at least one of name, email, password, or role is required",
+    });
     return;
   }
 
@@ -86,14 +100,18 @@ router.put("/:id", async (req, res) => {
   }
 
   try {
+    const passwordHash =
+      password !== undefined ? await hashPassword(password) : null;
+
     const { rows } = await pool.query(
       `UPDATE users
        SET name = COALESCE($2, name),
            email = COALESCE($3, email),
-           role = COALESCE($4, role)
+           password_hash = COALESCE($4, password_hash),
+           role = COALESCE($5, role)
        WHERE id = $1
-       RETURNING id, tenant_id, name, email, role, created_at`,
-      [req.params.id, name ?? null, email ?? null, role ?? null]
+       RETURNING ${userColumns}`,
+      [req.params.id, name ?? null, email ?? null, passwordHash, role ?? null]
     );
 
     if (rows.length === 0) {

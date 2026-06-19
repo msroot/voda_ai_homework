@@ -1,10 +1,12 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import pool from "../src/db.js";
+import { hashPassword } from "../src/auth/password.js";
 import { tenants } from "./tenants.js";
 import { users } from "./users.js";
 
 const SEED_DIR = join(process.cwd(), "seed");
+const DEFAULT_SEED_PASSWORD = "password123";
 
 interface AssetSeed {
   id: string;
@@ -44,17 +46,28 @@ async function seedTenants() {
 }
 
 async function seedUsers() {
+  const passwordHash = await hashPassword(DEFAULT_SEED_PASSWORD);
+
   for (const user of users) {
     await pool.query(
-      `INSERT INTO users (id, tenant_id, name, email, role, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO users (id, tenant_id, name, email, password_hash, role, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (id) DO UPDATE SET
          tenant_id = EXCLUDED.tenant_id,
          name = EXCLUDED.name,
          email = EXCLUDED.email,
+         password_hash = EXCLUDED.password_hash,
          role = EXCLUDED.role,
          created_at = EXCLUDED.created_at`,
-      [user.id, user.tenant_id, user.name, user.email, user.role, user.created_at]
+      [
+        user.id,
+        user.tenant_id,
+        user.name,
+        user.email,
+        passwordHash,
+        user.role,
+        user.created_at,
+      ]
     );
   }
 }
