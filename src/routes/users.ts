@@ -11,12 +11,9 @@ import type { CreateUserInput, UpdateUserInput } from "../types.js";
 
 const router = Router();
 
-router.get("/", async (req, res, next) => {
+router.get("/", async (_req, res, next) => {
   await runHandler(async () => {
-    const tenantId = req.query.tenant_id
-      ? String(req.query.tenant_id)
-      : undefined;
-    res.json(await listUsers(tenantId));
+    res.json(await listUsers());
   }, res, next);
 });
 

@@ -30,7 +30,6 @@ export interface UpdateTenantInput {
 }
 
 export interface CreateUserInput {
-  tenant_id: string;
   name: string;
   email: string;
   password: string;

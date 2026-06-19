@@ -24,6 +24,10 @@ function getAuthContext(): AuthContext {
   return context;
 }
 
+export function tryGetTenantId(): string | undefined {
+  return authStorage.getStore()?.tenantId;
+}
+
 export function getTenantId(): string {
   return getAuthContext().tenantId;
 }

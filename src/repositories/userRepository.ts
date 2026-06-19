@@ -1,4 +1,5 @@
-import pool from "../db.js";
+import { getTenantId } from "../context/authContext.js";
+import { query, queryWithoutTenantContext } from "../db.js";
 import type { User, UserRole } from "../types.js";
 
 const userColumns = "id, tenant_id, name, email, role, created_at";
@@ -8,22 +9,14 @@ export interface UserWithPassword extends User {
 }
 
 export async function findAllUsers(): Promise<User[]> {
-  const { rows } = await pool.query<User>(
+  const { rows } = await query<User>(
     `SELECT ${userColumns} FROM users ORDER BY created_at`
   );
   return rows;
 }
 
-export async function findUsersByTenantId(tenantId: string): Promise<User[]> {
-  const { rows } = await pool.query<User>(
-    `SELECT ${userColumns} FROM users WHERE tenant_id = $1 ORDER BY created_at`,
-    [tenantId]
-  );
-  return rows;
-}
-
 export async function findUserById(id: string): Promise<User | null> {
-  const { rows } = await pool.query<User>(
+  const { rows } = await query<User>(
     `SELECT ${userColumns} FROM users WHERE id = $1`,
     [id]
   );
@@ -31,7 +24,7 @@ export async function findUserById(id: string): Promise<User | null> {
 }
 
 export async function findUserByEmail(email: string): Promise<UserWithPassword | null> {
-  const { rows } = await pool.query<UserWithPassword>(
+  const { rows } = await queryWithoutTenantContext<UserWithPassword>(
     "SELECT id, tenant_id, name, email, password_hash, role, created_at FROM users WHERE email = $1",
     [email]
   );
@@ -40,13 +33,13 @@ export async function findUserByEmail(email: string): Promise<UserWithPassword |
 
 export async function createUser(
   id: string,
-  tenantId: string,
   name: string,
   email: string,
   passwordHash: string,
   role: UserRole
 ): Promise<User> {
-  const { rows } = await pool.query<User>(
+  const tenantId = getTenantId();
+  const { rows } = await query<User>(
     `INSERT INTO users (id, tenant_id, name, email, password_hash, role)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING ${userColumns}`,
@@ -62,7 +55,7 @@ export async function updateUser(
   passwordHash: string | null,
   role: UserRole | null
 ): Promise<User | null> {
-  const { rows } = await pool.query<User>(
+  const { rows } = await query<User>(
     `UPDATE users
      SET name = COALESCE($2, name),
          email = COALESCE($3, email),
@@ -76,6 +69,6 @@ export async function updateUser(
 }
 
 export async function deleteUser(id: string): Promise<boolean> {
-  const { rowCount } = await pool.query("DELETE FROM users WHERE id = $1", [id]);
+  const { rowCount } = await query("DELETE FROM users WHERE id = $1", [id]);
   return (rowCount ?? 0) > 0;
 }

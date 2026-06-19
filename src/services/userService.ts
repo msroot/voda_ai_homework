@@ -10,7 +10,6 @@ import {
   deleteUser as deleteUserRecord,
   findAllUsers,
   findUserById,
-  findUsersByTenantId,
   updateUser as updateUserRecord,
 } from "../repositories/userRepository.js";
 import type {
@@ -22,11 +21,7 @@ import type {
 
 const validRoles: UserRole[] = ["admin", "editor", "viewer"];
 
-export async function listUsers(tenantId?: string): Promise<User[]> {
-  if (tenantId) {
-    return findUsersByTenantId(tenantId);
-  }
-
+export async function listUsers(): Promise<User[]> {
   return findAllUsers();
 }
 
@@ -41,10 +36,10 @@ export async function getUser(id: string): Promise<User> {
 }
 
 export async function createUser(input: CreateUserInput): Promise<User> {
-  const { tenant_id, name, email, password, role } = input;
+  const { name, email, password, role } = input;
 
-  if (!tenant_id || !name || !email || !password || !role) {
-    throw new AppError(400, "tenant_id, name, email, password, and role are required");
+  if (!name || !email || !password || !role) {
+    throw new AppError(400, "name, email, password, and role are required");
   }
 
   if (!validRoles.includes(role)) {
@@ -53,14 +48,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
 
   try {
     const passwordHash = await hashPassword(password);
-    return await createUserRecord(
-      randomUUID(),
-      tenant_id,
-      name,
-      email,
-      passwordHash,
-      role
-    );
+    return await createUserRecord(randomUUID(), name, email, passwordHash, role);
   } catch (err) {
     if (isUniqueViolation(err)) {
       throw new AppError(409, "email already exists for this tenant");

@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import pool from "../src/db.js";
+import pool, { queryWithoutTenantContext } from "../src/db.js";
 import { hashPassword } from "../src/auth/password.js";
 import { normalizeAssetData } from "../src/assetData.js";
 import { tenants } from "./tenants.js";
@@ -17,17 +17,17 @@ interface AssetSeed {
 
 async function resetDatabase() {
   const sql = readFileSync(join(SEED_DIR, "reset.sql"), "utf-8");
-  await pool.query(sql);
+  await queryWithoutTenantContext(sql);
 }
 
 async function createSchema() {
   const sql = readFileSync(join(SEED_DIR, "schema.sql"), "utf-8");
-  await pool.query(sql);
+  await queryWithoutTenantContext(sql);
 }
 
 async function seedTenants() {
   for (const tenant of tenants) {
-    await pool.query(
+    await queryWithoutTenantContext(
       `INSERT INTO tenants (id, name, slug, asset_schema, created_at)
        VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (id) DO UPDATE SET
@@ -50,7 +50,7 @@ async function seedUsers() {
   const passwordHash = await hashPassword(DEFAULT_SEED_PASSWORD);
 
   for (const user of users) {
-    await pool.query(
+    await queryWithoutTenantContext(
       `INSERT INTO users (id, tenant_id, name, email, password_hash, role, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (id) DO UPDATE SET
@@ -93,7 +93,7 @@ async function seedAssets() {
 
     const normalizedAsset = normalizeAssetData(asset, asset.tenant_id, asset.id);
 
-    await pool.query(
+    await queryWithoutTenantContext(
       `INSERT INTO assets (id, tenant_id, status, data, created_by)
        VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (id) DO UPDATE SET
