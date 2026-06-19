@@ -8,11 +8,21 @@ export interface UserWithPassword extends User {
   password_hash: string;
 }
 
-export async function findAllUsers(): Promise<User[]> {
-  const { rows } = await query<User>(
-    `SELECT ${userColumns} FROM users ORDER BY created_at`
+export async function findUsers(
+  limit: number,
+  offset: number
+): Promise<{ rows: User[]; total: number }> {
+  const totalResult = await query<{ count: number }>(
+    "SELECT COUNT(*)::int AS count FROM users"
   );
-  return rows;
+  const total = totalResult.rows[0]?.count ?? 0;
+
+  const { rows } = await query<User>(
+    `SELECT ${userColumns} FROM users ORDER BY created_at LIMIT $1 OFFSET $2`,
+    [limit, offset]
+  );
+
+  return { rows, total };
 }
 
 export async function findUserById(id: string): Promise<User | null> {

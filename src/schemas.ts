@@ -7,6 +7,12 @@ export const idParamSchema = z.object({
   id: z.string().uuid(),
 });
 
+export const paginationSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+export type Pagination = z.infer<typeof paginationSchema>;
+
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -66,7 +72,7 @@ export const createAssetSchema = z.object({
 });
 export type CreateAssetInput = z.infer<typeof createAssetSchema>;
 
-export const assetFilterSchema = z.object({
+export const assetFilterSchema = paginationSchema.extend({
   type: z.string().min(1).optional(),
   status: z.string().min(1).optional(),
 });

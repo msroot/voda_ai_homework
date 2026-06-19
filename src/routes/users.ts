@@ -1,7 +1,13 @@
 import { Router } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validate } from "../middleware/validate.js";
-import { createUserSchema, idParamSchema, updateUserSchema } from "../schemas.js";
+import {
+  createUserSchema,
+  idParamSchema,
+  paginationSchema,
+  updateUserSchema,
+  type Pagination,
+} from "../schemas.js";
 import {
   createUser,
   deleteUser,
@@ -14,8 +20,9 @@ const router = Router();
 
 router.get(
   "/",
-  asyncHandler(async (_req, res) => {
-    res.json(await listUsers());
+  validate(paginationSchema, "query"),
+  asyncHandler(async (req, res) => {
+    res.json(await listUsers(req.query as unknown as Pagination));
   })
 );
 

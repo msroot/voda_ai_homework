@@ -24,13 +24,20 @@ import {
 } from "../cache/assetCache.js";
 import { validateAssetData } from "../validateAsset.js";
 import type { AssetFilter } from "../schemas.js";
-import type { Asset, CreateAssetInput, UpdateAssetInput } from "../types.js";
+import type {
+  Asset,
+  CreateAssetInput,
+  Paginated,
+  UpdateAssetInput,
+} from "../types.js";
 
 // Reads are served from MongoDB in the structured read model and cached in
 // Redis. An asset only appears here once the outbox worker has synced it from
 // Postgres, so freshly created assets become readable after the sync completes
 // (eventual consistency). The cache is invalidated on every write and sync.
-export async function listAssets(filter: AssetFilter = {}): Promise<AssetView[]> {
+export async function listAssets(
+  filter: AssetFilter
+): Promise<Paginated<AssetView>> {
   const tenantId = getTenantId();
 
   const cached = await getCachedAssetList(tenantId, filter);
@@ -38,9 +45,14 @@ export async function listAssets(filter: AssetFilter = {}): Promise<AssetView[]>
     return cached;
   }
 
-  const assets = await findAssetDocuments(filter);
-  await setCachedAssetList(tenantId, filter, assets);
-  return assets;
+  const { rows, total } = await findAssetDocuments(filter);
+  const result: Paginated<AssetView> = {
+    data: rows,
+    pagination: { limit: filter.limit, offset: filter.offset, total },
+  };
+
+  await setCachedAssetList(tenantId, filter, result);
+  return result;
 }
 
 export async function getAsset(id: string): Promise<AssetView> {

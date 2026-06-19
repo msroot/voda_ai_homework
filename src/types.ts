@@ -36,3 +36,12 @@ export interface Asset {
   created_by: string;
   created_at: Date;
 }
+
+export interface Paginated<T> {
+  data: T[];
+  pagination: {
+    limit: number;
+    offset: number;
+    total: number;
+  };
+}

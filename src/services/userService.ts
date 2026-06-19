@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { hashPassword } from "../auth/password.js";
+import { getTenantId } from "../context/authContext.js";
 import {
   AppError,
   isForeignKeyViolation,
@@ -8,23 +9,55 @@ import {
 import {
   createUser as createUserRecord,
   deleteUser as deleteUserRecord,
-  findAllUsers,
+  findUsers,
   findUserById,
   updateUser as updateUserRecord,
 } from "../repositories/userRepository.js";
-import type { CreateUserInput, UpdateUserInput, User } from "../types.js";
+import {
+  getCachedUser,
+  getCachedUserList,
+  invalidateTenantUsers,
+  setCachedUser,
+  setCachedUserList,
+} from "../cache/userCache.js";
+import type { Pagination } from "../schemas.js";
+import type { CreateUserInput, Paginated, UpdateUserInput, User } from "../types.js";
 
-export async function listUsers(): Promise<User[]> {
-  return findAllUsers();
+export async function listUsers(
+  pagination: Pagination
+): Promise<Paginated<User>> {
+  const tenantId = getTenantId();
+
+  const cached = await getCachedUserList(tenantId, pagination);
+  if (cached) {
+    return cached;
+  }
+
+  const { rows, total } = await findUsers(pagination.limit, pagination.offset);
+  const result: Paginated<User> = {
+    data: rows,
+    pagination: { limit: pagination.limit, offset: pagination.offset, total },
+  };
+
+  await setCachedUserList(tenantId, pagination, result);
+  return result;
 }
 
 export async function getUser(id: string): Promise<User> {
+  const tenantId = getTenantId();
+
+  const cached = await getCachedUser(tenantId, id);
+  if (cached) {
+    return cached;
+  }
+
   const user = await findUserById(id);
 
   if (!user) {
     throw new AppError(404, "User not found");
   }
 
+  await setCachedUser(tenantId, id, user);
   return user;
 }
 
@@ -33,7 +66,15 @@ export async function createUser(input: CreateUserInput): Promise<User> {
 
   try {
     const passwordHash = await hashPassword(password);
-    return await createUserRecord(randomUUID(), name, email, passwordHash, role);
+    const user = await createUserRecord(
+      randomUUID(),
+      name,
+      email,
+      passwordHash,
+      role
+    );
+    await invalidateTenantUsers(getTenantId());
+    return user;
   } catch (err) {
     if (isUniqueViolation(err)) {
       throw new AppError(409, "email already exists for this tenant");
@@ -64,6 +105,7 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
       throw new AppError(404, "User not found");
     }
 
+    await invalidateTenantUsers(getTenantId());
     return user;
   } catch (err) {
     if (err instanceof AppError) {
@@ -82,4 +124,6 @@ export async function deleteUser(id: string): Promise<void> {
   if (!deleted) {
     throw new AppError(404, "User not found");
   }
+
+  await invalidateTenantUsers(getTenantId());
 }

@@ -82,6 +82,8 @@ function toView(doc: AssetDocument): AssetView {
 export interface AssetFilter {
   type?: string;
   status?: string;
+  limit: number;
+  offset: number;
 }
 
 // Read path: assets are served from MongoDB (the synced copy). Mongo has no
@@ -89,8 +91,8 @@ export interface AssetFilter {
 // using the tenant id from the request context. `type` is a top-level field;
 // `status` lives inside the custom_fields bucket.
 export async function findAssetDocuments(
-  filter: AssetFilter = {}
-): Promise<AssetView[]> {
+  filter: AssetFilter
+): Promise<{ rows: AssetView[]; total: number }> {
   const tenantId = getTenantId();
   const db = await getMongoDb();
 
@@ -102,13 +104,17 @@ export async function findAssetDocuments(
     queryFilter["custom_fields.status"] = filter.status;
   }
 
-  const docs = await db
-    .collection<AssetDocument>(COLLECTION)
+  const collection = db.collection<AssetDocument>(COLLECTION);
+  const total = await collection.countDocuments(queryFilter);
+
+  const docs = await collection
     .find(queryFilter)
     .sort({ created_at: -1 })
+    .skip(filter.offset)
+    .limit(filter.limit)
     .toArray();
 
-  return docs.map(toView);
+  return { rows: docs.map(toView), total };
 }
 
 export async function findAssetDocumentById(
