@@ -1,8 +1,10 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { UserRole } from "../types.js";
 
 export interface AuthContext {
   userId: string;
   tenantId: string;
+  role: UserRole;
 }
 
 const authStorage = new AsyncLocalStorage<AuthContext>();
@@ -31,4 +33,8 @@ export function getTenantId(): string {
 
 export function getUserId(): string {
   return getRequired("userId");
+}
+
+export function getRole(): UserRole {
+  return getRequired("role");
 }

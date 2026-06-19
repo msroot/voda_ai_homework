@@ -15,7 +15,8 @@ export function createAssetSyncWorker(): Worker<AssetSyncJobData, void, string> 
     async (job) => {
       const { assetId, tenantId, userId } = job.data;
 
-      await runWithAuthContext({ userId, tenantId }, async () => {
+      // Trusted system context: the sync worker acts on behalf of the tenant.
+      await runWithAuthContext({ userId, tenantId, role: "admin" }, async () => {
         const asset = await findAssetById(assetId);
         if (!asset) {
           throw new Error(`Asset ${assetId} not found for tenant ${tenantId}`);

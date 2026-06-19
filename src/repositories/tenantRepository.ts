@@ -3,13 +3,6 @@ import type { Tenant, User, UserRole } from "../types.js";
 
 const tenantColumns = "id, name, slug, asset_schema, created_at";
 
-export async function findAllTenants(): Promise<Tenant[]> {
-  const { rows } = await query<Tenant>(
-    `SELECT ${tenantColumns} FROM tenants ORDER BY created_at`
-  );
-  return rows;
-}
-
 export async function findTenantById(id: string): Promise<Tenant | null> {
   const { rows } = await query<Tenant>(
     `SELECT ${tenantColumns} FROM tenants WHERE id = $1`,
@@ -81,9 +74,4 @@ export async function updateTenant(
     [id, name, slug, assetSchema]
   );
   return rows[0] ?? null;
-}
-
-export async function deleteTenant(id: string): Promise<boolean> {
-  const { rowCount } = await query("DELETE FROM tenants WHERE id = $1", [id]);
-  return (rowCount ?? 0) > 0;
 }

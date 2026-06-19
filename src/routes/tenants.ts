@@ -1,55 +1,41 @@
 import { Router } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validate } from "../middleware/validate.js";
-import { createTenantSchema, idParamSchema, updateTenantSchema } from "../schemas.js";
+import { requirePlatformAdmin } from "../middleware/platformAdmin.js";
+import { requireAdmin } from "../middleware/authorize.js";
+import { createTenantSchema, updateTenantSchema } from "../schemas.js";
 import {
   createTenant,
-  deleteTenant,
-  getTenant,
-  listTenants,
-  updateTenant,
+  getCurrentTenant,
+  updateCurrentTenant,
 } from "../services/tenantService.js";
 
 const router = Router();
 
-router.get(
-  "/",
-  asyncHandler(async (_req, res) => {
-    res.json(await listTenants());
-  })
-);
-
-router.get(
-  "/:id",
-  validate(idParamSchema, "params"),
-  asyncHandler(async (req, res) => {
-    res.json(await getTenant(req.params.id));
-  })
-);
-
+// Platform-level provisioning: authenticated by x-admin-key, no tenant context.
 router.post(
   "/",
+  requirePlatformAdmin,
   validate(createTenantSchema),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createTenant(req.body));
   })
 );
 
-router.put(
-  "/:id",
-  validate(idParamSchema, "params"),
-  validate(updateTenantSchema),
-  asyncHandler(async (req, res) => {
-    res.json(await updateTenant(req.params.id, req.body));
+// Tenant self-management: scoped to the caller's own tenant.
+router.get(
+  "/current",
+  asyncHandler(async (_req, res) => {
+    res.json(await getCurrentTenant());
   })
 );
 
-router.delete(
-  "/:id",
-  validate(idParamSchema, "params"),
+router.put(
+  "/current",
+  requireAdmin,
+  validate(updateTenantSchema),
   asyncHandler(async (req, res) => {
-    await deleteTenant(req.params.id);
-    res.status(204).send();
+    res.json(await updateCurrentTenant(req.body));
   })
 );
 

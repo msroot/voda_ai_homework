@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validate } from "../middleware/validate.js";
+import { requireWrite } from "../middleware/authorize.js";
 import {
   assetFilterSchema,
   createAssetSchema,
@@ -36,6 +37,7 @@ router.get(
 
 router.post(
   "/",
+  requireWrite,
   validate(createAssetSchema),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createAsset(req.body));
@@ -44,6 +46,7 @@ router.post(
 
 router.put(
   "/:id",
+  requireWrite,
   validate(idParamSchema, "params"),
   validate(updateAssetSchema),
   asyncHandler(async (req, res) => {
@@ -53,6 +56,7 @@ router.put(
 
 router.delete(
   "/:id",
+  requireWrite,
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     await deleteAsset(req.params.id);

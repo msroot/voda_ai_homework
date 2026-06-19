@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validate } from "../middleware/validate.js";
+import { requireAdmin } from "../middleware/authorize.js";
 import {
   createUserSchema,
   idParamSchema,
@@ -36,6 +37,7 @@ router.get(
 
 router.post(
   "/",
+  requireAdmin,
   validate(createUserSchema),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createUser(req.body));
@@ -44,6 +46,7 @@ router.post(
 
 router.put(
   "/:id",
+  requireAdmin,
   validate(idParamSchema, "params"),
   validate(updateUserSchema),
   asyncHandler(async (req, res) => {
@@ -53,6 +56,7 @@ router.put(
 
 router.delete(
   "/:id",
+  requireAdmin,
   validate(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     await deleteUser(req.params.id);

@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { hashPassword } from "../auth/password.js";
+import { getTenantId, getUserId } from "../context/authContext.js";
 import {
   createDefaultAssetSchema,
   extendAssetSchema,
@@ -10,19 +11,28 @@ import {
 } from "../errors/appError.js";
 import {
   createTenantWithAdmin,
-  deleteTenant as deleteTenantRecord,
-  findAllTenants,
   findTenantById,
   updateTenant as updateTenantRecord,
 } from "../repositories/tenantRepository.js";
+import { findUserById } from "../repositories/userRepository.js";
 import type { CreateTenantInput, Tenant, UpdateTenantInput, User } from "../types.js";
 
-export async function listTenants(): Promise<Tenant[]> {
-  return findAllTenants();
+// Authoritative (DB-backed) check that the caller is an admin of their own
+// tenant. findUserById is RLS-scoped, so the user is only found when they belong
+// to the caller's tenant; the role comes from the DB, not the (possibly stale)
+// JWT claim.
+async function assertCurrentUserIsTenantAdmin(): Promise<void> {
+  const user = await findUserById(getUserId());
+
+  if (!user || user.role !== "admin") {
+    throw new AppError(403, "Only an admin of this tenant can perform this action");
+  }
 }
 
-export async function getTenant(id: string): Promise<Tenant> {
-  const tenant = await findTenantById(id);
+// Returns the caller's own tenant (derived from the auth context), never an
+// arbitrary one.
+export async function getCurrentTenant(): Promise<Tenant> {
+  const tenant = await findTenantById(getTenantId());
 
   if (!tenant) {
     throw new AppError(404, "Tenant not found");
@@ -66,16 +76,20 @@ export async function createTenant(
   }
 }
 
-export async function updateTenant(
-  id: string,
+// Updates the caller's own tenant. asset_schema is merged into (not replaced)
+// the existing schema.
+export async function updateCurrentTenant(
   input: UpdateTenantInput
 ): Promise<Tenant> {
+  await assertCurrentUserIsTenantAdmin();
+
+  const tenantId = getTenantId();
   const { name, slug, asset_schema } = input;
 
   let mergedAssetSchema: string | null = null;
 
   if (asset_schema !== undefined) {
-    const existing = await findTenantById(id);
+    const existing = await findTenantById(tenantId);
 
     if (!existing) {
       throw new AppError(404, "Tenant not found");
@@ -88,7 +102,7 @@ export async function updateTenant(
 
   try {
     const tenant = await updateTenantRecord(
-      id,
+      tenantId,
       name ?? null,
       slug ?? null,
       mergedAssetSchema
@@ -107,13 +121,5 @@ export async function updateTenant(
       throw new AppError(409, "slug already exists");
     }
     throw err;
-  }
-}
-
-export async function deleteTenant(id: string): Promise<void> {
-  const deleted = await deleteTenantRecord(id);
-
-  if (!deleted) {
-    throw new AppError(404, "Tenant not found");
   }
 }

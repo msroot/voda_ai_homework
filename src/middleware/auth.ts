@@ -2,7 +2,25 @@ import type { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../auth/jwt.js";
 import { runWithAuthContext } from "../context/authContext.js";
 
-const PUBLIC_PATHS = new Set(["/health", "/auth/login"]);
+// Requests that must NOT go through tenant JWT auth. This covers truly public
+// routes plus platform provisioning routes, which are authenticated separately
+// by the x-admin-key header (see requirePlatformAdmin).
+function isJwtExempt(req: Request): boolean {
+  if (req.path === "/health") {
+    return true;
+  }
+
+  if (req.method === "POST" && req.path === "/auth/login") {
+    return true;
+  }
+
+  // Platform-level tenant provisioning (authenticated by x-admin-key).
+  if (req.method === "POST" && req.path === "/tenants") {
+    return true;
+  }
+
+  return false;
+}
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
@@ -18,7 +36,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
     const payload = verifyToken(token);
 
     runWithAuthContext(
-      { userId: payload.sub, tenantId: payload.tenant_id },
+      { userId: payload.sub, tenantId: payload.tenant_id, role: payload.role },
       () => next()
     );
   } catch {
@@ -31,7 +49,7 @@ export function requireAuthUnlessPublic(
   res: Response,
   next: NextFunction
 ) {
-  if (PUBLIC_PATHS.has(req.path)) {
+  if (isJwtExempt(req)) {
     next();
     return;
   }
