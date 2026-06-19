@@ -41,3 +41,23 @@ export interface UpdateUserInput {
   email?: string;
   role?: UserRole;
 }
+
+export interface Asset {
+  id: string;
+  tenant_id: string;
+  status: string;
+  data: Record<string, unknown>;
+  created_by: string;
+  created_at: Date;
+}
+
+export interface CreateAssetInput {
+  user_id: string;
+  data: Record<string, unknown>;
+}
+
+export interface UpdateAssetInput {
+  user_id: string;
+  data?: Record<string, unknown>;
+  status?: string;
+}

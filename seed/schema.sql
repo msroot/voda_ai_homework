@@ -17,15 +17,12 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS assets (
-    id            UUID PRIMARY KEY,
-    tenant_id     UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    name          TEXT NOT NULL,
-    type          TEXT NOT NULL,
-    status        TEXT NOT NULL CHECK (status IN ('ok', 'warning', 'critical')),
-    lat           DOUBLE PRECISION NOT NULL,
-    lng           DOUBLE PRECISION NOT NULL,
-    installed_at  DATE NOT NULL,
-    data          JSONB NOT NULL DEFAULT '{}'::jsonb
+    id          UUID PRIMARY KEY,
+    tenant_id   UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    status      TEXT NOT NULL DEFAULT 'pending',
+    data        JSONB NOT NULL,
+    created_by  UUID NOT NULL REFERENCES users(id),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users(tenant_id);

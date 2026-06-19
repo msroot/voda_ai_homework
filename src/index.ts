@@ -3,6 +3,7 @@ import express from "express";
 import pool from "./db.js";
 import tenantRoutes from "./routes/tenants.js";
 import userRoutes from "./routes/users.js";
+import assetRoutes from "./routes/assets.js";
 import { runSeed } from "../seed/index.js";
 
 const app = express();
@@ -16,6 +17,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/tenants", tenantRoutes);
 app.use("/users", userRoutes);
+app.use("/assets", assetRoutes);
 
 app.use(
   (

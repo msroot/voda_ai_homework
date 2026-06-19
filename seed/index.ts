@@ -6,26 +6,9 @@ import { users } from "./users.js";
 
 const SEED_DIR = join(process.cwd(), "seed");
 
-const COMMON_ASSET_FIELDS = [
-  "id",
-  "tenant_id",
-  "name",
-  "type",
-  "status",
-  "lat",
-  "lng",
-  "installed_at",
-] as const;
-
 interface AssetSeed {
   id: string;
   tenant_id: string;
-  name: string;
-  type: string;
-  status: string;
-  lat: number;
-  lng: number;
-  installed_at: string;
   [key: string]: unknown;
 }
 
@@ -76,45 +59,33 @@ async function seedUsers() {
   }
 }
 
-function tenantSpecificData(asset: AssetSeed): Record<string, unknown> {
-  const data: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(asset)) {
-    if (!COMMON_ASSET_FIELDS.includes(key as (typeof COMMON_ASSET_FIELDS)[number])) {
-      data[key] = value;
-    }
-  }
-  return data;
-}
-
 async function seedAssets() {
   const assets: AssetSeed[] = JSON.parse(
     readFileSync(join(SEED_DIR, "assets.seed.json"), "utf-8")
   );
 
+  const defaultUserByTenant = new Map<string, string>();
+  for (const user of users) {
+    if (!defaultUserByTenant.has(user.tenant_id)) {
+      defaultUserByTenant.set(user.tenant_id, user.id);
+    }
+  }
+
   for (const asset of assets) {
+    const createdBy = defaultUserByTenant.get(asset.tenant_id);
+    if (!createdBy) {
+      throw new Error(`No seed user found for tenant ${asset.tenant_id}`);
+    }
+
     await pool.query(
-      `INSERT INTO assets (id, tenant_id, name, type, status, lat, lng, installed_at, data)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO assets (id, tenant_id, status, data, created_by)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (id) DO UPDATE SET
          tenant_id = EXCLUDED.tenant_id,
-         name = EXCLUDED.name,
-         type = EXCLUDED.type,
          status = EXCLUDED.status,
-         lat = EXCLUDED.lat,
-         lng = EXCLUDED.lng,
-         installed_at = EXCLUDED.installed_at,
-         data = EXCLUDED.data`,
-      [
-        asset.id,
-        asset.tenant_id,
-        asset.name,
-        asset.type,
-        asset.status,
-        asset.lat,
-        asset.lng,
-        asset.installed_at,
-        JSON.stringify(tenantSpecificData(asset)),
-      ]
+         data = EXCLUDED.data,
+         created_by = EXCLUDED.created_by`,
+      [asset.id, asset.tenant_id, "active", JSON.stringify(asset), createdBy]
     );
   }
 
