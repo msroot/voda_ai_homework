@@ -15,24 +15,49 @@ import {
   type AssetView,
 } from "../repositories/assetMongoRepository.js";
 import { findTenantAssetSchema } from "../repositories/tenantRepository.js";
+import {
+  getCachedAsset,
+  getCachedAssetList,
+  invalidateTenantAssets,
+  setCachedAsset,
+  setCachedAssetList,
+} from "../cache/assetCache.js";
 import { validateAssetData } from "../validateAsset.js";
 import type { AssetFilter } from "../schemas.js";
 import type { Asset, CreateAssetInput, UpdateAssetInput } from "../types.js";
 
-// Reads are served from MongoDB in the structured read model. An asset only
-// appears here once the outbox worker has synced it from Postgres, so freshly
-// created assets become readable after the sync completes (eventual consistency).
+// Reads are served from MongoDB in the structured read model and cached in
+// Redis. An asset only appears here once the outbox worker has synced it from
+// Postgres, so freshly created assets become readable after the sync completes
+// (eventual consistency). The cache is invalidated on every write and sync.
 export async function listAssets(filter: AssetFilter = {}): Promise<AssetView[]> {
-  return findAssetDocuments(filter);
+  const tenantId = getTenantId();
+
+  const cached = await getCachedAssetList(tenantId, filter);
+  if (cached) {
+    return cached;
+  }
+
+  const assets = await findAssetDocuments(filter);
+  await setCachedAssetList(tenantId, filter, assets);
+  return assets;
 }
 
 export async function getAsset(id: string): Promise<AssetView> {
+  const tenantId = getTenantId();
+
+  const cached = await getCachedAsset(tenantId, id);
+  if (cached) {
+    return cached;
+  }
+
   const asset = await findAssetDocumentById(id);
 
   if (!asset) {
     throw new AppError(404, "Asset not found");
   }
 
+  await setCachedAsset(tenantId, id, asset);
   return asset;
 }
 
@@ -58,7 +83,9 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
   // listener (polling) and synced to MongoDB by the worker, which flips it to
   // "synced". No separate event publish is needed.
   try {
-    return await createAssetRecord(assetId, "pending", assetData, userId);
+    const created = await createAssetRecord(assetId, "pending", assetData, userId);
+    await invalidateTenantAssets(tenantId);
+    return created;
   } catch (err) {
     if (isUniqueViolation(err)) {
       throw new AppError(409, "Asset id already exists");
@@ -107,6 +134,7 @@ export async function updateAsset(
     throw new AppError(404, "Asset not found");
   }
 
+  await invalidateTenantAssets(getTenantId());
   return asset;
 }
 
@@ -119,4 +147,5 @@ export async function deleteAsset(id: string): Promise<void> {
 
   // Keep the Mongo read model in sync with the Postgres source of truth.
   await deleteAssetDocument(id);
+  await invalidateTenantAssets(getTenantId());
 }

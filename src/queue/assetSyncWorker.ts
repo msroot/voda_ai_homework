@@ -6,6 +6,7 @@ import {
   markAssetSynced,
 } from "../repositories/assetRepository.js";
 import { upsertAssetDocument } from "../repositories/assetMongoRepository.js";
+import { invalidateTenantAssets } from "../cache/assetCache.js";
 import { ASSET_SYNC_QUEUE, type AssetSyncJobData } from "./assetSyncQueue.js";
 
 export function createAssetSyncWorker(): Worker<AssetSyncJobData, void, string> {
@@ -23,6 +24,10 @@ export function createAssetSyncWorker(): Worker<AssetSyncJobData, void, string> 
         await upsertAssetDocument(asset);
         await markAssetSynced(assetId);
       });
+
+      // The asset is now in Mongo; drop any cache that was repopulated with the
+      // pre-sync view during the eventual-consistency window.
+      await invalidateTenantAssets(tenantId);
     },
     { connection: createRedisConnection() as unknown as ConnectionOptions }
   );
