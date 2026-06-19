@@ -52,12 +52,14 @@ export interface Asset {
 }
 
 export interface CreateAssetInput {
-  user_id: string;
   data: Record<string, unknown>;
 }
 
 export interface UpdateAssetInput {
-  user_id: string;
   data?: Record<string, unknown>;
   status?: string;
+}
+
+export interface LoginInput {
+  email: string;
 }

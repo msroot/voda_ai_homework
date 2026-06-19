@@ -8,14 +8,6 @@ const router = Router();
 
 const assetColumns = "id, tenant_id, status, data, created_by, created_at";
 
-async function getUserTenantId(userId: string): Promise<string | null> {
-  const { rows } = await pool.query<{ tenant_id: string }>(
-    "SELECT tenant_id FROM users WHERE id = $1",
-    [userId]
-  );
-  return rows[0]?.tenant_id ?? null;
-}
-
 async function getTenantSchema(
   tenantId: string
 ): Promise<Record<string, unknown> | null> {
@@ -27,27 +19,19 @@ async function getTenantSchema(
 }
 
 router.get("/", async (req, res) => {
-  const { tenant_id } = req.query;
-
-  if (tenant_id) {
-    const { rows } = await pool.query(
-      `SELECT ${assetColumns} FROM assets WHERE tenant_id = $1 ORDER BY id`,
-      [tenant_id]
-    );
-    res.json(rows);
-    return;
-  }
+  const tenantId = req.user!.tenant_id;
 
   const { rows } = await pool.query(
-    `SELECT ${assetColumns} FROM assets ORDER BY tenant_id, id`
+    `SELECT ${assetColumns} FROM assets WHERE tenant_id = $1 ORDER BY created_at DESC`,
+    [tenantId]
   );
   res.json(rows);
 });
 
 router.get("/:id", async (req, res) => {
   const { rows } = await pool.query(
-    `SELECT ${assetColumns} FROM assets WHERE id = $1`,
-    [req.params.id]
+    `SELECT ${assetColumns} FROM assets WHERE id = $1 AND tenant_id = $2`,
+    [req.params.id, req.user!.tenant_id]
   );
 
   if (rows.length === 0) {
@@ -59,16 +43,12 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const { user_id, data } = req.body as CreateAssetInput;
+  const { data } = req.body as CreateAssetInput;
+  const userId = req.user!.sub;
+  const tenantId = req.user!.tenant_id;
 
-  if (!user_id || !data || typeof data !== "object" || Array.isArray(data)) {
-    res.status(400).json({ error: "user_id and data object are required" });
-    return;
-  }
-
-  const tenantId = await getUserTenantId(user_id);
-  if (!tenantId) {
-    res.status(404).json({ error: "User not found" });
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    res.status(400).json({ error: "data object is required" });
     return;
   }
 
@@ -95,7 +75,7 @@ router.post("/", async (req, res) => {
       `INSERT INTO assets (id, tenant_id, status, data, created_by)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING ${assetColumns}`,
-      [assetData.id, tenantId, "pending", JSON.stringify(assetData), user_id]
+      [assetData.id, tenantId, "pending", JSON.stringify(assetData), userId]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -108,12 +88,8 @@ router.post("/", async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  const { user_id, data, status } = req.body as UpdateAssetInput;
-
-  if (!user_id) {
-    res.status(400).json({ error: "user_id is required" });
-    return;
-  }
+  const { data, status } = req.body as UpdateAssetInput;
+  const tenantId = req.user!.tenant_id;
 
   if (data === undefined && status === undefined) {
     res.status(400).json({ error: "at least one of data or status is required" });
@@ -125,15 +101,9 @@ router.put("/:id", async (req, res) => {
     return;
   }
 
-  const tenantId = await getUserTenantId(user_id);
-  if (!tenantId) {
-    res.status(404).json({ error: "User not found" });
-    return;
-  }
-
   const existing = await pool.query(
-    `SELECT ${assetColumns} FROM assets WHERE id = $1`,
-    [req.params.id]
+    `SELECT ${assetColumns} FROM assets WHERE id = $1 AND tenant_id = $2`,
+    [req.params.id, tenantId]
   );
 
   if (existing.rows.length === 0) {
@@ -142,12 +112,6 @@ router.put("/:id", async (req, res) => {
   }
 
   const asset = existing.rows[0];
-
-  if (asset.tenant_id !== tenantId) {
-    res.status(403).json({ error: "Asset does not belong to user's tenant" });
-    return;
-  }
-
   let nextData = asset.data;
 
   if (data !== undefined) {
@@ -174,12 +138,13 @@ router.put("/:id", async (req, res) => {
     `UPDATE assets
      SET data = COALESCE($2, data),
          status = COALESCE($3, status)
-     WHERE id = $1
+     WHERE id = $1 AND tenant_id = $4
      RETURNING ${assetColumns}`,
     [
       req.params.id,
       data !== undefined ? JSON.stringify(nextData) : null,
       status ?? null,
+      tenantId,
     ]
   );
 
@@ -187,22 +152,9 @@ router.put("/:id", async (req, res) => {
 });
 
 router.delete("/:id", async (req, res) => {
-  const userId = req.query.user_id as string | undefined;
-
-  if (!userId) {
-    res.status(400).json({ error: "user_id query parameter is required" });
-    return;
-  }
-
-  const tenantId = await getUserTenantId(userId);
-  if (!tenantId) {
-    res.status(404).json({ error: "User not found" });
-    return;
-  }
-
   const { rowCount } = await pool.query(
     "DELETE FROM assets WHERE id = $1 AND tenant_id = $2",
-    [req.params.id, tenantId]
+    [req.params.id, req.user!.tenant_id]
   );
 
   if (rowCount === 0) {
