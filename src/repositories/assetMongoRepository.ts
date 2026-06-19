@@ -117,6 +117,30 @@ export async function findAssetDocuments(
   return { rows: docs.map(toView), total };
 }
 
+export interface AssetStatusCount {
+  status: string | null;
+  count: number;
+}
+
+// Cross-store report input: asset counts grouped by business status for one
+// tenant, read from MongoDB. Tenant isolation is enforced via the $match.
+// `status` lives inside the custom_fields bucket.
+export async function aggregateAssetStatusCounts(
+  tenantId: string
+): Promise<AssetStatusCount[]> {
+  const db = await getMongoDb();
+
+  const results = await db
+    .collection<AssetDocument>(COLLECTION)
+    .aggregate<{ _id: string | null; count: number }>([
+      { $match: { tenant_id: tenantId } },
+      { $group: { _id: "$custom_fields.status", count: { $sum: 1 } } },
+    ])
+    .toArray();
+
+  return results.map((row) => ({ status: row._id, count: row.count }));
+}
+
 export async function findAssetDocumentById(
   id: string
 ): Promise<AssetView | null> {

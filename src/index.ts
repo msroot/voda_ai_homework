@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.js";
 import tenantRoutes from "./routes/tenants.js";
 import userRoutes from "./routes/users.js";
 import assetRoutes from "./routes/assets.js";
+import reportRoutes from "./routes/reports.js";
 import { requireAuthUnlessPublic } from "./middleware/auth.js";
 import { AppError } from "./errors/appError.js";
 import { runSeed } from "../seed/index.js";
@@ -23,6 +24,7 @@ app.use("/auth", authRoutes);
 app.use("/tenants", tenantRoutes);
 app.use("/users", userRoutes);
 app.use("/assets", assetRoutes);
+app.use("/reports", reportRoutes);
 
 app.use(
   (
