@@ -8,6 +8,7 @@ import assetRoutes from "./routes/assets.js";
 import reportRoutes from "./routes/reports.js";
 import { requireAuthUnlessPublic } from "./middleware/auth.js";
 import { AppError } from "./errors/appError.js";
+import { ensureAssetIndexes } from "./repositories/assetMongoRepository.js";
 import { runSeed } from "../seed/index.js";
 
 const app = express();
@@ -50,6 +51,12 @@ app.use(
 async function start() {
   if (process.env.SEED_ON_START === "true") {
     await runSeed();
+  }
+
+  try {
+    await ensureAssetIndexes();
+  } catch (err) {
+    console.error("Failed to ensure Mongo asset indexes:", err);
   }
 
   app.listen(port, () => {

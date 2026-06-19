@@ -36,6 +36,18 @@ export interface AssetDocument {
 
 export type AssetView = Omit<AssetDocument, "_id">;
 
+// Mongo reads are always tenant-scoped, so each index leads with tenant_id.
+// _id (= asset_id) is covered by the default index, serving find-by-id, upsert
+// and delete.
+export async function ensureAssetIndexes(): Promise<void> {
+  const db = await getMongoDb();
+  await db.collection<AssetDocument>(COLLECTION).createIndexes([
+    { key: { tenant_id: 1, created_at: -1 }, name: "tenant_created_at" },
+    { key: { tenant_id: 1, type: 1 }, name: "tenant_type" },
+    { key: { tenant_id: 1, "custom_fields.status": 1 }, name: "tenant_status" },
+  ]);
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)

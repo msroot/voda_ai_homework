@@ -26,8 +26,21 @@ CREATE TABLE IF NOT EXISTS assets (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Tenant scoping (RLS filters every query by tenant_id).
 CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_assets_tenant_id ON assets(tenant_id);
+
+-- Paginated user listing: tenant scope + created_at ordering.
+CREATE INDEX IF NOT EXISTS idx_users_tenant_created ON users(tenant_id, created_at);
+
+-- Login looks up a user by email across tenants (bypasses RLS); the
+-- UNIQUE(tenant_id, email) constraint can't serve an email-only lookup.
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Outbox poll: find rows still awaiting sync, oldest first. Partial index keeps
+-- it tiny since most rows are already 'synced'.
+CREATE INDEX IF NOT EXISTS idx_assets_pending
+    ON assets(created_at) WHERE status = 'pending';
 
 CREATE OR REPLACE FUNCTION app_current_tenant_id()
 RETURNS UUID AS $$
