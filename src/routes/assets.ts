@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
 import pool from "../db.js";
+import { getTenantId, getUserId } from "../context/authContext.js";
 import { validateAssetData } from "../validateAsset.js";
 import type { CreateAssetInput, UpdateAssetInput } from "../types.js";
 
@@ -18,8 +19,8 @@ async function getTenantSchema(
   return rows[0]?.asset_schema ?? null;
 }
 
-router.get("/", async (req, res) => {
-  const tenantId = req.user!.tenant_id;
+router.get("/", async (_req, res) => {
+  const tenantId = getTenantId();
 
   const { rows } = await pool.query(
     `SELECT ${assetColumns} FROM assets WHERE tenant_id = $1 ORDER BY created_at DESC`,
@@ -31,7 +32,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { rows } = await pool.query(
     `SELECT ${assetColumns} FROM assets WHERE id = $1 AND tenant_id = $2`,
-    [req.params.id, req.user!.tenant_id]
+    [req.params.id, getTenantId()]
   );
 
   if (rows.length === 0) {
@@ -44,8 +45,8 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   const { data } = req.body as CreateAssetInput;
-  const userId = req.user!.sub;
-  const tenantId = req.user!.tenant_id;
+  const userId = getUserId();
+  const tenantId = getTenantId();
 
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     res.status(400).json({ error: "data object is required" });
@@ -89,7 +90,7 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   const { data, status } = req.body as UpdateAssetInput;
-  const tenantId = req.user!.tenant_id;
+  const tenantId = getTenantId();
 
   if (data === undefined && status === undefined) {
     res.status(400).json({ error: "at least one of data or status is required" });
@@ -154,7 +155,7 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const { rowCount } = await pool.query(
     "DELETE FROM assets WHERE id = $1 AND tenant_id = $2",
-    [req.params.id, req.user!.tenant_id]
+    [req.params.id, getTenantId()]
   );
 
   if (rowCount === 0) {
