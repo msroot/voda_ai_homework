@@ -1,0 +1,4747 @@
+[
+  {
+    "id": "d8f56413-5be6-428e-98c2-67976142ea7d",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-S-0001",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 42.355415,
+    "lng": -71.12365,
+    "installed_at": "1999-02-28",
+    "material": "copper",
+    "diameter_mm": 250
+  },
+  {
+    "id": "d453dd32-4b0d-4b41-8d52-88f1142c3fe8",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0001",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.350871,
+    "lng": -71.131828,
+    "installed_at": "2011-12-24",
+    "material": "copper",
+    "diameter_mm": 250
+  },
+  {
+    "id": "19db3ad0-ddd1-4fb2-bb98-2ef8daf61a26",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0002",
+    "type": "valve",
+    "status": "warning",
+    "lat": 42.346537,
+    "lng": -71.129922,
+    "installed_at": "1998-07-31",
+    "material": "lead",
+    "diameter_mm": 150
+  },
+  {
+    "id": "aefcfad8-efc8-4849-b3aa-7efe4458a885",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0001",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.362205,
+    "lng": -71.07411,
+    "installed_at": "2025-01-23",
+    "material": "iron",
+    "diameter_mm": 250
+  },
+  {
+    "id": "b02b61c4-a3d7-4628-ace6-6fa2fd5166e6",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0002",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.373099,
+    "lng": -71.096008,
+    "installed_at": "2007-02-09",
+    "material": "PVC",
+    "diameter_mm": 300
+  },
+  {
+    "id": "3602f8ac-10f1-4c81-848a-aa9e66b2bc5b",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0003",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 42.354457,
+    "lng": -71.078913,
+    "installed_at": "2009-02-24",
+    "material": "copper",
+    "diameter_mm": 100
+  },
+  {
+    "id": "8fb5d27b-beb7-4919-bf22-faf823bed01d",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0001",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.374326,
+    "lng": -71.106119,
+    "installed_at": "2006-11-18",
+    "material": "copper",
+    "diameter_mm": 300
+  },
+  {
+    "id": "c17af08a-1745-46d8-be57-0ddf827050a8",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0004",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.370075,
+    "lng": -71.069459,
+    "installed_at": "2001-03-16",
+    "material": "iron",
+    "diameter_mm": 50
+  },
+  {
+    "id": "77d21e02-ff01-4f99-988c-24c961b1cd22",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0003",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.34417,
+    "lng": -71.123321,
+    "installed_at": "2012-04-05",
+    "material": "copper",
+    "diameter_mm": 250
+  },
+  {
+    "id": "a4161293-c4c2-42e3-844e-a7c8c0398710",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0002",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.386647,
+    "lng": -71.134162,
+    "installed_at": "2019-02-01",
+    "material": "copper",
+    "diameter_mm": 50
+  },
+  {
+    "id": "2dbc2134-c30f-446e-8026-695ff8cda88b",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0005",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 42.35261,
+    "lng": -71.123454,
+    "installed_at": "2006-10-25",
+    "material": "iron",
+    "diameter_mm": 300
+  },
+  {
+    "id": "ec24a3c5-c754-408f-b418-8f3f8a14be62",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0004",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.352907,
+    "lng": -71.088357,
+    "installed_at": "2002-03-31",
+    "material": "iron",
+    "diameter_mm": 250
+  },
+  {
+    "id": "e0c53cb8-3da9-42a9-8ed4-2f1a3d4cbf37",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0003",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 42.354449,
+    "lng": -71.133578,
+    "installed_at": "2008-10-17",
+    "material": "iron",
+    "diameter_mm": 50
+  },
+  {
+    "id": "f264accc-79ac-4b1e-a8e5-6e0c20de435d",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-S-0002",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 42.378914,
+    "lng": -71.07543,
+    "installed_at": "2000-08-22",
+    "material": "PVC",
+    "diameter_mm": 150
+  },
+  {
+    "id": "fec21bbe-6624-4bfa-8fcc-a39ab683d2e6",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-S-0003",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 42.36666,
+    "lng": -71.090719,
+    "installed_at": "2004-01-09",
+    "material": "copper",
+    "diameter_mm": 200
+  },
+  {
+    "id": "96a402f2-3ae8-4c93-8dcd-cd03969b6662",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0006",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.388977,
+    "lng": -71.102042,
+    "installed_at": "1995-12-11",
+    "material": "PVC",
+    "diameter_mm": 50
+  },
+  {
+    "id": "474a493b-3ced-4f2d-839f-bc501223b513",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0007",
+    "type": "pipe",
+    "status": "critical",
+    "lat": 42.33926,
+    "lng": -71.088929,
+    "installed_at": "2009-10-27",
+    "material": "lead",
+    "diameter_mm": 100
+  },
+  {
+    "id": "683514f2-ceb8-4f9d-b914-c120c8dcd19f",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0004",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.367354,
+    "lng": -71.082195,
+    "installed_at": "2005-11-25",
+    "material": "PVC",
+    "diameter_mm": 50
+  },
+  {
+    "id": "a56c0941-fbf2-4050-a748-dbcfac619e63",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0005",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.340816,
+    "lng": -71.103533,
+    "installed_at": "1997-06-06",
+    "material": "iron",
+    "diameter_mm": 50
+  },
+  {
+    "id": "6c006f61-23e2-4cb4-b2d8-567d894a05e4",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0005",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.359157,
+    "lng": -71.110231,
+    "installed_at": "2003-07-14",
+    "material": "PVC",
+    "diameter_mm": 150
+  },
+  {
+    "id": "ffd0f9d5-a6f2-47b8-8cf3-5b5819108be5",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0008",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 42.362758,
+    "lng": -71.071163,
+    "installed_at": "2019-09-08",
+    "material": "iron",
+    "diameter_mm": 50
+  },
+  {
+    "id": "0f02bad0-e706-4ef4-a6aa-9385dd59ba71",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0009",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.390582,
+    "lng": -71.073045,
+    "installed_at": "2004-08-03",
+    "material": "PVC",
+    "diameter_mm": 200
+  },
+  {
+    "id": "bb026576-f512-44c3-b253-d2186c4a37ea",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0006",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 42.335129,
+    "lng": -71.106499,
+    "installed_at": "2007-10-18",
+    "material": "lead",
+    "diameter_mm": 100
+  },
+  {
+    "id": "0cd620c2-0ea2-422b-9048-67babf7b539b",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0010",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 42.346394,
+    "lng": -71.119108,
+    "installed_at": "1997-09-25",
+    "material": "lead",
+    "diameter_mm": 250
+  },
+  {
+    "id": "acdabacc-1165-4210-9854-3881118a9d29",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0011",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.390163,
+    "lng": -71.096228,
+    "installed_at": "2003-05-03",
+    "material": "PVC",
+    "diameter_mm": 200
+  },
+  {
+    "id": "956b8c0c-a849-4b92-ab52-52e314fcdd54",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0012",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.342193,
+    "lng": -71.070009,
+    "installed_at": "2022-10-13",
+    "material": "copper",
+    "diameter_mm": 150
+  },
+  {
+    "id": "50f0fd0a-750c-4b75-8ccc-9bc2a53f8a28",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0013",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.347256,
+    "lng": -71.082718,
+    "installed_at": "2025-02-16",
+    "material": "iron",
+    "diameter_mm": 50
+  },
+  {
+    "id": "eeea163e-21e8-4c68-83e4-2caf8181a8cc",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-S-0004",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 42.362497,
+    "lng": -71.062113,
+    "installed_at": "2004-07-24",
+    "material": "copper",
+    "diameter_mm": 50
+  },
+  {
+    "id": "ce9e1a11-fcbb-4e59-bbdd-cf7c9c96e9ec",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0014",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 42.387756,
+    "lng": -71.108025,
+    "installed_at": "2008-07-27",
+    "material": "iron",
+    "diameter_mm": 300
+  },
+  {
+    "id": "1b66b5a9-e3c4-4657-9d8c-bbac43b409ef",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0006",
+    "type": "valve",
+    "status": "critical",
+    "lat": 42.384026,
+    "lng": -71.113145,
+    "installed_at": "2001-01-09",
+    "material": "PVC",
+    "diameter_mm": 150
+  },
+  {
+    "id": "e7c421c7-4049-4b71-bd10-6c6081627cf1",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0015",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.351905,
+    "lng": -71.119624,
+    "installed_at": "2006-11-04",
+    "material": "iron",
+    "diameter_mm": 50
+  },
+  {
+    "id": "295d6fbf-430f-401d-bad4-09e2a319dcb4",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0016",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.373057,
+    "lng": -71.074458,
+    "installed_at": "2000-11-13",
+    "material": "lead",
+    "diameter_mm": 250
+  },
+  {
+    "id": "5e84f058-d5a8-44eb-8939-23de8babce3b",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0017",
+    "type": "pipe",
+    "status": "critical",
+    "lat": 42.37734,
+    "lng": -71.094054,
+    "installed_at": "2001-09-08",
+    "material": "PVC",
+    "diameter_mm": 200
+  },
+  {
+    "id": "ae9bec36-35c7-436c-9b99-62c6e61fecc0",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0007",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 42.342647,
+    "lng": -71.112497,
+    "installed_at": "1996-10-15",
+    "material": "PVC",
+    "diameter_mm": 300
+  },
+  {
+    "id": "ee0caeb5-ecfe-4b99-a790-cebdbfddc3d9",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0008",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.341168,
+    "lng": -71.078052,
+    "installed_at": "2022-11-03",
+    "material": "PVC",
+    "diameter_mm": 100
+  },
+  {
+    "id": "cd5f4822-6966-48aa-ae49-f329c84a7b28",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0009",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.393572,
+    "lng": -71.075814,
+    "installed_at": "2009-11-25",
+    "material": "PVC",
+    "diameter_mm": 150
+  },
+  {
+    "id": "eb1fa9f2-d10b-41d0-b317-347038f16a81",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0018",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.344552,
+    "lng": -71.083807,
+    "installed_at": "2016-02-11",
+    "material": "lead",
+    "diameter_mm": 150
+  },
+  {
+    "id": "dd463c09-4752-47aa-9408-f9ac6601ddd0",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0019",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.353311,
+    "lng": -71.07694,
+    "installed_at": "2003-08-31",
+    "material": "iron",
+    "diameter_mm": 150
+  },
+  {
+    "id": "e08596db-1d87-4966-8710-d430f071d879",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0007",
+    "type": "valve",
+    "status": "warning",
+    "lat": 42.356069,
+    "lng": -71.097813,
+    "installed_at": "2009-11-08",
+    "material": "copper",
+    "diameter_mm": 100
+  },
+  {
+    "id": "6fb78271-504d-481f-8953-5b63ba81edd9",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0020",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.369835,
+    "lng": -71.063201,
+    "installed_at": "2010-07-04",
+    "material": "iron",
+    "diameter_mm": 200
+  },
+  {
+    "id": "afd5dea5-89d7-4d6c-8e77-7f00ecf27e76",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0021",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.38897,
+    "lng": -71.121124,
+    "installed_at": "2018-04-28",
+    "material": "PVC",
+    "diameter_mm": 150
+  },
+  {
+    "id": "e6697833-b841-40a0-9fe7-71d6d9178793",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0010",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.360878,
+    "lng": -71.065732,
+    "installed_at": "2024-10-03",
+    "material": "copper",
+    "diameter_mm": 250
+  },
+  {
+    "id": "f0bbac67-aa38-40a1-aba2-5efe311c6eb6",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0008",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.353557,
+    "lng": -71.105187,
+    "installed_at": "2000-09-16",
+    "material": "lead",
+    "diameter_mm": 300
+  },
+  {
+    "id": "6e0d2648-35ce-4841-8973-2d6c4dcabfb7",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0009",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.379888,
+    "lng": -71.122296,
+    "installed_at": "1995-01-07",
+    "material": "copper",
+    "diameter_mm": 200
+  },
+  {
+    "id": "83f4a9a9-48a6-49d0-95b5-2908a8aa7158",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0010",
+    "type": "valve",
+    "status": "warning",
+    "lat": 42.361507,
+    "lng": -71.085679,
+    "installed_at": "2002-08-12",
+    "material": "copper",
+    "diameter_mm": 50
+  },
+  {
+    "id": "3eae0032-0bd4-4990-8640-be0f25b8fd4b",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0011",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.384105,
+    "lng": -71.080167,
+    "installed_at": "2003-12-07",
+    "material": "lead",
+    "diameter_mm": 250
+  },
+  {
+    "id": "7e8f8095-624c-49b6-b244-45a7b7e58481",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0012",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.385984,
+    "lng": -71.129684,
+    "installed_at": "2003-09-21",
+    "material": "lead",
+    "diameter_mm": 100
+  },
+  {
+    "id": "2d06e8cf-3805-4907-acd6-6193c7468f59",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0011",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 42.343854,
+    "lng": -71.084804,
+    "installed_at": "1999-10-13",
+    "material": "lead",
+    "diameter_mm": 50
+  },
+  {
+    "id": "8f15ba58-fce6-4504-87f8-424daae65fc1",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0022",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.368444,
+    "lng": -71.068025,
+    "installed_at": "2015-11-04",
+    "material": "copper",
+    "diameter_mm": 200
+  },
+  {
+    "id": "be6033f7-28be-4288-a5af-6e39722764e6",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0013",
+    "type": "valve",
+    "status": "warning",
+    "lat": 42.371759,
+    "lng": -71.082493,
+    "installed_at": "2019-07-30",
+    "material": "lead",
+    "diameter_mm": 200
+  },
+  {
+    "id": "464c04af-3d3f-4799-a072-95e97c0e8cd8",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0014",
+    "type": "valve",
+    "status": "warning",
+    "lat": 42.350551,
+    "lng": -71.116951,
+    "installed_at": "2018-05-20",
+    "material": "lead",
+    "diameter_mm": 50
+  },
+  {
+    "id": "620e99d3-3b33-43d8-a69c-d696236c7b87",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0023",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 42.377813,
+    "lng": -71.117882,
+    "installed_at": "1998-08-13",
+    "material": "PVC",
+    "diameter_mm": 300
+  },
+  {
+    "id": "63b4c08b-6b8e-469f-9538-5b0e34f3193c",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0024",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.347837,
+    "lng": -71.104715,
+    "installed_at": "1997-10-17",
+    "material": "iron",
+    "diameter_mm": 250
+  },
+  {
+    "id": "8bcf53a1-bc10-4a52-bf5d-2fdf89c8d2ab",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0025",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 42.357823,
+    "lng": -71.13457,
+    "installed_at": "2013-10-18",
+    "material": "PVC",
+    "diameter_mm": 200
+  },
+  {
+    "id": "2a405f12-b963-437f-a781-4c1fcc530e36",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0026",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.348165,
+    "lng": -71.103184,
+    "installed_at": "2025-06-19",
+    "material": "lead",
+    "diameter_mm": 100
+  },
+  {
+    "id": "6db99102-a48b-4dbe-957d-94a106f028ff",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0012",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.393843,
+    "lng": -71.096009,
+    "installed_at": "2024-09-27",
+    "material": "PVC",
+    "diameter_mm": 200
+  },
+  {
+    "id": "473bd358-610e-4a64-a130-1617c2dff335",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0027",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.345904,
+    "lng": -71.116009,
+    "installed_at": "2010-02-20",
+    "material": "lead",
+    "diameter_mm": 150
+  },
+  {
+    "id": "c7fee39f-1190-4938-a66f-d7f739669fa7",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0013",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.385095,
+    "lng": -71.100668,
+    "installed_at": "2010-09-12",
+    "material": "iron",
+    "diameter_mm": 50
+  },
+  {
+    "id": "90604f62-1d48-4071-ab61-a7b1793b4c32",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0028",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.391977,
+    "lng": -71.120447,
+    "installed_at": "2000-08-30",
+    "material": "PVC",
+    "diameter_mm": 200
+  },
+  {
+    "id": "f6f7f0cc-29ec-4e49-91bd-b8c0c71d5e60",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0029",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.376968,
+    "lng": -71.079016,
+    "installed_at": "2000-02-20",
+    "material": "copper",
+    "diameter_mm": 50
+  },
+  {
+    "id": "32c5bd89-b70b-4420-b104-3785658b2523",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0015",
+    "type": "valve",
+    "status": "critical",
+    "lat": 42.369721,
+    "lng": -71.067191,
+    "installed_at": "2011-11-02",
+    "material": "iron",
+    "diameter_mm": 250
+  },
+  {
+    "id": "cbd58bf6-1efd-46e9-8e37-14af99b49350",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0030",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 42.376437,
+    "lng": -71.089211,
+    "installed_at": "2025-09-10",
+    "material": "iron",
+    "diameter_mm": 150
+  },
+  {
+    "id": "7d7ddbed-d284-476c-ab88-f83dd97dc9cd",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0031",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.366965,
+    "lng": -71.086709,
+    "installed_at": "1995-07-27",
+    "material": "iron",
+    "diameter_mm": 200
+  },
+  {
+    "id": "f7294951-8591-41d2-bbda-02422d174fc9",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0014",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 42.392647,
+    "lng": -71.088602,
+    "installed_at": "2014-07-15",
+    "material": "copper",
+    "diameter_mm": 250
+  },
+  {
+    "id": "3ed8c56c-da09-4fa0-9282-8d8044b591f7",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0016",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.383492,
+    "lng": -71.095713,
+    "installed_at": "2021-07-30",
+    "material": "iron",
+    "diameter_mm": 150
+  },
+  {
+    "id": "d9d80b8d-7e8a-4ee7-8758-e201561e16d1",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0017",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.387898,
+    "lng": -71.117198,
+    "installed_at": "2012-01-01",
+    "material": "copper",
+    "diameter_mm": 100
+  },
+  {
+    "id": "8e485223-46b9-4991-a14e-b70db380c73a",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0032",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.364253,
+    "lng": -71.109098,
+    "installed_at": "2021-09-28",
+    "material": "iron",
+    "diameter_mm": 250
+  },
+  {
+    "id": "b63b4dc3-a559-4463-b9e1-3ceab0cbc61f",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0015",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.391884,
+    "lng": -71.12875,
+    "installed_at": "2005-10-12",
+    "material": "lead",
+    "diameter_mm": 200
+  },
+  {
+    "id": "79279973-5e78-4fd7-94e0-d3baa9f948b2",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0033",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.382576,
+    "lng": -71.128207,
+    "installed_at": "2008-09-25",
+    "material": "copper",
+    "diameter_mm": 200
+  },
+  {
+    "id": "b8a6171f-1ee3-4dc4-bb04-8a8b405bfdc9",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0034",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.394798,
+    "lng": -71.094822,
+    "installed_at": "2008-10-02",
+    "material": "PVC",
+    "diameter_mm": 150
+  },
+  {
+    "id": "b97e6703-46c8-4dfe-bbf4-7042bd1531c8",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0016",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.342173,
+    "lng": -71.095882,
+    "installed_at": "2004-09-15",
+    "material": "copper",
+    "diameter_mm": 50
+  },
+  {
+    "id": "f96b648a-0ba6-4ab9-8639-447b2067bdac",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0035",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.384958,
+    "lng": -71.113374,
+    "installed_at": "2018-12-17",
+    "material": "iron",
+    "diameter_mm": 250
+  },
+  {
+    "id": "48ca7651-92f5-4f7b-8323-d342df6a8f93",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0018",
+    "type": "valve",
+    "status": "warning",
+    "lat": 42.352528,
+    "lng": -71.066081,
+    "installed_at": "1999-08-08",
+    "material": "lead",
+    "diameter_mm": 200
+  },
+  {
+    "id": "6694c343-10ba-48e3-9276-2bdc1d34d08e",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0036",
+    "type": "pipe",
+    "status": "critical",
+    "lat": 42.361428,
+    "lng": -71.121541,
+    "installed_at": "2016-06-06",
+    "material": "lead",
+    "diameter_mm": 50
+  },
+  {
+    "id": "1e52d770-3f89-4142-be71-6b1415ce6a66",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0037",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 42.369621,
+    "lng": -71.084889,
+    "installed_at": "2008-08-18",
+    "material": "lead",
+    "diameter_mm": 250
+  },
+  {
+    "id": "fd72b050-96a9-454f-9c33-e1f94c1f55ab",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0017",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.370768,
+    "lng": -71.089855,
+    "installed_at": "2014-11-10",
+    "material": "lead",
+    "diameter_mm": 150
+  },
+  {
+    "id": "a911d192-43bf-4931-b605-bf54a021c0ca",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-S-0005",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 42.369118,
+    "lng": -71.130603,
+    "installed_at": "2004-04-27",
+    "material": "iron",
+    "diameter_mm": 100
+  },
+  {
+    "id": "3b4206c5-085b-45fb-8a8f-f810784c2f29",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0038",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.349392,
+    "lng": -71.094705,
+    "installed_at": "2021-08-21",
+    "material": "copper",
+    "diameter_mm": 300
+  },
+  {
+    "id": "96fc734d-a003-4d28-8a8f-3653c9af18f8",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0039",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.351963,
+    "lng": -71.072249,
+    "installed_at": "2006-11-13",
+    "material": "PVC",
+    "diameter_mm": 200
+  },
+  {
+    "id": "cae9b4a7-2a79-4a68-8f44-704f1247ea4e",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0040",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.341887,
+    "lng": -71.118589,
+    "installed_at": "2001-05-19",
+    "material": "copper",
+    "diameter_mm": 250
+  },
+  {
+    "id": "45b1ed25-f153-4ae8-a70a-cc5cb321bf21",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0041",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.379937,
+    "lng": -71.093448,
+    "installed_at": "2008-08-22",
+    "material": "lead",
+    "diameter_mm": 200
+  },
+  {
+    "id": "f63fce41-3a9a-4a5e-9761-32ed069f14f1",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0019",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.339827,
+    "lng": -71.13209,
+    "installed_at": "2006-03-26",
+    "material": "iron",
+    "diameter_mm": 300
+  },
+  {
+    "id": "473544f9-ea83-4f00-b135-f221a6c9537f",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0018",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.384285,
+    "lng": -71.092934,
+    "installed_at": "2018-04-12",
+    "material": "PVC",
+    "diameter_mm": 250
+  },
+  {
+    "id": "1ac70ec0-ab8d-4eb4-9230-dfbd5553b2fe",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-S-0006",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 42.361153,
+    "lng": -71.07556,
+    "installed_at": "2013-04-26",
+    "material": "PVC",
+    "diameter_mm": 150
+  },
+  {
+    "id": "50843242-168b-4625-b46f-78910964fbbf",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0020",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.359699,
+    "lng": -71.098831,
+    "installed_at": "2019-09-04",
+    "material": "copper",
+    "diameter_mm": 150
+  },
+  {
+    "id": "764414fd-8ae7-49ed-9e8e-de0ba85c6e4a",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0019",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 42.341955,
+    "lng": -71.078604,
+    "installed_at": "1995-01-19",
+    "material": "lead",
+    "diameter_mm": 50
+  },
+  {
+    "id": "218a1536-8c99-4894-845d-cc38341c6494",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0020",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.346255,
+    "lng": -71.10859,
+    "installed_at": "1997-04-25",
+    "material": "copper",
+    "diameter_mm": 200
+  },
+  {
+    "id": "8d03c91e-4f8d-4238-a88b-78b5b5b453ca",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0042",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.387851,
+    "lng": -71.099616,
+    "installed_at": "2005-09-25",
+    "material": "iron",
+    "diameter_mm": 250
+  },
+  {
+    "id": "7f95897c-276a-46ce-9507-55d9a5d04d53",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0021",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.359479,
+    "lng": -71.118597,
+    "installed_at": "2000-04-08",
+    "material": "copper",
+    "diameter_mm": 250
+  },
+  {
+    "id": "30cbd755-6232-417a-a507-41818d1fb540",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0021",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.377325,
+    "lng": -71.104669,
+    "installed_at": "2015-06-28",
+    "material": "PVC",
+    "diameter_mm": 50
+  },
+  {
+    "id": "486822b9-00a8-4de9-920f-87d044656d6b",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0022",
+    "type": "valve",
+    "status": "critical",
+    "lat": 42.351575,
+    "lng": -71.07733,
+    "installed_at": "2017-10-10",
+    "material": "copper",
+    "diameter_mm": 250
+  },
+  {
+    "id": "c34b9fbb-8d4a-45b8-951a-c8ea585a0afa",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0022",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.369795,
+    "lng": -71.086824,
+    "installed_at": "2016-09-22",
+    "material": "lead",
+    "diameter_mm": 200
+  },
+  {
+    "id": "69288e92-c68a-452f-9b23-aa8c3bcabf85",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-S-0007",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 42.390971,
+    "lng": -71.071519,
+    "installed_at": "2012-03-06",
+    "material": "iron",
+    "diameter_mm": 150
+  },
+  {
+    "id": "fb16e5db-a6ea-479e-921c-82f8cada4f80",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-H-0023",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 42.379682,
+    "lng": -71.083518,
+    "installed_at": "2024-10-08",
+    "material": "PVC",
+    "diameter_mm": 200
+  },
+  {
+    "id": "1986b4b2-70b7-4868-9854-80f0dfcaf0b7",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-S-0008",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 42.392889,
+    "lng": -71.125784,
+    "installed_at": "1999-07-03",
+    "material": "lead",
+    "diameter_mm": 50
+  },
+  {
+    "id": "56abf2f1-43d8-4870-b81d-baa1c8120a8e",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0023",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.378347,
+    "lng": -71.105072,
+    "installed_at": "2016-01-23",
+    "material": "lead",
+    "diameter_mm": 300
+  },
+  {
+    "id": "c268283e-e32f-4e63-b7fd-dd71a075e927",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0024",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.339819,
+    "lng": -71.111015,
+    "installed_at": "2009-03-16",
+    "material": "lead",
+    "diameter_mm": 250
+  },
+  {
+    "id": "fa745761-6f18-4108-9723-199dbf2c14a0",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0025",
+    "type": "valve",
+    "status": "critical",
+    "lat": 42.337154,
+    "lng": -71.130005,
+    "installed_at": "2005-03-16",
+    "material": "iron",
+    "diameter_mm": 300
+  },
+  {
+    "id": "0e5dd462-cbd0-4ef2-930a-37df0bc61066",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-P-0043",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 42.377233,
+    "lng": -71.127663,
+    "installed_at": "1996-04-19",
+    "material": "copper",
+    "diameter_mm": 150
+  },
+  {
+    "id": "9c07a751-1437-4509-acd1-586a2b840c67",
+    "tenant_id": "11111111-1111-4111-8111-111111111111",
+    "name": "NWU-V-0026",
+    "type": "valve",
+    "status": "ok",
+    "lat": 42.35749,
+    "lng": -71.124373,
+    "installed_at": "2003-01-29",
+    "material": "lead",
+    "diameter_mm": 250
+  },
+  {
+    "id": "aab612c9-415d-474a-b5a6-69814104a8b5",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0001",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.770988,
+    "lng": -73.982535,
+    "installed_at": "2023-08-13",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": null,
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "6c9f82b9-f647-4986-a391-7c994c955f6a",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0002",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.770657,
+    "lng": -73.98763,
+    "installed_at": "2021-05-10",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-17T18:01:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "059dd55d-4b94-4e30-b303-f438fe2110d0",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0003",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.7812,
+    "lng": -73.9884,
+    "installed_at": "2008-04-09",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-10-01T03:10:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "9b689c88-3ae9-49fe-8c82-18dac696f5e6",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0004",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.776699,
+    "lng": -73.975396,
+    "installed_at": "2007-11-03",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-22T20:20:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "a5769411-a0a1-4839-a745-770418dfbc3c",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0005",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.770666,
+    "lng": -73.979186,
+    "installed_at": "2023-03-08",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-11T10:31:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "c958e75e-21d5-4971-b367-49b52cf6bf75",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0006",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.751892,
+    "lng": -73.988029,
+    "installed_at": "2013-08-21",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "bf1e8366-4b8e-43d4-8e76-07adf7a67b94",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0007",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.760108,
+    "lng": -73.985912,
+    "installed_at": "2016-08-12",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": null,
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "8eac0a33-cdf9-44a7-9882-b5c1f79efd70",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0008",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.738445,
+    "lng": -73.975502,
+    "installed_at": "2012-10-29",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-13T13:02:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "f0b6f83f-a377-46f1-9289-f0ab618ae305",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0009",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.762194,
+    "lng": -73.983178,
+    "installed_at": "2021-03-22",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-20T20:37:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "76da3ca0-d2e8-4f38-a2a9-d4d8102efde5",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0010",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.767173,
+    "lng": -73.975852,
+    "installed_at": "2024-01-20",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-12T22:02:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "637e4b01-22ba-410e-899c-a782e3236d1a",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0011",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.732721,
+    "lng": -73.989442,
+    "installed_at": "2005-07-13",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-06T21:58:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "f396ea37-f065-4817-a87a-48509d9b6231",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0012",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.774536,
+    "lng": -73.987682,
+    "installed_at": "2016-12-13",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-14T15:17:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "a5135ea0-fa53-434d-a6d5-901d8b621d41",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0013",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.756682,
+    "lng": -73.986458,
+    "installed_at": "2011-06-24",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-18T22:40:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "0cf2b69b-0577-4ea9-b899-924698de8ebb",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0014",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.786941,
+    "lng": -73.977637,
+    "installed_at": "2023-09-08",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-25T18:28:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "c9e48e8c-25c6-4c45-863d-04ee541c7a86",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0015",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.734117,
+    "lng": -73.978523,
+    "installed_at": "2005-06-14",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-24T21:58:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "3ce915e7-c9d6-463b-8a3c-6f5f5bb5c40c",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0016",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.745039,
+    "lng": -73.987383,
+    "installed_at": "1995-09-01",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-23T13:41:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "97fa7f04-8363-4007-9cae-9610c72c1fe3",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0017",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.737606,
+    "lng": -73.983686,
+    "installed_at": "2015-02-09",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-21T10:01:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "ffa361be-0f92-40e1-87f9-7d05f6ca6b8b",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0018",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.773635,
+    "lng": -73.976369,
+    "installed_at": "2023-11-10",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "204e178c-10d0-4d11-a5f9-34bf9bb96155",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0019",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.736478,
+    "lng": -73.979314,
+    "installed_at": "2009-06-13",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-04T20:38:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "b3a7d0e0-cb08-487d-9963-c26d6e218b09",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0020",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.749511,
+    "lng": -73.975081,
+    "installed_at": "2022-02-27",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "18578baf-bac7-42b9-aa7e-4c3666132e69",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0021",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.78193,
+    "lng": -73.983549,
+    "installed_at": "2015-05-06",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-19T21:36:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "5f65c8ce-bd21-4c11-be9d-61ee18b87245",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0022",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.771209,
+    "lng": -73.982886,
+    "installed_at": "2014-05-16",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-04T19:26:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "0d2b91ef-b897-4ec5-aa74-bb18de3b496f",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0023",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.749779,
+    "lng": -73.988167,
+    "installed_at": "2013-12-21",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-15T11:55:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "1d691fba-5e18-4b24-8e67-6a01d86a6460",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0024",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.760445,
+    "lng": -73.987679,
+    "installed_at": "2010-09-15",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-11T23:18:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "b3e4110a-45f5-4c52-ae2f-bf77076979d6",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0025",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.766814,
+    "lng": -73.98036,
+    "installed_at": "2006-12-30",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": null,
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "bf012e32-177d-4e7e-87d9-24cef8c88fae",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0026",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.740884,
+    "lng": -73.987851,
+    "installed_at": "2023-05-27",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-12T09:26:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "27d415b6-0d77-45a0-a222-b6a615bfbe97",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0027",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.739445,
+    "lng": -73.985325,
+    "installed_at": "2021-09-29",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-29T05:39:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "585d3f86-1d23-44e6-8329-20b7c143f426",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0028",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.756587,
+    "lng": -73.98364,
+    "installed_at": "2004-09-01",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-04T12:09:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "36136e15-f200-4261-8d29-d1ab345512f7",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0029",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.770028,
+    "lng": -73.989319,
+    "installed_at": "1995-05-06",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-18T07:51:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "ab05347f-d556-437d-8f08-81ee8011316b",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0030",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.730464,
+    "lng": -73.978795,
+    "installed_at": "2005-04-28",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-29T13:48:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "4a1dab32-6aed-4dc7-a3e0-5309b5a1b949",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0031",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.757585,
+    "lng": -73.988832,
+    "installed_at": "2013-02-21",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-16T17:16:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "6683e107-96c0-44d0-af88-7f283e49fd09",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0032",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.757606,
+    "lng": -73.979656,
+    "installed_at": "1999-10-01",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-17T09:06:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "5970a859-c6b6-44ad-a7ea-8d5a31a3ac4d",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0033",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.749984,
+    "lng": -73.987478,
+    "installed_at": "2017-11-16",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-02T03:01:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "c5d95f51-f387-41bd-ad59-72c6134a5a2f",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0034",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.736168,
+    "lng": -73.98616,
+    "installed_at": "2024-05-27",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-05T20:16:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "50ee7a92-a091-41e0-b891-b0c3dd3f487e",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0035",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.770868,
+    "lng": -73.976769,
+    "installed_at": "2009-07-01",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-10T03:49:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "0e9058b6-09a0-40f6-b3b0-a0917634c169",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0036",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.748169,
+    "lng": -73.98588,
+    "installed_at": "2008-12-03",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "cab4923b-f448-4385-8de7-ad6c949077c2",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0037",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.781855,
+    "lng": -73.977171,
+    "installed_at": "2015-10-04",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "e62d2d06-cf9b-4558-9a7f-195b73557b9d",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0038",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.76911,
+    "lng": -73.985177,
+    "installed_at": "1997-10-10",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "5d286aa4-28a3-4779-9c1c-351785d2d0a6",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0039",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.768768,
+    "lng": -73.989413,
+    "installed_at": "2018-07-05",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": null,
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "8ed6ad5e-1831-4aa3-9466-9d1910df9974",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0040",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.776468,
+    "lng": -73.979817,
+    "installed_at": "2010-01-04",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-20T00:46:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "2102f9c9-6457-4bc4-a981-b098b2cf952d",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0041",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.750002,
+    "lng": -73.981259,
+    "installed_at": "2024-06-05",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-27T15:28:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "a561e1e9-17ec-489c-86c1-b6cbe99630f7",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0042",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.752601,
+    "lng": -73.978125,
+    "installed_at": "2025-09-29",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-15T00:48:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "27aa7cbc-2337-4bbc-bffe-77c839feb99c",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0043",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.748532,
+    "lng": -73.975732,
+    "installed_at": "2003-08-12",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-26T21:32:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "277d1be9-6070-46a1-98e5-2499218c6e1c",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0044",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.780107,
+    "lng": -73.976745,
+    "installed_at": "2022-09-21",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-03T01:38:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "bfa016c2-c09c-4506-88f1-096d9c4ffb46",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0045",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.75626,
+    "lng": -73.983837,
+    "installed_at": "2014-12-04",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-20T14:46:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "c7332304-4822-4120-84f9-eccd7630a8a7",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0046",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.784238,
+    "lng": -73.98709,
+    "installed_at": "2014-10-06",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-12T10:43:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "b61e5fdb-1a43-4206-af2d-dcc48df661da",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0047",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.778076,
+    "lng": -73.987924,
+    "installed_at": "2011-08-26",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": null,
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "38d77b9a-e916-4a57-b248-23ab177a8a5f",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0048",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.775787,
+    "lng": -73.985908,
+    "installed_at": "2014-08-16",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": null,
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "ee4a9b5d-5195-44e3-8737-4c86397b5f51",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0049",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.733195,
+    "lng": -73.98247,
+    "installed_at": "2011-10-26",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": null,
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "72d78bdd-7817-49ff-b49e-04ccc24369e7",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0050",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.738256,
+    "lng": -73.985697,
+    "installed_at": "2001-03-23",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-27T21:28:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "3cd5fd7f-49c1-4669-86b3-3fe61c76bdf6",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0051",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.742939,
+    "lng": -73.987757,
+    "installed_at": "2013-12-26",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-20T15:34:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "83efa9f3-a1c7-4c8a-8435-1b64893ad232",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0052",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.777634,
+    "lng": -73.983143,
+    "installed_at": "2021-10-07",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-24T23:11:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "5c508720-f982-44e0-8603-156a15eacbcf",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0053",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.730094,
+    "lng": -73.984708,
+    "installed_at": "2024-12-22",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "5f90bed6-fb25-464d-a30a-a767a2bb522b",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0054",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.777185,
+    "lng": -73.982386,
+    "installed_at": "1996-12-14",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-15T05:58:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "8bc78e81-5a30-4528-8b59-95622227219f",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0055",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.744468,
+    "lng": -73.980143,
+    "installed_at": "2009-11-30",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "752a7d25-f190-4b7e-86b4-69efb74eba93",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0056",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.757877,
+    "lng": -73.979569,
+    "installed_at": "1997-10-30",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-29T12:10:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "a59b457f-c0d7-4c73-895f-fa8140d92bce",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0057",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.748936,
+    "lng": -73.985349,
+    "installed_at": "2016-03-27",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-29T07:48:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "7f072cb9-2fd3-40c0-b945-f2fd56cb1ab0",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0058",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.737469,
+    "lng": -73.98448,
+    "installed_at": "2012-05-05",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-07T20:49:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "147f6570-1a43-4b54-923a-e9934b3446bc",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0059",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.773625,
+    "lng": -73.988816,
+    "installed_at": "2019-06-21",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-17T13:14:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "46494296-6f58-42c3-bf86-cc319d66e815",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0060",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.77306,
+    "lng": -73.9875,
+    "installed_at": "2010-10-25",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": null,
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "d942644c-248d-41ec-87f8-d4f0f3ea0184",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0061",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.770271,
+    "lng": -73.983907,
+    "installed_at": "2002-03-06",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-11T13:24:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "add702c9-2747-493c-9ae7-7eab084a6780",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0062",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.734034,
+    "lng": -73.978322,
+    "installed_at": "2020-06-11",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": null,
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "1d0af7f7-f5e4-4471-bfe6-8c9c4758367b",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0063",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.775785,
+    "lng": -73.981391,
+    "installed_at": "2024-02-20",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-08T18:55:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "b1a8b71f-491b-40e9-9ca3-fbb3ff11c8ba",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0064",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.784813,
+    "lng": -73.988234,
+    "installed_at": "2004-08-16",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-25T07:45:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "109fd8ee-b5a4-4200-98f0-dd23aaf78c67",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0065",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.740359,
+    "lng": -73.979299,
+    "installed_at": "2009-05-03",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-17T20:23:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "cac4d0eb-3373-430e-bc31-a5971f119c0f",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0066",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.772574,
+    "lng": -73.979497,
+    "installed_at": "2005-01-21",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-09T00:24:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "4f2dad3f-10d4-4e39-9612-37c9e25df9a8",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0067",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.763241,
+    "lng": -73.984466,
+    "installed_at": "2022-06-14",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "7740d831-7331-4749-92fc-7a87a4704d48",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0068",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.754648,
+    "lng": -73.983858,
+    "installed_at": "2009-03-22",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-25T15:50:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "272c0588-84a2-476c-9fc9-05f8d4d60735",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0069",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.765267,
+    "lng": -73.978483,
+    "installed_at": "1997-06-26",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-16T19:35:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "46426c45-8d03-417a-b4d3-75c1a29319fa",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0070",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.786849,
+    "lng": -73.982217,
+    "installed_at": "2003-10-22",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-03T12:53:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "9aea622f-e6e9-47ca-b87b-63849fddde2e",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0071",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.760154,
+    "lng": -73.98747,
+    "installed_at": "2024-07-19",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": null,
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "c4576cc3-35f7-49bc-a6b0-745843c07d43",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0072",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.779514,
+    "lng": -73.989574,
+    "installed_at": "2020-11-14",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": "2025-09-02T10:04:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "67f5ae02-af5b-4f47-8eae-71cfce000af0",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0073",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.78334,
+    "lng": -73.981816,
+    "installed_at": "2005-12-26",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-28T18:34:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "586a346a-dc5b-47d1-bcef-1972bbf483ce",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0074",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.754937,
+    "lng": -73.983033,
+    "installed_at": "2009-04-28",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-14T15:17:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "f204be89-4a4b-4563-8cf4-77ef18c8a616",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0075",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.736371,
+    "lng": -73.986374,
+    "installed_at": "2001-04-27",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": null,
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "7f8e5483-28ca-4a1d-835b-ec2c3098f7b2",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0076",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.787761,
+    "lng": -73.976465,
+    "installed_at": "2009-01-10",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-17T11:00:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "4806f804-0cf0-474c-8c74-dc0f5a575539",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0077",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.735403,
+    "lng": -73.984101,
+    "installed_at": "2021-03-02",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-01T17:23:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "0b95017c-5dae-4201-a73b-a8bdc38c1dec",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0078",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.762201,
+    "lng": -73.977292,
+    "installed_at": "2011-05-29",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-05T22:21:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "ae2e9af9-9f8c-429f-bd35-0c5fd3479a3b",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0079",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.763193,
+    "lng": -73.988897,
+    "installed_at": "2007-07-19",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-27T02:24:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "80051b10-66c1-4dca-8255-da619a3b0319",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0080",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.777694,
+    "lng": -73.984914,
+    "installed_at": "2003-12-06",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-25T06:20:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "fd98fe33-6498-4be9-a999-bbef518b2f21",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0081",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.76116,
+    "lng": -73.987766,
+    "installed_at": "2022-07-02",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-17T21:10:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "54cc1e2a-5e4c-4287-8442-51dbd0d4ea67",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0082",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.760439,
+    "lng": -73.982354,
+    "installed_at": "2016-04-20",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-12T13:02:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "c86c6544-a7d4-4f50-b791-f1e543f9cd6b",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0083",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.777805,
+    "lng": -73.97912,
+    "installed_at": "2016-04-15",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-29T03:55:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "08150147-3e00-480e-ae44-1e21d25864f2",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0084",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.740231,
+    "lng": -73.980565,
+    "installed_at": "2001-08-18",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": null,
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "eba742d2-9c89-4374-8664-95a780773e33",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0085",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.731136,
+    "lng": -73.985295,
+    "installed_at": "2013-05-29",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 15,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "2c55aef7-f4e9-4734-9052-1700607796a3",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0086",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.738285,
+    "lng": -73.98689,
+    "installed_at": "2018-07-28",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": null,
+      "units": "C"
+    }
+  },
+  {
+    "id": "f5141058-3138-4975-bbf3-3a349c2dfa97",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0087",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.751257,
+    "lng": -73.97842,
+    "installed_at": "2006-11-10",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-17T21:58:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "ef3a6f27-ef06-4ccb-8f7c-1d59594b2a3a",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0088",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.77627,
+    "lng": -73.979426,
+    "installed_at": "2016-07-10",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-25T22:53:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "f48f709c-49a2-4441-8ac4-de854a5b1aff",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0089",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.762591,
+    "lng": -73.976564,
+    "installed_at": "2001-07-27",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-11T08:49:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "bdab07e7-9d9d-428e-9bf6-45f623245211",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0090",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.758745,
+    "lng": -73.986969,
+    "installed_at": "2007-03-09",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-29T04:34:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "01539221-2331-4a28-8550-eca8ae62990c",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0091",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.768277,
+    "lng": -73.989213,
+    "installed_at": "1999-07-06",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": null,
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "0f25477d-a559-40e7-8910-fade52380bf2",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0092",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.769174,
+    "lng": -73.97679,
+    "installed_at": "2007-11-20",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-20T22:22:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "ff46a6bf-094d-416d-ab6d-2fedef158d5b",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0093",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.773387,
+    "lng": -73.97595,
+    "installed_at": "2002-11-20",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-23T00:30:00+00:00",
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "8b15bd94-a42d-4cd7-bd35-9f6a74503887",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0094",
+    "type": "sensor",
+    "status": "critical",
+    "lat": 40.730556,
+    "lng": -73.981481,
+    "installed_at": "2007-10-07",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-25T09:26:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "039b058c-2faa-4e0b-b7f6-0cdf41dc1c60",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0095",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.74637,
+    "lng": -73.977868,
+    "installed_at": "2024-01-30",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": "2025-09-18T01:46:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "669d01ff-1634-425b-93f3-007383e96ef4",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0096",
+    "type": "sensor",
+    "status": "warning",
+    "lat": 40.775437,
+    "lng": -73.987368,
+    "installed_at": "2014-03-09",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 300,
+      "last_reading_at": "2025-09-25T02:25:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "951c25d5-4d4c-4280-9462-52e7f43ba052",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0097",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.78615,
+    "lng": -73.989898,
+    "installed_at": "2006-12-23",
+    "model": "BS-300",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-19T14:19:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "b41c504f-e346-4415-a526-7a2bec50ace4",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0098",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.744178,
+    "lng": -73.979983,
+    "installed_at": "2017-07-17",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 60,
+      "last_reading_at": "2025-09-02T10:22:00+00:00",
+      "units": "L/min"
+    }
+  },
+  {
+    "id": "8c9aa1e9-b3b2-4337-aa74-dbb75fa5e0aa",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0099",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.766878,
+    "lng": -73.986713,
+    "installed_at": "2022-03-04",
+    "model": "BS-200",
+    "telemetry": {
+      "sample_rate_seconds": 30,
+      "last_reading_at": "2025-09-21T13:27:00+00:00",
+      "units": "C"
+    }
+  },
+  {
+    "id": "1cb9b73a-906d-4c8c-aad0-8c8913fe8a29",
+    "tenant_id": "22222222-2222-4222-8222-222222222222",
+    "name": "BCN-S-0100",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 40.775284,
+    "lng": -73.976903,
+    "installed_at": "2011-03-25",
+    "model": "BS-100",
+    "telemetry": {
+      "sample_rate_seconds": 900,
+      "last_reading_at": null,
+      "units": "PSI"
+    }
+  },
+  {
+    "id": "95492a82-b787-4f8d-b495-311eae27d432",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0001",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.898724,
+    "lng": -87.715764,
+    "installed_at": "2000-03-19",
+    "ward": "Ward 8",
+    "inspections": []
+  },
+  {
+    "id": "765e6cb5-8f0d-4540-8ec7-d662905c7bdd",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0001",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.891245,
+    "lng": -87.653174,
+    "installed_at": "2015-06-29",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2015-09-26",
+        "notes": "Calibration check passed.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2023-08-08",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "fc737d92-11ab-4d11-a4eb-8000ef40d162",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0002",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.899397,
+    "lng": -87.725697,
+    "installed_at": "1997-09-14",
+    "ward": "Ward 8",
+    "inspections": []
+  },
+  {
+    "id": "fe2bd987-5fdc-4bbf-ab9c-d71cf6ba745b",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0001",
+    "type": "valve",
+    "status": "critical",
+    "lat": 41.879064,
+    "lng": -87.656948,
+    "installed_at": "2023-12-22",
+    "ward": "Ward 7",
+    "inspections": [
+      {
+        "date": "2025-01-11",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "8989c5ab-fe2b-44d8-adb0-728d1e5ebe54",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0002",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.911928,
+    "lng": -87.66713,
+    "installed_at": "2010-08-07",
+    "ward": "Ward 7",
+    "inspections": [
+      {
+        "date": "2015-08-05",
+        "notes": "Routine pressure check.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "75eb89c2-3f5c-42f3-bacb-43a3d2c7bffb",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0002",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.947419,
+    "lng": -87.686015,
+    "installed_at": "2012-01-06",
+    "ward": "Ward 6",
+    "inspections": []
+  },
+  {
+    "id": "efad49e9-c41c-447e-9d6b-9b626b535a19",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0003",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.852618,
+    "lng": -87.646855,
+    "installed_at": "2024-08-12",
+    "ward": "Ward 1",
+    "inspections": [
+      {
+        "date": "2024-09-15",
+        "notes": "Routine pressure check.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "8a2db2e6-3bfd-48a6-b05f-ddf566fadca0",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0004",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.883573,
+    "lng": -87.666158,
+    "installed_at": "1996-12-25",
+    "ward": "Ward 4",
+    "inspections": [
+      {
+        "date": "1999-07-07",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2003-04-08",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "8e85140d-0f9a-4b70-8670-7cd64ceda164",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-S-0001",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 41.858428,
+    "lng": -87.646755,
+    "installed_at": "2013-07-20",
+    "ward": "Ward 10",
+    "inspections": [
+      {
+        "date": "2017-06-23",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2023-02-17",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2024-08-31",
+        "notes": "No issues found.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "24f43c62-b523-40de-9b87-d29c4cfd0fc1",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0005",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.847906,
+    "lng": -87.694236,
+    "installed_at": "2005-02-09",
+    "ward": "Ward 8",
+    "inspections": [
+      {
+        "date": "2014-05-13",
+        "notes": "No issues found.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2014-06-14",
+        "notes": "Calibration check passed.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2017-09-21",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "ac75c344-608e-449e-84b9-e6020d31812e",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0006",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.907605,
+    "lng": -87.642389,
+    "installed_at": "2003-07-18",
+    "ward": "Ward 10",
+    "inspections": [
+      {
+        "date": "2005-03-05",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2023-02-19",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "bf337a15-1e08-4f20-bdd1-51b0f64ab6ec",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-S-0002",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 41.934337,
+    "lng": -87.698368,
+    "installed_at": "2003-07-11",
+    "ward": "Ward 8",
+    "inspections": [
+      {
+        "date": "2017-01-29",
+        "notes": "No issues found.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2019-02-15",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2019-04-23",
+        "notes": "No issues found.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "fb37afae-cd85-43ca-993e-638d774c0afa",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0003",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.88595,
+    "lng": -87.668371,
+    "installed_at": "2017-04-22",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "2020-11-23",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "95831d58-ef4c-4119-8da5-d39b42c21797",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0007",
+    "type": "valve",
+    "status": "warning",
+    "lat": 41.867551,
+    "lng": -87.725657,
+    "installed_at": "1995-09-23",
+    "ward": "Ward 10",
+    "inspections": [
+      {
+        "date": "2002-07-25",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2008-12-19",
+        "notes": "No issues found.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "7d1645a0-d253-4966-836b-9a0a41e02a89",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0003",
+    "type": "pipe",
+    "status": "critical",
+    "lat": 41.898375,
+    "lng": -87.706656,
+    "installed_at": "2010-02-21",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "2020-06-23",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2021-02-21",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "08a8ac7f-8621-48ad-8f09-105cf50d7a37",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0008",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.916438,
+    "lng": -87.68361,
+    "installed_at": "2023-10-16",
+    "ward": "Ward 2",
+    "inspections": [
+      {
+        "date": "2023-10-22",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2023-12-04",
+        "notes": "Replaced gasket.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2025-08-30",
+        "notes": "Routine pressure check.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "7ce40679-a8c6-4bc0-bbb3-447be9aa144b",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0004",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.856246,
+    "lng": -87.686679,
+    "installed_at": "2022-08-28",
+    "ward": "Ward 1",
+    "inspections": []
+  },
+  {
+    "id": "b2a6e468-d02b-4243-8091-3ac10463750e",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0004",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.896197,
+    "lng": -87.728874,
+    "installed_at": "2007-11-11",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2011-11-18",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "143a9aff-659b-4105-8b80-f288446f64dd",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0005",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.892926,
+    "lng": -87.707108,
+    "installed_at": "2010-11-25",
+    "ward": "Ward 6",
+    "inspections": [
+      {
+        "date": "2016-05-09",
+        "notes": "Calibration check passed.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2021-03-12",
+        "notes": "Routine pressure check.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2023-07-28",
+        "notes": "No issues found.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "6f14b3f6-d867-488b-bff6-b824152aeaec",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0005",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.875512,
+    "lng": -87.677493,
+    "installed_at": "2002-09-08",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2004-08-05",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2006-12-18",
+        "notes": "Calibration check passed.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "edc3a1c3-2dea-4d2d-886c-405fa879d8f8",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0009",
+    "type": "valve",
+    "status": "warning",
+    "lat": 41.835587,
+    "lng": -87.722937,
+    "installed_at": "2020-04-11",
+    "ward": "Ward 6",
+    "inspections": []
+  },
+  {
+    "id": "3d8f95f4-905f-4096-a996-56e24c9d6907",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0010",
+    "type": "valve",
+    "status": "warning",
+    "lat": 41.854859,
+    "lng": -87.716302,
+    "installed_at": "1998-06-14",
+    "ward": "Ward 10",
+    "inspections": [
+      {
+        "date": "2015-11-27",
+        "notes": "No issues found.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2022-09-12",
+        "notes": "Replaced gasket.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "9d264599-c4dd-4df5-9aec-56a857311609",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0006",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.890095,
+    "lng": -87.637439,
+    "installed_at": "1998-05-30",
+    "ward": "Ward 10",
+    "inspections": [
+      {
+        "date": "2013-01-18",
+        "notes": "Calibration check passed.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "95fbe976-ae00-4b7e-af8c-83e56e8d9644",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0007",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.924026,
+    "lng": -87.687198,
+    "installed_at": "2011-11-03",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2025-09-17",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "5111d31d-63be-441d-bd5a-0c9e277eb0aa",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0008",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 41.915573,
+    "lng": -87.722206,
+    "installed_at": "2023-06-08",
+    "ward": "Ward 6",
+    "inspections": []
+  },
+  {
+    "id": "72e76b51-6e54-4c6d-aff8-e87e16591c89",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0006",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.830623,
+    "lng": -87.700715,
+    "installed_at": "2000-12-10",
+    "ward": "Ward 9",
+    "inspections": [
+      {
+        "date": "2005-07-29",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2019-03-31",
+        "notes": "Replaced gasket.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "b98f5dbe-15ae-4e0f-8777-a07f6346d4ef",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0011",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.901631,
+    "lng": -87.655478,
+    "installed_at": "2013-07-24",
+    "ward": "Ward 9",
+    "inspections": [
+      {
+        "date": "2017-05-13",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2019-01-02",
+        "notes": "Calibration check passed.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2025-03-31",
+        "notes": "Calibration check passed.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "406f64d6-5c72-4ebd-93b1-1e59c85cd714",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0007",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.889175,
+    "lng": -87.72399,
+    "installed_at": "2016-09-20",
+    "ward": "Ward 4",
+    "inspections": [
+      {
+        "date": "2022-04-12",
+        "notes": "Repainted housing.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2023-05-19",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "d0c30018-6e3c-4d4f-95b1-45e470b27304",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0009",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.866559,
+    "lng": -87.639862,
+    "installed_at": "2009-10-13",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2012-11-01",
+        "notes": "Repainted housing.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2016-07-09",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2016-12-21",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "d105c8d6-47c1-4017-a045-2909536d47d7",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0008",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.864974,
+    "lng": -87.663979,
+    "installed_at": "2005-11-15",
+    "ward": "Ward 7",
+    "inspections": [
+      {
+        "date": "2018-07-09",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "d4cee27c-4a94-4e9f-8c35-1e4f703e957f",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-S-0003",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 41.911806,
+    "lng": -87.677741,
+    "installed_at": "2004-05-27",
+    "ward": "Ward 12",
+    "inspections": []
+  },
+  {
+    "id": "2775ee42-a89e-42f2-80af-bf3f3df51967",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0012",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.931735,
+    "lng": -87.654471,
+    "installed_at": "2008-08-01",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "2017-01-14",
+        "notes": "Repainted housing.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "f7eae66e-ca6c-4f9b-8969-71018b2c550a",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0009",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.948884,
+    "lng": -87.684473,
+    "installed_at": "2013-10-06",
+    "ward": "Ward 6",
+    "inspections": [
+      {
+        "date": "2015-09-02",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2016-03-19",
+        "notes": "Routine pressure check.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "1b1f2eb1-6e32-45a8-8bd5-cc86f73936e9",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0010",
+    "type": "pipe",
+    "status": "critical",
+    "lat": 41.897586,
+    "lng": -87.668722,
+    "installed_at": "2009-11-15",
+    "ward": "Ward 1",
+    "inspections": []
+  },
+  {
+    "id": "768b4f7e-6421-4e66-9fc6-4cd0721e8b1f",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0011",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.85664,
+    "lng": -87.659049,
+    "installed_at": "2004-11-30",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2008-04-17",
+        "notes": "Routine pressure check.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2016-02-20",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "7490adeb-57d3-47d3-8fd8-0bbb592c1107",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0010",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 41.865452,
+    "lng": -87.642548,
+    "installed_at": "2001-05-10",
+    "ward": "Ward 4",
+    "inspections": [
+      {
+        "date": "2016-12-23",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "a5e15b55-57d3-44dd-9963-dc7205c8234b",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0011",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.88258,
+    "lng": -87.663807,
+    "installed_at": "2000-02-29",
+    "ward": "Ward 2",
+    "inspections": [
+      {
+        "date": "2007-07-14",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2011-02-07",
+        "notes": "No issues found.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "0779250a-6544-4313-aea0-5d13a84554c3",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0012",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.945016,
+    "lng": -87.707974,
+    "installed_at": "2023-09-24",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "2024-04-13",
+        "notes": "No issues found.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2024-12-27",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "2fdc9992-8971-4eea-9f3a-098accac2fb5",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0013",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.854694,
+    "lng": -87.658529,
+    "installed_at": "1999-07-26",
+    "ward": "Ward 6",
+    "inspections": [
+      {
+        "date": "2020-02-02",
+        "notes": "Calibration check passed.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "1d3e503a-9645-40e4-a47d-c3929c7eb575",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-S-0004",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 41.910484,
+    "lng": -87.683499,
+    "installed_at": "2012-06-07",
+    "ward": "Ward 6",
+    "inspections": [
+      {
+        "date": "2022-09-13",
+        "notes": "Calibration check passed.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "5f90fc87-2edc-417e-9df0-5d184e2d6255",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0014",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.940242,
+    "lng": -87.673934,
+    "installed_at": "2005-09-13",
+    "ward": "Ward 12",
+    "inspections": []
+  },
+  {
+    "id": "eb4e2281-b184-41fc-8991-b01aa2b03c4b",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0013",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.876616,
+    "lng": -87.67334,
+    "installed_at": "2016-10-30",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2018-09-13",
+        "notes": "Calibration check passed.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2018-10-09",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2023-01-19",
+        "notes": "Repainted housing.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "8fc3d7d3-f6bd-40c7-a24a-2a50d0b1fde0",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-S-0005",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 41.904329,
+    "lng": -87.647775,
+    "installed_at": "2003-10-02",
+    "ward": "Ward 9",
+    "inspections": [
+      {
+        "date": "2012-12-04",
+        "notes": "No issues found.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2019-02-09",
+        "notes": "Repainted housing.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "49e64c22-89a0-47eb-b98f-569b465cc2cb",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0015",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.85007,
+    "lng": -87.676287,
+    "installed_at": "1996-06-19",
+    "ward": "Ward 3",
+    "inspections": [
+      {
+        "date": "2018-09-07",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2021-11-02",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "bc69c155-1a37-46bd-acd6-f011fd61f13b",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0016",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.895045,
+    "lng": -87.658105,
+    "installed_at": "2004-10-20",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2011-06-24",
+        "notes": "Repainted housing.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2024-06-03",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "96822e22-bcd4-444f-8f8a-368e35ba9357",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0017",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.933464,
+    "lng": -87.721737,
+    "installed_at": "2005-08-18",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "2021-07-27",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "98cbaa52-47f5-4019-8843-8de259cf0b0d",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0018",
+    "type": "valve",
+    "status": "warning",
+    "lat": 41.903938,
+    "lng": -87.655439,
+    "installed_at": "2020-07-28",
+    "ward": "Ward 9",
+    "inspections": []
+  },
+  {
+    "id": "d0afb235-ade6-4f51-a670-93a0fc48f615",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0014",
+    "type": "pipe",
+    "status": "critical",
+    "lat": 41.94748,
+    "lng": -87.7022,
+    "installed_at": "2018-01-28",
+    "ward": "Ward 2",
+    "inspections": []
+  },
+  {
+    "id": "21f8072d-ddb7-470e-b390-b059207bbe21",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0012",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.920011,
+    "lng": -87.690898,
+    "installed_at": "2024-06-03",
+    "ward": "Ward 4",
+    "inspections": []
+  },
+  {
+    "id": "a0b85755-44ca-45a2-a1e5-18a293d228d4",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0019",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.868652,
+    "lng": -87.706482,
+    "installed_at": "2001-05-18",
+    "ward": "Ward 7",
+    "inspections": [
+      {
+        "date": "2004-10-06",
+        "notes": "No issues found.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "de70bd30-00a2-4367-94fb-09f053c93ae7",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0020",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.891874,
+    "lng": -87.703569,
+    "installed_at": "2016-11-22",
+    "ward": "Ward 12",
+    "inspections": []
+  },
+  {
+    "id": "6dfd171a-f7d7-465d-b7c3-b3c965d0b517",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0021",
+    "type": "valve",
+    "status": "warning",
+    "lat": 41.946658,
+    "lng": -87.66969,
+    "installed_at": "2018-12-22",
+    "ward": "Ward 4",
+    "inspections": [
+      {
+        "date": "2022-08-05",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "197dbae1-0bc2-4a72-8c64-8ca2c3231466",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0022",
+    "type": "valve",
+    "status": "warning",
+    "lat": 41.895677,
+    "lng": -87.717594,
+    "installed_at": "2025-08-13",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2025-08-14",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2025-09-11",
+        "notes": "Repainted housing.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "28b2bf21-4d47-4ed6-a666-3769e1d46f82",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0013",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.830081,
+    "lng": -87.638987,
+    "installed_at": "2000-12-01",
+    "ward": "Ward 5",
+    "inspections": []
+  },
+  {
+    "id": "b9da5f8c-4e35-4a80-a027-9a186576a410",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0023",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.873252,
+    "lng": -87.72217,
+    "installed_at": "1997-04-28",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "2001-05-31",
+        "notes": "Routine pressure check.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2016-07-29",
+        "notes": "Repainted housing.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "1edf3bfa-d12e-4eb5-97f4-79b5b212a6ee",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0015",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.839353,
+    "lng": -87.6736,
+    "installed_at": "1995-05-13",
+    "ward": "Ward 7",
+    "inspections": [
+      {
+        "date": "1998-07-16",
+        "notes": "No issues found.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2016-10-15",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "249204c7-ad58-4b1b-be31-537aa43e558c",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0014",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.842384,
+    "lng": -87.695082,
+    "installed_at": "2000-12-21",
+    "ward": "Ward 2",
+    "inspections": [
+      {
+        "date": "2001-05-08",
+        "notes": "Repainted housing.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "379d58f9-dc26-4108-b140-11a1afc2ccfc",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0024",
+    "type": "valve",
+    "status": "critical",
+    "lat": 41.872143,
+    "lng": -87.70976,
+    "installed_at": "2022-08-20",
+    "ward": "Ward 2",
+    "inspections": [
+      {
+        "date": "2023-04-29",
+        "notes": "No issues found.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2023-06-02",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2024-10-14",
+        "notes": "Calibration check passed.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "06ddf6ca-b0c3-4a59-b0f7-ad22c76a8e0f",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0016",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 41.907354,
+    "lng": -87.706424,
+    "installed_at": "2007-10-13",
+    "ward": "Ward 11",
+    "inspections": [
+      {
+        "date": "2012-05-22",
+        "notes": "No issues found.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2019-05-24",
+        "notes": "Routine pressure check.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2021-05-23",
+        "notes": "Repainted housing.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "51045a16-ef15-4b72-9c70-ee97fca45567",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0017",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.876306,
+    "lng": -87.707097,
+    "installed_at": "1995-07-17",
+    "ward": "Ward 3",
+    "inspections": [
+      {
+        "date": "2021-01-13",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "0387f74d-1149-4096-965d-744f0445c1a8",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0018",
+    "type": "pipe",
+    "status": "critical",
+    "lat": 41.895563,
+    "lng": -87.713587,
+    "installed_at": "1998-04-10",
+    "ward": "Ward 5",
+    "inspections": [
+      {
+        "date": "2000-12-25",
+        "notes": "Calibration check passed.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "9db54283-89a3-4811-895c-4fdea3fa4069",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0019",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 41.905428,
+    "lng": -87.6824,
+    "installed_at": "1998-09-12",
+    "ward": "Ward 3",
+    "inspections": [
+      {
+        "date": "2012-08-06",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "4f67448e-10ec-4b1f-a4a5-c736ae59aa52",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0015",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.946918,
+    "lng": -87.715239,
+    "installed_at": "2024-02-24",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "2024-10-25",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "bd9bc648-a876-4e85-bddf-a03aaa8430f8",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0020",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.840346,
+    "lng": -87.688724,
+    "installed_at": "2008-11-15",
+    "ward": "Ward 3",
+    "inspections": []
+  },
+  {
+    "id": "b88416d2-d28f-4f68-8871-d7b38468b74d",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0016",
+    "type": "hydrant",
+    "status": "critical",
+    "lat": 41.914948,
+    "lng": -87.663358,
+    "installed_at": "2018-06-17",
+    "ward": "Ward 5",
+    "inspections": []
+  },
+  {
+    "id": "45a08539-6de8-470a-8e9e-9ebd55c34853",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0017",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 41.845232,
+    "lng": -87.655793,
+    "installed_at": "1996-04-25",
+    "ward": "Ward 9",
+    "inspections": []
+  },
+  {
+    "id": "911f730b-dbff-40b0-bfe6-70f30e3141ec",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0018",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.915479,
+    "lng": -87.675218,
+    "installed_at": "2011-02-26",
+    "ward": "Ward 3",
+    "inspections": [
+      {
+        "date": "2016-11-15",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "620af158-5d2d-404f-b8c5-90730bc57207",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0019",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 41.857409,
+    "lng": -87.681662,
+    "installed_at": "2005-12-20",
+    "ward": "Ward 3",
+    "inspections": []
+  },
+  {
+    "id": "3f8e2d0d-5261-4dec-b979-d5f56b5bc975",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0025",
+    "type": "valve",
+    "status": "warning",
+    "lat": 41.945241,
+    "lng": -87.72664,
+    "installed_at": "2024-05-31",
+    "ward": "Ward 7",
+    "inspections": [
+      {
+        "date": "2024-10-16",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2024-11-10",
+        "notes": "Routine pressure check.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2025-07-27",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "d847dc53-c605-458a-8845-4343ddb449dc",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-S-0006",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 41.926521,
+    "lng": -87.636766,
+    "installed_at": "2015-11-12",
+    "ward": "Ward 5",
+    "inspections": [
+      {
+        "date": "2022-01-24",
+        "notes": "Routine pressure check.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "f8cbab4c-9779-4e84-9e47-2e2276c3e642",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0026",
+    "type": "valve",
+    "status": "warning",
+    "lat": 41.87427,
+    "lng": -87.702298,
+    "installed_at": "2005-11-18",
+    "ward": "Ward 8",
+    "inspections": [
+      {
+        "date": "2010-04-06",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2022-04-23",
+        "notes": "No issues found.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2023-04-14",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "60538c1b-a845-40a1-8249-2e5e005fd0e6",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0027",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.894985,
+    "lng": -87.669586,
+    "installed_at": "2010-01-10",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "2012-05-10",
+        "notes": "No issues found.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2014-08-17",
+        "notes": "Routine pressure check.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "69be173a-850e-40ad-9872-f72ee5b4a1ae",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0020",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.946707,
+    "lng": -87.716475,
+    "installed_at": "2005-05-20",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "2007-04-15",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2015-08-31",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2022-02-26",
+        "notes": "No issues found.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "53853918-bc40-45fa-94f7-6322b362c0d2",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0021",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 41.909493,
+    "lng": -87.717583,
+    "installed_at": "2012-08-17",
+    "ward": "Ward 6",
+    "inspections": [
+      {
+        "date": "2017-11-12",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "1ee89a4c-6811-44e2-9064-7c59774f6354",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0022",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.846333,
+    "lng": -87.656836,
+    "installed_at": "2015-03-02",
+    "ward": "Ward 9",
+    "inspections": [
+      {
+        "date": "2023-10-21",
+        "notes": "Repainted housing.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "9a72083c-b266-486c-b467-88bdd38e13e4",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0023",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.866997,
+    "lng": -87.704824,
+    "installed_at": "2008-08-24",
+    "ward": "Ward 1",
+    "inspections": [
+      {
+        "date": "2015-12-31",
+        "notes": "Replaced gasket.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "2c82989f-fd9c-4bb0-91f1-6485429a4a7c",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0021",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.915339,
+    "lng": -87.638002,
+    "installed_at": "2008-05-28",
+    "ward": "Ward 1",
+    "inspections": [
+      {
+        "date": "2018-07-19",
+        "notes": "Replaced gasket.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2020-11-15",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2025-03-08",
+        "notes": "Replaced gasket.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "f004e897-a15b-4e18-afb0-64065f4b1a97",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-S-0007",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 41.831435,
+    "lng": -87.651115,
+    "installed_at": "2012-12-20",
+    "ward": "Ward 11",
+    "inspections": []
+  },
+  {
+    "id": "cf2e3296-7184-4713-a55f-65b7e709fba6",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0024",
+    "type": "hydrant",
+    "status": "critical",
+    "lat": 41.900334,
+    "lng": -87.642844,
+    "installed_at": "2003-11-14",
+    "ward": "Ward 3",
+    "inspections": []
+  },
+  {
+    "id": "6ee35607-92ea-4324-ac93-e5962b015723",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0025",
+    "type": "hydrant",
+    "status": "critical",
+    "lat": 41.931673,
+    "lng": -87.653156,
+    "installed_at": "1997-04-09",
+    "ward": "Ward 12",
+    "inspections": [
+      {
+        "date": "1998-08-05",
+        "notes": "No issues found.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "9df2372e-9e82-4aae-9d36-16a108dec921",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0026",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.850737,
+    "lng": -87.709602,
+    "installed_at": "2001-09-01",
+    "ward": "Ward 4",
+    "inspections": [
+      {
+        "date": "2020-02-24",
+        "notes": "Routine pressure check.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2024-01-17",
+        "notes": "Calibration check passed.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "8b2d158a-cd5a-4324-be7c-80e9a1791e93",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0022",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 41.875962,
+    "lng": -87.690173,
+    "installed_at": "2006-03-06",
+    "ward": "Ward 1",
+    "inspections": [
+      {
+        "date": "2014-03-25",
+        "notes": "Repainted housing.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2022-03-05",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2023-09-18",
+        "notes": "Calibration check passed.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "78c04ed8-fdd4-4f21-8f03-f0c80effd5bd",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0027",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 41.851578,
+    "lng": -87.699707,
+    "installed_at": "2007-08-08",
+    "ward": "Ward 9",
+    "inspections": [
+      {
+        "date": "2020-09-12",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "382b5b86-f2a3-4efd-bf13-8c80c398c332",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0028",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 41.842016,
+    "lng": -87.667598,
+    "installed_at": "1997-07-05",
+    "ward": "Ward 10",
+    "inspections": [
+      {
+        "date": "2013-06-04",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2014-12-06",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "2460d0d2-9048-43c1-9151-9998f2933585",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0028",
+    "type": "valve",
+    "status": "ok",
+    "lat": 41.926745,
+    "lng": -87.663725,
+    "installed_at": "2010-10-10",
+    "ward": "Ward 10",
+    "inspections": [
+      {
+        "date": "2017-09-14",
+        "notes": "Repainted housing.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      },
+      {
+        "date": "2021-10-24",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2022-12-07",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "573bfc17-2167-435e-8e73-34f233932b6c",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0023",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.9022,
+    "lng": -87.728107,
+    "installed_at": "2022-07-19",
+    "ward": "Ward 12",
+    "inspections": []
+  },
+  {
+    "id": "86bb42c7-d8b2-48b6-9c65-4aa2c63ce21d",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0029",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.926291,
+    "lng": -87.647519,
+    "installed_at": "2001-05-09",
+    "ward": "Ward 6",
+    "inspections": [
+      {
+        "date": "2005-11-19",
+        "notes": "Calibration check passed.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2018-02-09",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2019-02-05",
+        "notes": "No issues found.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "9d1c0838-edc8-4ca8-a3bc-d6f3b18d2c8c",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0024",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.925021,
+    "lng": -87.638737,
+    "installed_at": "2020-03-17",
+    "ward": "Ward 6",
+    "inspections": [
+      {
+        "date": "2023-07-06",
+        "notes": "No issues found.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  },
+  {
+    "id": "c55523ed-fe89-46c8-99cb-3540643ffdae",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0030",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 41.866819,
+    "lng": -87.664593,
+    "installed_at": "2020-09-11",
+    "ward": "Ward 10",
+    "inspections": []
+  },
+  {
+    "id": "2401342a-7f05-4bf5-afca-c5771aa6f7cb",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-S-0008",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 41.902287,
+    "lng": -87.642501,
+    "installed_at": "2020-05-14",
+    "ward": "Ward 6",
+    "inspections": [
+      {
+        "date": "2021-09-13",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      },
+      {
+        "date": "2022-04-24",
+        "notes": "Tightened flange bolts.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "0053f649-b86d-466b-9ba8-27c6c97a24ad",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0031",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.883596,
+    "lng": -87.704805,
+    "installed_at": "2006-07-07",
+    "ward": "Ward 1",
+    "inspections": [
+      {
+        "date": "2022-12-11",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "dd326d9c-c9ea-456a-babf-cebfd42cb1ae",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0025",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.936146,
+    "lng": -87.683157,
+    "installed_at": "1999-07-20",
+    "ward": "Ward 10",
+    "inspections": [
+      {
+        "date": "2006-11-04",
+        "notes": "Replaced gasket.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      },
+      {
+        "date": "2009-08-31",
+        "notes": "Calibration check passed.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      }
+    ]
+  },
+  {
+    "id": "8c0b393a-1333-4bc9-bb63-5ff529310971",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0032",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.832409,
+    "lng": -87.705193,
+    "installed_at": "2011-11-04",
+    "ward": "Ward 2",
+    "inspections": [
+      {
+        "date": "2025-08-08",
+        "notes": "Routine pressure check.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "f9722cc1-349e-44a9-94c2-9d5c19ec0829",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0026",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.881759,
+    "lng": -87.667905,
+    "installed_at": "1997-05-27",
+    "ward": "Ward 4",
+    "inspections": [
+      {
+        "date": "2022-04-04",
+        "notes": "Calibration check passed.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "00fa0eb4-5c5f-48d4-8df4-07b82751ab86",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0027",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.865688,
+    "lng": -87.720888,
+    "installed_at": "2017-01-08",
+    "ward": "Ward 7",
+    "inspections": []
+  },
+  {
+    "id": "fa207403-4ab4-47e3-a360-76812bbba89d",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0028",
+    "type": "pipe",
+    "status": "ok",
+    "lat": 41.928868,
+    "lng": -87.670616,
+    "installed_at": "2004-04-13",
+    "ward": "Ward 2",
+    "inspections": [
+      {
+        "date": "2006-11-15",
+        "notes": "No issues found.",
+        "inspector_id": "c241330b-01a9-471f-9e8a-774bcf36d58b"
+      }
+    ]
+  },
+  {
+    "id": "61a66444-e2af-4629-9efb-336e2f546033",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0033",
+    "type": "hydrant",
+    "status": "ok",
+    "lat": 41.886513,
+    "lng": -87.644987,
+    "installed_at": "2012-05-20",
+    "ward": "Ward 6",
+    "inspections": []
+  },
+  {
+    "id": "b24beb96-c092-4b74-a6b0-7ff60fc79913",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-H-0034",
+    "type": "hydrant",
+    "status": "warning",
+    "lat": 41.835354,
+    "lng": -87.688225,
+    "installed_at": "2020-04-23",
+    "ward": "Ward 11",
+    "inspections": []
+  },
+  {
+    "id": "6319629b-d73e-4bb9-8f9c-a17b8db8dadf",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-P-0029",
+    "type": "pipe",
+    "status": "warning",
+    "lat": 41.910177,
+    "lng": -87.653223,
+    "installed_at": "2005-03-16",
+    "ward": "Ward 9",
+    "inspections": [
+      {
+        "date": "2017-03-19",
+        "notes": "Reported minor seepage, scheduled follow-up.",
+        "inspector_id": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd"
+      }
+    ]
+  },
+  {
+    "id": "ccea5031-844e-450b-a684-390c923b7820",
+    "tenant_id": "33333333-3333-4333-8333-333333333333",
+    "name": "CW-V-0029",
+    "type": "valve",
+    "status": "warning",
+    "lat": 41.887151,
+    "lng": -87.722499,
+    "installed_at": "2017-07-10",
+    "ward": "Ward 10",
+    "inspections": [
+      {
+        "date": "2019-03-05",
+        "notes": "Repainted housing.",
+        "inspector_id": "6b65a6a4-8b81-48f6-b38a-088ca65ed389"
+      },
+      {
+        "date": "2024-06-23",
+        "notes": "Cleaned debris from inlet.",
+        "inspector_id": "47378190-96da-4dac-b2ff-5d2a386ecbe0"
+      }
+    ]
+  }
+]

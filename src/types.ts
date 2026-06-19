@@ -4,6 +4,7 @@ export interface Tenant {
   id: string;
   name: string;
   slug: string;
+  asset_schema: Record<string, unknown>;
   created_at: Date;
 }
 
@@ -24,6 +25,8 @@ export interface CreateTenantInput {
 export interface UpdateTenantInput {
   name?: string;
   slug?: string;
+  /** Additional JSON Schema fields merged into the tenant schema. Base fields are never removed. */
+  asset_schema?: Record<string, unknown>;
 }
 
 export interface CreateUserInput {

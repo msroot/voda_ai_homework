@@ -11,10 +11,11 @@
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS tenants (
-    id          UUID PRIMARY KEY,
-    name        TEXT NOT NULL,
-    slug        TEXT NOT NULL UNIQUE,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id            UUID PRIMARY KEY,
+    name          TEXT NOT NULL,
+    slug          TEXT NOT NULL UNIQUE,
+    asset_schema  JSONB NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -30,10 +31,10 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users(tenant_id);
 
 -- Tenants
-INSERT INTO tenants (id, name, slug, created_at) VALUES
-  ('11111111-1111-4111-8111-111111111111', 'Northwind Utilities', 'northwind-utilities', '2024-01-15T10:00:00Z'),
-  ('22222222-2222-4222-8222-222222222222', 'Beacon Sensors', 'beacon-sensors', '2024-03-22T09:30:00Z'),
-  ('33333333-3333-4333-8333-333333333333', 'Civic Works', 'civic-works', '2024-06-10T14:15:00Z');
+INSERT INTO tenants (id, name, slug, asset_schema, created_at) VALUES
+  ('11111111-1111-4111-8111-111111111111', 'Northwind Utilities', 'northwind-utilities', '{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://voda-ai-homework.local/schemas/asset.json","title":"Asset","type":"object","required":["id","tenant_id","name","type","status","lat","lng","installed_at"],"properties":{"id":{"type":"string","format":"uuid"},"tenant_id":{"type":"string","format":"uuid"},"name":{"type":"string","minLength":1},"type":{"type":"string","minLength":1},"status":{"type":"string","enum":["ok","warning","critical"]},"lat":{"type":"number"},"lng":{"type":"number"},"installed_at":{"type":"string","format":"date"}},"additionalProperties":false}'::jsonb, '2024-01-15T10:00:00Z'),
+  ('22222222-2222-4222-8222-222222222222', 'Beacon Sensors', 'beacon-sensors', '{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://voda-ai-homework.local/schemas/asset.json","title":"Asset","type":"object","required":["id","tenant_id","name","type","status","lat","lng","installed_at"],"properties":{"id":{"type":"string","format":"uuid"},"tenant_id":{"type":"string","format":"uuid"},"name":{"type":"string","minLength":1},"type":{"type":"string","minLength":1},"status":{"type":"string","enum":["ok","warning","critical"]},"lat":{"type":"number"},"lng":{"type":"number"},"installed_at":{"type":"string","format":"date"}},"additionalProperties":false}'::jsonb, '2024-03-22T09:30:00Z'),
+  ('33333333-3333-4333-8333-333333333333', 'Civic Works', 'civic-works', '{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://voda-ai-homework.local/schemas/asset.json","title":"Asset","type":"object","required":["id","tenant_id","name","type","status","lat","lng","installed_at"],"properties":{"id":{"type":"string","format":"uuid"},"tenant_id":{"type":"string","format":"uuid"},"name":{"type":"string","minLength":1},"type":{"type":"string","minLength":1},"status":{"type":"string","enum":["ok","warning","critical"]},"lat":{"type":"number"},"lng":{"type":"number"},"installed_at":{"type":"string","format":"date"}},"additionalProperties":false}'::jsonb, '2024-06-10T14:15:00Z');
 
 -- Users
 INSERT INTO users (id, tenant_id, name, email, role, created_at) VALUES

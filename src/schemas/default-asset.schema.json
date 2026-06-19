@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://voda-ai-homework.local/schemas/asset.json",
+  "title": "Asset",
+  "type": "object",
+  "required": [
+    "id",
+    "tenant_id",
+    "name",
+    "type",
+    "status",
+    "lat",
+    "lng",
+    "installed_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "tenant_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["ok", "warning", "critical"]
+    },
+    "lat": {
+      "type": "number"
+    },
+    "lng": {
+      "type": "number"
+    },
+    "installed_at": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "additionalProperties": false
+}
