@@ -60,4 +60,26 @@ export function queryWithoutTenantContext<T extends pg.QueryResultRow = pg.Query
   return runScoped<T>(true, text, params);
 }
 
+// Runs multiple statements in a single transaction with RLS bypassed. Use for
+// trusted multi-step writes that must be atomic (e.g. tenant onboarding, which
+// has no tenant context yet). The callback receives the transaction client.
+export async function withBypassTransaction<T>(
+  fn: (client: pg.PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT set_config('app.bypass_rls', 'true', true)");
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export default pool;

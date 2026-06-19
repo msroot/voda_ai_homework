@@ -1,5 +1,5 @@
-import { query, queryWithoutTenantContext } from "../db.js";
-import type { Tenant } from "../types.js";
+import { query, withBypassTransaction } from "../db.js";
+import type { Tenant, User, UserRole } from "../types.js";
 
 const tenantColumns = "id, name, slug, asset_schema, created_at";
 
@@ -25,17 +25,44 @@ export async function findTenantAssetSchema(): Promise<Record<string, unknown> |
   return rows[0]?.asset_schema ?? null;
 }
 
-export async function createTenant(
-  id: string,
-  name: string,
-  slug: string,
-  assetSchema: Record<string, unknown>
-): Promise<Tenant> {
-  const { rows } = await queryWithoutTenantContext<Tenant>(
-    `INSERT INTO tenants (id, name, slug, asset_schema) VALUES ($1, $2, $3, $4) RETURNING ${tenantColumns}`,
-    [id, name, slug, JSON.stringify(assetSchema)]
-  );
-  return rows[0];
+// Onboarding: insert the tenant and its first admin user in one transaction so
+// a failure on either leaves no orphaned tenant. Bypasses RLS because there is
+// no tenant context yet.
+export async function createTenantWithAdmin(params: {
+  tenantId: string;
+  name: string;
+  slug: string;
+  assetSchema: Record<string, unknown>;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  passwordHash: string;
+  role: UserRole;
+}): Promise<{ tenant: Tenant; user: User }> {
+  return withBypassTransaction(async (client) => {
+    const tenantResult = await client.query<Tenant>(
+      `INSERT INTO tenants (id, name, slug, asset_schema)
+       VALUES ($1, $2, $3, $4)
+       RETURNING ${tenantColumns}`,
+      [params.tenantId, params.name, params.slug, JSON.stringify(params.assetSchema)]
+    );
+
+    const userResult = await client.query<User>(
+      `INSERT INTO users (id, tenant_id, name, email, password_hash, role)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, tenant_id, name, email, role, created_at`,
+      [
+        params.userId,
+        params.tenantId,
+        params.userName,
+        params.userEmail,
+        params.passwordHash,
+        params.role,
+      ]
+    );
+
+    return { tenant: tenantResult.rows[0], user: userResult.rows[0] };
+  });
 }
 
 export async function updateTenant(

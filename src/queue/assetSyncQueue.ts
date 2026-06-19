@@ -20,7 +20,7 @@ const queue = new Queue<AssetSyncJobData, void, string>(ASSET_SYNC_QUEUE, {
     // Remove on terminal states so the outbox poll can re-enqueue a row if it
     // is still "pending" later (auto-recovery for transient failures).
     removeOnComplete: true,
-    removeOnFail: true,
+    removeOnFail: false,
   },
 });
 

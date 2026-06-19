@@ -48,8 +48,20 @@ export async function createUser(
   passwordHash: string,
   role: UserRole
 ): Promise<User> {
-  const tenantId = getTenantId();
-  const { rows } = await query<User>(
+  return createUserForTenant(id, getTenantId(), name, email, passwordHash, role);
+}
+
+// Used by tenant onboarding, which runs without a tenant context and inserts the
+// first user into a brand-new tenant, so it bypasses RLS with an explicit tenant.
+export async function createUserForTenant(
+  id: string,
+  tenantId: string,
+  name: string,
+  email: string,
+  passwordHash: string,
+  role: UserRole
+): Promise<User> {
+  const { rows } = await queryWithoutTenantContext<User>(
     `INSERT INTO users (id, tenant_id, name, email, password_hash, role)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING ${userColumns}`,

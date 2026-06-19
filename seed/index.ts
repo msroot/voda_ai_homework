@@ -3,6 +3,12 @@ import { join } from "path";
 import pg from "pg";
 import { hashPassword } from "../src/auth/password.js";
 import { normalizeAssetData } from "../src/assetData.js";
+import { closeMongo } from "../src/mongo.js";
+import {
+  ensureAssetIndexes,
+  replaceAssetDocuments,
+} from "../src/repositories/assetMongoRepository.js";
+import type { Asset } from "../src/types.js";
 import { tenants } from "./tenants.js";
 import { users } from "./users.js";
 
@@ -89,6 +95,8 @@ async function seedAssets() {
     }
   }
 
+  const assetDocs: Asset[] = [];
+
   for (const asset of assets) {
     const createdBy = defaultUserByTenant.get(asset.tenant_id);
     if (!createdBy) {
@@ -97,6 +105,8 @@ async function seedAssets() {
 
     const normalizedAsset = normalizeAssetData(asset, asset.tenant_id, asset.id);
 
+    // Seeded rows are written directly to Mongo below, so they start as
+    // 'synced' and are not re-processed by the outbox/worker.
     await adminPool.query(
       `INSERT INTO assets (id, tenant_id, status, data, created_by)
        VALUES ($1, $2, $3, $4, $5)
@@ -108,12 +118,25 @@ async function seedAssets() {
       [
         asset.id,
         asset.tenant_id,
-        "active",
+        "synced",
         JSON.stringify(normalizedAsset),
         createdBy,
       ]
     );
+
+    assetDocs.push({
+      id: asset.id,
+      tenant_id: asset.tenant_id,
+      status: "synced",
+      data: normalizedAsset,
+      created_by: createdBy,
+      created_at: new Date(),
+    });
   }
+
+  // Mirror the seed set into the Mongo read model and ensure its indexes.
+  await replaceAssetDocuments(assetDocs);
+  await ensureAssetIndexes();
 
   return assets.length;
 }
@@ -138,6 +161,6 @@ if (isDirectRun) {
         console.error(err);
         process.exit(1);
       })
-      .finally(() => adminPool.end());
+      .finally(() => Promise.all([adminPool.end(), closeMongo()]));
   });
 }

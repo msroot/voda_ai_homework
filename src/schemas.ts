@@ -22,6 +22,11 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export const createTenantSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
+  admin: z.object({
+    name: z.string().min(1),
+    email: z.string().email(),
+    password: z.string().min(1),
+  }),
 });
 export type CreateTenantInput = z.infer<typeof createTenantSchema>;
 

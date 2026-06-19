@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { hashPassword } from "../auth/password.js";
 import {
   createDefaultAssetSchema,
   extendAssetSchema,
@@ -8,13 +9,13 @@ import {
   isUniqueViolation,
 } from "../errors/appError.js";
 import {
-  createTenant as createTenantRecord,
+  createTenantWithAdmin,
   deleteTenant as deleteTenantRecord,
   findAllTenants,
   findTenantById,
   updateTenant as updateTenantRecord,
 } from "../repositories/tenantRepository.js";
-import type { CreateTenantInput, Tenant, UpdateTenantInput } from "../types.js";
+import type { CreateTenantInput, Tenant, UpdateTenantInput, User } from "../types.js";
 
 export async function listTenants(): Promise<Tenant[]> {
   return findAllTenants();
@@ -30,19 +31,36 @@ export async function getTenant(id: string): Promise<Tenant> {
   return tenant;
 }
 
-export async function createTenant(input: CreateTenantInput): Promise<Tenant> {
-  const { name, slug } = input;
+// Onboarding: creates the tenant and its first admin user atomically (one
+// transaction) so the new tenant can immediately authenticate and manage
+// itself, with no risk of an orphaned tenant if the user insert fails.
+export async function createTenant(
+  input: CreateTenantInput
+): Promise<{ tenant: Tenant; user: User }> {
+  const { name, slug, admin } = input;
+  const passwordHash = await hashPassword(admin.password);
 
   try {
-    return await createTenantRecord(
-      randomUUID(),
+    return await createTenantWithAdmin({
+      tenantId: randomUUID(),
       name,
       slug,
-      createDefaultAssetSchema()
-    );
+      assetSchema: createDefaultAssetSchema(),
+      userId: randomUUID(),
+      userName: admin.name,
+      userEmail: admin.email,
+      passwordHash,
+      role: "admin",
+    });
   } catch (err) {
     if (isUniqueViolation(err)) {
-      throw new AppError(409, "slug already exists");
+      const constraint = (err as { constraint?: string }).constraint ?? "";
+      throw new AppError(
+        409,
+        constraint.includes("email")
+          ? "admin email already exists"
+          : "slug already exists"
+      );
     }
     throw err;
   }

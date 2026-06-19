@@ -183,3 +183,14 @@ export async function upsertAssetDocument(asset: Asset): Promise<void> {
     .collection<AssetDocument>(COLLECTION)
     .updateOne({ _id }, { $set: fields }, { upsert: true });
 }
+
+// Seeding: replace the whole collection with the seed set in one pass.
+export async function replaceAssetDocuments(assets: Asset[]): Promise<void> {
+  const db = await getMongoDb();
+  const collection = db.collection<AssetDocument>(COLLECTION);
+
+  await collection.deleteMany({});
+  if (assets.length > 0) {
+    await collection.insertMany(assets.map(toDocument));
+  }
+}
