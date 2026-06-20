@@ -61,22 +61,21 @@ export async function createUser(
   return rows[0];
 }
 
+// email is immutable after creation, so it is intentionally not updatable.
 export async function updateUser(
   id: string,
   name: string | null,
-  email: string | null,
   passwordHash: string | null,
   role: UserRole | null
 ): Promise<User | null> {
   const { rows } = await query<User>(
     `UPDATE users
      SET name = COALESCE($2, name),
-         email = COALESCE($3, email),
-         password_hash = COALESCE($4, password_hash),
-         role = COALESCE($5, role)
+         password_hash = COALESCE($3, password_hash),
+         role = COALESCE($4, role)
      WHERE id = $1
      RETURNING ${userColumns}`,
-    [id, name, email, passwordHash, role]
+    [id, name, passwordHash, role]
   );
   return rows[0] ?? null;
 }
