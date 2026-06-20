@@ -8,7 +8,7 @@ This document explains how the multi-tenant asset service works end to end: comp
 
 1. [System overview](#1-system-overview)
 2. [Process layout](#2-process-layout)
-3. [Write path (create / update / delete)](#3-write-path-create--update--delete)
+3. [Write path (create / update / delete)](#3-write-path-create--update--delete) — includes [idempotency](#34-idempotency--asset-id-as-the-stable-key)
 4. [Read path (list / get)](#4-read-path-list--get)
 5. [Asset validation & dynamic metadata](#5-asset-validation--dynamic-metadata)
 6. [Patterns & why](#6-patterns--why)
@@ -163,13 +163,24 @@ SELECT id, tenant_id, modified_by
  FOR UPDATE SKIP LOCKED;
 ```
 
-If the worker fails after enqueue, BullMQ retries; idempotent Mongo upserts prevent duplicate documents. Rows left in `processing` can be recovered by a future poll policy or ops tooling.
+Rows left in `processing` can be recovered by a future poll policy or ops tooling.
 
-### 3.4 Delete path
+### 3.4 Idempotency — asset `id` as the stable key
+
+Sync jobs can be retried (worker crash, BullMQ backoff, duplicate enqueue). The system stays correct because **idempotency** is built into the pipeline: the Postgres **asset `id`** (UUID) is the single deduplication key from queue to Mongo.
+
+| Layer | Key | Effect |
+|-------|-----|--------|
+| **BullMQ** | `jobId = assetId` | Re-enqueue for the same asset replaces the pending job instead of duplicating work |
+| **Mongo** | `_id = asset.id` | `upsertAssetDocument` updates the existing document or inserts once — retries never create a second document |
+
+Running the same sync job twice (or more) has the same end result as running it once: **one Mongo document per asset id**.
+
+### 3.5 Delete path
 
 Delete sets `action=delete` and sync `status=pending`. Worker removes the Mongo document and Postgres hard-deletes the row after processing (tombstone flow).
 
-### 3.5 API response timing
+### 3.6 API response timing
 
 Create/update responses are built from Postgres immediately. Fields `synced_at`, `synced_by`, and `updated_at` are **null** until the worker completes. Clients that need the read model should poll `GET /assets/:id` or wait briefly.
 
@@ -293,7 +304,7 @@ The end-to-end path is: **client payload → AJV (tenant config) → Postgres wr
 | **Transactional onboarding** | `createTenantWithAdmin` | Tenant + schema config + admin user in one `BEGIN/COMMIT` |
 | **Pessimistic concurrency** | Listener transaction | No duplicate enqueue across parallel pollers |
 | **CQRS (light)** | PG write / Mongo read | Optimize each path independently |
-| **Read model sync** | Worker + BullMQ | Retryable, scalable projection updates |
+| **Read model sync** | Worker + BullMQ | Retryable projection updates; **idempotency** via `asset.id` → Mongo `_id` |
 | **AsyncLocalStorage context** | `authContext` | Tenant/user available deep in stack without parameter drilling |
 | **RLS** | Postgres policies | Defense in depth for multi-tenant SQL |
 | **Zod validation** | `schemas.ts` + `validateRequest` | HTTP input validation separate from domain types (`types.ts`) |
