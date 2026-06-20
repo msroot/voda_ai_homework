@@ -16,8 +16,8 @@ import {
   setCachedUser,
   setCachedUserList,
 } from "../cache.js";
-import type { Pagination } from "../schemas.js";
-import type { CreateUserInput, Paginated, UpdateUserInput } from "../types.js";
+import type { CreateUserInput, Pagination, UpdateUserInput } from "../schemas.js";
+import type { Paginated } from "../types.js";
 
 export async function listUsers(
   pagination: Pagination

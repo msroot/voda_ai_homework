@@ -1,15 +1,10 @@
 import { signToken, verifyPassword } from "../auth.js";
-import { userToResponse, type UserResponse } from "../responses.js";
+import { userToResponse, type LoginResponse } from "../responses.js";
 import { AppError } from "../appError.js";
+import type { LoginInput } from "../schemas.js";
 import { findUserByEmail } from "../repositories/userRepository.js";
-import type { LoginInput } from "../types.js";
 
-interface LoginResult {
-  token: string;
-  user: UserResponse;
-}
-
-export async function login(input: LoginInput): Promise<LoginResult> {
+export async function login(input: LoginInput): Promise<LoginResponse> {
   const found = await findUserByEmail(input.email);
 
   if (!found || !(await verifyPassword(input.password, found.password_hash))) {

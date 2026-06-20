@@ -1,6 +1,7 @@
 import { getTenantId } from "../auth.js";
 import { query, queryWithoutTenantContext } from "../clients/postgres.js";
-import type { User, UserRole } from "../types.js";
+import type { UserRole } from "../schemas.js";
+import type { User } from "../types.js";
 
 const userColumns = "id, tenant_id, name, email, role, created_at";
 

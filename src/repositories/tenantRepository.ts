@@ -1,6 +1,7 @@
 import { getTenantId } from "../auth.js";
 import { query, withBypassTransaction } from "../clients/postgres.js";
-import type { Tenant, User, UserRole } from "../types.js";
+import type { UserRole } from "../schemas.js";
+import type { Tenant, User } from "../types.js";
 
 const tenantColumns = "id, name, slug, created_at";
 

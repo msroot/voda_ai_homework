@@ -1,6 +1,11 @@
 import { randomUUID } from "crypto";
 import { hashPassword, getTenantId, getUserId } from "../auth.js";
-import { formatSchemaVersion, userToResponse, type UserResponse } from "../responses.js";
+import {
+  tenantToResponse,
+  userToResponse,
+  type TenantResponse,
+  type UserResponse,
+} from "../responses.js";
 import {
   buildTenantAssetSchema,
   createDefaultAssetSchema,
@@ -9,6 +14,7 @@ import {
   validateAssetSchemaBaseFields,
 } from "../assetSchema.js";
 import { AppError, isUniqueViolation } from "../appError.js";
+import type { CreateTenantInput, UpdateTenantInput } from "../schemas.js";
 import {
   createTenantWithAdmin,
   findLatestAssetSchema,
@@ -16,16 +22,7 @@ import {
   updateTenant as updateTenantRecord,
 } from "../repositories/tenantRepository.js";
 import { findUserById } from "../repositories/userRepository.js";
-import type {
-  CreateTenantInput,
-  TenantWithSchema,
-  UpdateTenantInput,
-} from "../types.js";
 
-// Authoritative (DB-backed) check that the caller is an admin of their own
-// tenant. findUserById is RLS-scoped, so the user is only found when they belong
-// to the caller's tenant; the role comes from the DB, not the (possibly stale)
-// JWT claim.
 function finalizeAssetSchema(schema: Record<string, unknown>): Record<string, unknown> {
   const normalized = normalizeAssetSchema(schema);
 
@@ -50,9 +47,7 @@ async function assertCurrentUserIsTenantAdmin(): Promise<void> {
   }
 }
 
-// Returns the caller's own tenant (derived from the auth context), never an
-// arbitrary one, together with its current (latest) asset schema and version.
-export async function getCurrentTenant(): Promise<TenantWithSchema> {
+export async function getCurrentTenant(): Promise<TenantResponse> {
   const tenant = await findTenantById(getTenantId());
 
   if (!tenant) {
@@ -65,14 +60,12 @@ export async function getCurrentTenant(): Promise<TenantWithSchema> {
     throw new AppError(500, "Tenant asset schema missing");
   }
 
-  return { ...tenant, schema_version: formatSchemaVersion(latest.version), asset_schema: latest.schema };
+  return tenantToResponse(tenant, latest.version, latest.schema);
 }
 
-// Onboarding: creates the tenant, version-1 asset schema, and first admin user
-// atomically so the tenant can create assets immediately after login.
 export async function createTenant(
   input: CreateTenantInput
-): Promise<{ tenant: TenantWithSchema; user: UserResponse }> {
+): Promise<{ tenant: TenantResponse; user: UserResponse }> {
   const { name, slug, admin, asset_schema } = input;
   const passwordHash = await hashPassword(admin.password);
 
@@ -96,11 +89,7 @@ export async function createTenant(
     });
 
     return {
-      tenant: {
-        ...tenant,
-        schema_version: formatSchemaVersion(1),
-        asset_schema: assetSchema,
-      },
+      tenant: tenantToResponse(tenant, 1, assetSchema),
       user: userToResponse(user),
     };
   } catch (err) {
@@ -117,12 +106,9 @@ export async function createTenant(
   }
 }
 
-// Updates tenant metadata (name/slug). The asset schema is immutable after
-// tenant creation — changing it would leave existing assets on an old version
-// with a different shape than new ones.
 export async function updateCurrentTenant(
   input: UpdateTenantInput
-): Promise<TenantWithSchema> {
+): Promise<TenantResponse> {
   await assertCurrentUserIsTenantAdmin();
 
   const tenantId = getTenantId();
@@ -147,5 +133,5 @@ export async function updateCurrentTenant(
     throw new AppError(500, "Tenant asset schema missing");
   }
 
-  return { ...tenant, schema_version: formatSchemaVersion(latest.version), asset_schema: latest.schema };
+  return tenantToResponse(tenant, latest.version, latest.schema);
 }

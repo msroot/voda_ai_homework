@@ -1,4 +1,4 @@
-import type { Asset, User } from "./types.js";
+import type { Asset, Tenant, User } from "./types.js";
 
 /** Public label for an asset schema version (API + reports). DB/Mongo store the integer. */
 export function formatSchemaVersion(version: number): string {
@@ -13,7 +13,6 @@ export function parseSchemaVersion(label: string): number {
   return Number(match[1]);
 }
 
-/** Public asset shape returned by every asset endpoint (create, update, get, list). */
 export interface AssetResponse {
   id: string;
   tenant_id: string;
@@ -43,7 +42,6 @@ export interface MongoAssetRecord {
   updated_at: Date;
 }
 
-/** Public user shape returned by every user endpoint. */
 export interface UserResponse {
   id: string;
   tenant_id: string;
@@ -53,10 +51,58 @@ export interface UserResponse {
   created_at: string;
 }
 
+export interface TenantResponse {
+  id: string;
+  name: string;
+  slug: string;
+  schema_version: string;
+  asset_schema: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: UserResponse;
+}
+
+export interface TenantOverviewReport {
+  tenant: Pick<TenantResponse, "id" | "name" | "slug">;
+  users: {
+    total: number;
+    by_role: Record<string, number>;
+  };
+  asset_schema: {
+    versions_count: number;
+    versions: string[];
+    current_version: string;
+  };
+  assets: {
+    total: number;
+    by_status: Record<string, number>;
+    by_schema_version: Record<string, number>;
+  };
+  generated_at: string;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
+}
+
+export function tenantToResponse(
+  tenant: Tenant,
+  schemaVersion: number,
+  assetSchema: Record<string, unknown>
+): TenantResponse {
+  return {
+    id: tenant.id,
+    name: tenant.name,
+    slug: tenant.slug,
+    schema_version: formatSchemaVersion(schemaVersion),
+    asset_schema: assetSchema,
+    created_at: tenant.created_at.toISOString(),
+  };
 }
 
 export function assetRecordToResponse(

@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import bcrypt from "bcryptjs";
 import jwt, { type SignOptions } from "jsonwebtoken";
-import type { UserRole } from "./types.js";
+import type { UserRole } from "./schemas.js";
 
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-me";

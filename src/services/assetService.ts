@@ -28,8 +28,8 @@ import {
   setCachedAsset,
   setCachedAssetList,
 } from "../cache.js";
-import type { AssetFilter } from "../schemas.js";
-import type { CreateAssetInput, Paginated, UpdateAssetInput } from "../types.js";
+import type { AssetFilter, AssetWriteInput } from "../schemas.js";
+import type { Paginated } from "../types.js";
 
 export async function listAssets(
   filter: AssetFilter
@@ -70,7 +70,7 @@ export async function getAsset(id: string): Promise<AssetResponse> {
   return response;
 }
 
-export async function createAsset(input: CreateAssetInput): Promise<AssetResponse> {
+export async function createAsset(input: AssetWriteInput): Promise<AssetResponse> {
   const { data } = input;
   const userId = getUserId();
   const tenantId = getTenantId();
@@ -108,7 +108,7 @@ export async function createAsset(input: CreateAssetInput): Promise<AssetRespons
 
 export async function updateAsset(
   id: string,
-  input: UpdateAssetInput
+  input: AssetWriteInput
 ): Promise<AssetResponse> {
   const { data } = input;
 

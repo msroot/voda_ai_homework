@@ -1,4 +1,4 @@
-import { formatSchemaVersion } from "../responses.js";
+import { formatSchemaVersion, type TenantOverviewReport } from "../responses.js";
 import { getTenantId } from "../auth.js";
 import { AppError } from "../appError.js";
 import {
@@ -11,25 +11,6 @@ import {
   findTenantById,
 } from "../repositories/tenantRepository.js";
 import { countUsersByRole } from "../repositories/userRepository.js";
-
-export interface TenantOverviewReport {
-  tenant: { id: string; name: string; slug: string };
-  users: {
-    total: number;
-    by_role: Record<string, number>;
-  };
-  asset_schema: {
-    versions_count: number;
-    versions: string[];
-    current_version: string;
-  };
-  assets: {
-    total: number;
-    by_status: Record<string, number>;
-    by_schema_version: Record<string, number>;
-  };
-  generated_at: string;
-}
 
 function statusCountMap(
   rows: Array<{ status: string | null; count: number }>
@@ -51,8 +32,6 @@ function schemaVersionCountMap(
   return map;
 }
 
-// Cross-store overview: tenant + users + schema metadata from Postgres,
-// asset aggregates from MongoDB, scoped to the caller's tenant.
 export async function getTenantOverviewReport(): Promise<TenantOverviewReport> {
   const tenantId = getTenantId();
 

@@ -19,7 +19,6 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
-// Tenant admins extend the asset schema with custom fields under extra_fields.
 export const assetSchemaExtensionSchema = z.object({
   properties: z.record(z.string(), z.unknown()).optional(),
   required: z.array(z.string()).optional(),
@@ -57,7 +56,6 @@ export const createUserSchema = z.object({
 });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
-// email is immutable after creation, so it is intentionally not updatable here.
 export const updateUserSchema = z
   .object({
     name: z.string().min(1).optional(),
@@ -73,18 +71,13 @@ export const updateUserSchema = z
   );
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 
-export const createAssetSchema = z.object({
+export const assetWriteSchema = z.object({
   data: z.record(z.string(), z.unknown()),
 });
-export type CreateAssetInput = z.infer<typeof createAssetSchema>;
+export type AssetWriteInput = z.infer<typeof assetWriteSchema>;
 
 export const assetFilterSchema = paginationSchema.extend({
   type: z.string().min(1).optional(),
   status: z.string().min(1).optional(),
 });
 export type AssetFilter = z.infer<typeof assetFilterSchema>;
-
-export const updateAssetSchema = z.object({
-  data: z.record(z.string(), z.unknown()),
-});
-export type UpdateAssetInput = z.infer<typeof updateAssetSchema>;
