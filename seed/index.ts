@@ -47,12 +47,11 @@ async function seedTenants() {
       [tenant.id, tenant.name, tenant.slug, tenant.created_at]
     );
 
-    // Seed each tenant's schema as version 1.
+    // Immutable: insert version 1 only; PG blocks updates/deletes.
     await adminPool.query(
       `INSERT INTO asset_schemas (tenant_id, version, schema)
        VALUES ($1, 1, $2)
-       ON CONFLICT (tenant_id, version) DO UPDATE SET
-         schema = EXCLUDED.schema`,
+       ON CONFLICT (tenant_id) DO NOTHING`,
       [tenant.id, JSON.stringify(tenant.asset_schema)]
     );
   }

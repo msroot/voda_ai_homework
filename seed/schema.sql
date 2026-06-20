@@ -5,16 +5,15 @@ CREATE TABLE IF NOT EXISTS tenants (
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Versioned tenant asset schemas. Each tenant schema change inserts a new
--- version (never mutates an old one). New assets are validated against and
--- pinned to the latest version; existing assets keep validating against the
--- version they were created with.
+-- Immutable tenant asset schema. Inserted once at tenant creation (version 1).
+-- Assets are validated against and pinned to this version.
 CREATE TABLE IF NOT EXISTS asset_schemas (
     tenant_id   UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    version     INT NOT NULL,
+    version     INT NOT NULL CHECK (version = 1),
     schema      JSONB NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (tenant_id, version)
+    PRIMARY KEY (tenant_id, version),
+    UNIQUE (tenant_id)
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -46,9 +45,7 @@ CREATE TABLE IF NOT EXISTS assets (
     -- 'delete' (a tombstone; the worker removes the Mongo doc, then hard-deletes
     -- this row).
     action      TEXT NOT NULL DEFAULT 'upsert',
-    -- Asset schema version this asset was validated against. Updates re-validate
-    -- against this same version, so a later tenant schema change never breaks
-    -- edits to older assets.
+    -- Asset schema version this asset was validated against (always 1).
     schema_version INT NOT NULL,
     data        JSONB NOT NULL,
     created_by  UUID NOT NULL REFERENCES users(id),
@@ -83,6 +80,24 @@ RETURNS BOOLEAN AS $$
   SELECT COALESCE(current_setting('app.bypass_rls', true), '') = 'true';
 $$ LANGUAGE sql STABLE;
 
+-- asset_schemas rows are insert-once: no updates or deletes (even for superusers).
+CREATE OR REPLACE FUNCTION asset_schemas_immutable()
+RETURNS TRIGGER AS $$
+BEGIN
+  RAISE EXCEPTION 'asset_schemas rows cannot be updated or deleted';
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS asset_schemas_no_update ON asset_schemas;
+CREATE TRIGGER asset_schemas_no_update
+  BEFORE UPDATE ON asset_schemas
+  FOR EACH ROW EXECUTE FUNCTION asset_schemas_immutable();
+
+DROP TRIGGER IF EXISTS asset_schemas_no_delete ON asset_schemas;
+CREATE TRIGGER asset_schemas_no_delete
+  BEFORE DELETE ON asset_schemas
+  FOR EACH ROW EXECUTE FUNCTION asset_schemas_immutable();
+
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
 ALTER TABLE asset_schemas ENABLE ROW LEVEL SECURITY;
@@ -99,10 +114,14 @@ CREATE POLICY tenants_tenant_isolation ON tenants
   WITH CHECK (app_bypass_rls() OR id = app_current_tenant_id());
 
 DROP POLICY IF EXISTS asset_schemas_tenant_isolation ON asset_schemas;
-CREATE POLICY asset_schemas_tenant_isolation ON asset_schemas
-  FOR ALL
-  USING (app_bypass_rls() OR tenant_id = app_current_tenant_id())
-  WITH CHECK (app_bypass_rls() OR tenant_id = app_current_tenant_id());
+DROP POLICY IF EXISTS asset_schemas_select ON asset_schemas;
+DROP POLICY IF EXISTS asset_schemas_insert ON asset_schemas;
+CREATE POLICY asset_schemas_select ON asset_schemas
+  FOR SELECT
+  USING (app_bypass_rls() OR tenant_id = app_current_tenant_id());
+CREATE POLICY asset_schemas_insert ON asset_schemas
+  FOR INSERT
+  WITH CHECK (app_bypass_rls());
 
 DROP POLICY IF EXISTS users_tenant_isolation ON users;
 CREATE POLICY users_tenant_isolation ON users
@@ -129,3 +148,4 @@ $$;
 
 GRANT USAGE ON SCHEMA public TO voda_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO voda_app;
+REVOKE UPDATE, DELETE ON asset_schemas FROM voda_app;

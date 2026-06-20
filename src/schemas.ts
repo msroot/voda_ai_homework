@@ -42,14 +42,10 @@ export const updateTenantSchema = z
   .object({
     name: z.string().min(1).optional(),
     slug: z.string().min(1).optional(),
-    asset_schema: assetSchemaExtensionSchema.optional(),
   })
   .refine(
-    (data) =>
-      data.name !== undefined ||
-      data.slug !== undefined ||
-      data.asset_schema !== undefined,
-    { message: "at least one of name, slug, or asset_schema is required" }
+    (data) => data.name !== undefined || data.slug !== undefined,
+    { message: "at least one of name or slug is required" }
   );
 export type UpdateTenantInput = z.infer<typeof updateTenantSchema>;
 

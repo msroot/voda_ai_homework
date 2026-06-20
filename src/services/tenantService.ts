@@ -4,7 +4,6 @@ import { getTenantId, getUserId } from "../context/authContext.js";
 import {
   buildTenantAssetSchema,
   createDefaultAssetSchema,
-  extendAssetSchema,
   normalizeAssetSchema,
   validateAssetSchemaBaseFields,
 } from "../assets/mergeAssetSchema.js";
@@ -17,13 +16,11 @@ import {
   createTenantWithAdmin,
   findLatestAssetSchema,
   findTenantById,
-  insertNextAssetSchema,
   updateTenant as updateTenantRecord,
 } from "../repositories/tenantRepository.js";
 import { findUserById } from "../repositories/userRepository.js";
 import type {
   CreateTenantInput,
-  Tenant,
   TenantWithSchema,
   UpdateTenantInput,
   User,
@@ -124,23 +121,20 @@ export async function createTenant(
   }
 }
 
-// Updates the caller's own tenant. A provided asset_schema is merged into (not
-// replaced) the current schema and stored as a NEW version; older assets keep
-// validating against the version they were created with.
+// Updates tenant metadata (name/slug). The asset schema is immutable after
+// tenant creation — changing it would leave existing assets on an old version
+// with a different shape than new ones.
 export async function updateCurrentTenant(
   input: UpdateTenantInput
 ): Promise<TenantWithSchema> {
   await assertCurrentUserIsTenantAdmin();
 
   const tenantId = getTenantId();
-  const { name, slug, asset_schema } = input;
+  const { name, slug } = input;
 
-  let tenant: Tenant | null;
+  let tenant;
   try {
-    tenant =
-      name !== undefined || slug !== undefined
-        ? await updateTenantRecord(tenantId, name ?? null, slug ?? null)
-        : await findTenantById(tenantId);
+    tenant = await updateTenantRecord(tenantId, name ?? null, slug ?? null);
   } catch (err) {
     if (isUniqueViolation(err)) {
       throw new AppError(409, "slug already exists");
@@ -152,17 +146,9 @@ export async function updateCurrentTenant(
     throw new AppError(404, "Tenant not found");
   }
 
-  let latest = await findLatestAssetSchema();
+  const latest = await findLatestAssetSchema();
   if (!latest) {
     throw new AppError(500, "Tenant asset schema missing");
-  }
-
-  // A schema extension creates a new version that becomes the current one.
-  if (asset_schema !== undefined) {
-    const merged = finalizeAssetSchema(
-      extendAssetSchema(latest.schema, asset_schema)
-    );
-    latest = await insertNextAssetSchema(JSON.stringify(merged));
   }
 
   return { ...tenant, schema_version: latest.version, asset_schema: latest.schema };

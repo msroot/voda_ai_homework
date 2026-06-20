@@ -17,14 +17,11 @@ export async function findTenantById(id: string): Promise<Tenant | null> {
   return rows[0] ?? null;
 }
 
-// The current (highest-version) asset schema for the caller's tenant. New assets
-// validate against and are pinned to this version.
+// The tenant's immutable asset schema (version 1).
 export async function findLatestAssetSchema(): Promise<AssetSchemaVersion | null> {
   const { rows } = await query<AssetSchemaVersion>(
     `SELECT version, schema FROM asset_schemas
-      WHERE tenant_id = $1
-      ORDER BY version DESC
-      LIMIT 1`,
+      WHERE tenant_id = $1`,
     [getTenantId()]
   );
   return rows[0] ?? null;
@@ -40,23 +37,6 @@ export async function findAssetSchemaByVersion(
     [getTenantId(), version]
   );
   return rows[0]?.schema ?? null;
-}
-
-// Appends a new schema version (latest + 1) for the caller's tenant. The version
-// is computed in-statement so it's correct under the normal (low-concurrency)
-// admin update path.
-export async function insertNextAssetSchema(
-  schema: string
-): Promise<AssetSchemaVersion> {
-  const { rows } = await query<AssetSchemaVersion>(
-    `INSERT INTO asset_schemas (tenant_id, version, schema)
-     SELECT $1, COALESCE(MAX(version), 0) + 1, $2::jsonb
-       FROM asset_schemas
-      WHERE tenant_id = $1
-     RETURNING version, schema`,
-    [getTenantId(), schema]
-  );
-  return rows[0];
 }
 
 // Onboarding: insert the tenant and its first admin user in one transaction so
@@ -106,8 +86,7 @@ export async function createTenantWithAdmin(params: {
   });
 }
 
-// Updates tenant metadata only. The asset schema is versioned separately via
-// insertNextAssetSchema.
+// Updates tenant metadata only. The asset schema is immutable after creation.
 export async function updateTenant(
   id: string,
   name: string | null,

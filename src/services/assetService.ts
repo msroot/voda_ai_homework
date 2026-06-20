@@ -131,8 +131,7 @@ export async function updateAsset(
   let nextData = existing.data;
 
   if (data !== undefined) {
-    // Re-validate against the schema version this asset was created with, so a
-    // later tenant schema change can't break edits to an older asset.
+    // Re-validate against the tenant's immutable asset schema.
     const schema = await findAssetSchemaByVersion(existing.schema_version);
     if (!schema) {
       throw new AppError(404, "Asset schema version not found");
