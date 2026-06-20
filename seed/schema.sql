@@ -20,7 +20,14 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS assets (
     id          UUID PRIMARY KEY,
     tenant_id   UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    -- Outbox sync state for the read model: 'pending' (awaiting the worker) or
+    -- 'synced'. The row is the outbox entry, so the write and the sync marker
+    -- commit together in one transaction.
     status      TEXT NOT NULL DEFAULT 'pending',
+    -- Operation the worker must apply to MongoDB: 'upsert' (create/update) or
+    -- 'delete' (a tombstone; the worker removes the Mongo doc, then hard-deletes
+    -- this row).
+    action      TEXT NOT NULL DEFAULT 'upsert',
     data        JSONB NOT NULL,
     created_by  UUID NOT NULL REFERENCES users(id),
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()

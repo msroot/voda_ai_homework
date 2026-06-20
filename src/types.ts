@@ -28,10 +28,13 @@ export interface User {
   created_at: Date;
 }
 
+export type AssetAction = "upsert" | "delete";
+
 export interface Asset {
   id: string;
   tenant_id: string;
   status: string;
+  action: AssetAction;
   data: Record<string, unknown>;
   created_by: string;
   created_at: Date;

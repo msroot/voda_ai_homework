@@ -4,12 +4,11 @@ import { getTenantId, getUserId } from "../context/authContext.js";
 import { AppError, isUniqueViolation } from "../errors/appError.js";
 import {
   createAsset as createAssetRecord,
-  deleteAsset as deleteAssetRecord,
+  markAssetForDeletion,
   findAssetById,
   updateAsset as updateAssetRecord,
 } from "../repositories/assetRepository.js";
 import {
-  deleteAssetDocument,
   findAssetDocumentById,
   findAssetDocuments,
   type AssetView,
@@ -151,13 +150,15 @@ export async function updateAsset(
 }
 
 export async function deleteAsset(id: string): Promise<void> {
-  const deleted = await deleteAssetRecord(id);
+  // Same outbox path as create/update: mark the row as a delete tombstone in
+  // Postgres and let the worker remove it from MongoDB, then hard-delete the
+  // row. The cache is expired now so reads don't serve the soon-to-be-gone asset
+  // from Redis.
+  const marked = await markAssetForDeletion(id);
 
-  if (!deleted) {
+  if (!marked) {
     throw new AppError(404, "Asset not found");
   }
 
-  // Keep the Mongo read model in sync with the Postgres source of truth.
-  await deleteAssetDocument(id);
   await invalidateTenantAssets(getTenantId());
 }

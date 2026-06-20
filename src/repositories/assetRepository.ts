@@ -8,7 +8,8 @@ interface PendingAsset {
   created_by: string;
 }
 
-const assetColumns = "id, tenant_id, status, data, created_by, created_at";
+const assetColumns =
+  "id, tenant_id, status, action, data, created_by, created_at";
 
 export async function findAssetById(id: string): Promise<Asset | null> {
   const { rows } = await query<Asset>(
@@ -26,8 +27,8 @@ export async function createAsset(
 ): Promise<Asset> {
   const tenantId = getTenantId();
   const { rows } = await query<Asset>(
-    `INSERT INTO assets (id, tenant_id, status, data, created_by)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO assets (id, tenant_id, status, action, data, created_by)
+     VALUES ($1, $2, $3, 'upsert', $4, $5)
      RETURNING ${assetColumns}`,
     [id, tenantId, status, JSON.stringify(data), createdBy]
   );
@@ -42,7 +43,8 @@ export async function updateAsset(
   const { rows } = await query<Asset>(
     `UPDATE assets
      SET data = COALESCE($2, data),
-         status = COALESCE($3, status)
+         status = COALESCE($3, status),
+         action = 'upsert'
      WHERE id = $1
      RETURNING ${assetColumns}`,
     [id, data, status]
@@ -50,13 +52,32 @@ export async function updateAsset(
   return rows[0] ?? null;
 }
 
-export async function deleteAsset(id: string): Promise<boolean> {
-  const { rowCount } = await query("DELETE FROM assets WHERE id = $1", [id]);
+// Soft delete: turn the row into a delete tombstone the worker will process
+// (remove the Mongo doc, then hard-delete this row). Tenant-scoped via RLS, so
+// it returns false for assets that belong to another tenant.
+export async function markAssetForDeletion(id: string): Promise<boolean> {
+  const { rowCount } = await query(
+    `UPDATE assets
+        SET status = 'pending', action = 'delete'
+      WHERE id = $1`,
+    [id]
+  );
   return (rowCount ?? 0) > 0;
 }
 
+// Final removal once the read model has been cleared. Used by the sync worker
+// after it deletes the Mongo document.
+export async function hardDeleteAsset(id: string): Promise<void> {
+  await query("DELETE FROM assets WHERE id = $1", [id]);
+}
+
+// Marks an upsert as synced. Guarded on action = 'upsert' so a delete tombstone
+// that arrived mid-sync isn't lost (the row stays 'pending' and gets re-polled).
 export async function markAssetSynced(id: string): Promise<void> {
-  await query("UPDATE assets SET status = $2 WHERE id = $1", [id, "synced"]);
+  await query(
+    "UPDATE assets SET status = 'synced' WHERE id = $1 AND action = 'upsert'",
+    [id]
+  );
 }
 
 // Outbox poll: reads pending rows across all tenants (a trusted system process),

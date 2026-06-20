@@ -128,6 +128,7 @@ async function seedAssets() {
       id: asset.id,
       tenant_id: asset.tenant_id,
       status: "synced",
+      action: "upsert",
       data: normalizedAsset,
       created_by: createdBy,
       created_at: new Date(),

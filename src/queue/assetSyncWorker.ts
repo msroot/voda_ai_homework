@@ -3,9 +3,13 @@ import { createRedisConnection } from "../redis.js";
 import { runWithAuthContext } from "../context/authContext.js";
 import {
   findAssetById,
+  hardDeleteAsset,
   markAssetSynced,
 } from "../repositories/assetRepository.js";
-import { upsertAssetDocument } from "../repositories/assetMongoRepository.js";
+import {
+  deleteAssetDocument,
+  upsertAssetDocument,
+} from "../repositories/assetMongoRepository.js";
 import { invalidateTenantAssets } from "../cache/assetCache.js";
 import { ASSET_SYNC_QUEUE, type AssetSyncJobData } from "./assetSyncQueue.js";
 
@@ -16,18 +20,30 @@ export function createAssetSyncWorker(): Worker<AssetSyncJobData, void, string> 
       const { assetId, tenantId, userId } = job.data;
 
       // Trusted system context: the sync worker acts on behalf of the tenant.
+      // The job is only a trigger; the row's current `action` is the source of
+      // truth (so the latest create/update/delete always wins).
       await runWithAuthContext({ userId, tenantId, role: "admin" }, async () => {
         const asset = await findAssetById(assetId);
+
+        // Row already gone (e.g. a delete finalized on a previous attempt).
         if (!asset) {
-          throw new Error(`Asset ${assetId} not found for tenant ${tenantId}`);
+          return;
         }
 
-        await upsertAssetDocument(asset);
-        await markAssetSynced(assetId);
+        if (asset.action === "delete") {
+          // Clear the read model first, then drop the outbox row. If the second
+          // step fails the row stays a 'pending' tombstone and is re-polled;
+          // the Mongo delete is idempotent.
+          await deleteAssetDocument(assetId);
+          await hardDeleteAsset(assetId);
+        } else {
+          await upsertAssetDocument(asset);
+          await markAssetSynced(assetId);
+        }
       });
 
-      // The asset is now in Mongo; drop any cache that was repopulated with the
-      // pre-sync view during the eventual-consistency window.
+      // The read model now reflects the change; drop any cache that was
+      // repopulated during the eventual-consistency window.
       await invalidateTenantAssets(tenantId);
     },
     { connection: createRedisConnection() as unknown as ConnectionOptions }
