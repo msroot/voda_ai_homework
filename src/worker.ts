@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { createAssetSyncWorker } from "./queue/assetSyncWorker.js";
+import { createAssetSyncWorker } from "./assetSync.js";
 import { ensureAssetIndexes } from "./repositories/assetMongoRepository.js";
 import { closeMongo } from "./clients/mongo.js";
 

@@ -6,7 +6,7 @@ import {
   extendAssetSchema,
   normalizeAssetSchema,
   validateAssetSchemaBaseFields,
-} from "../src/assets/mergeAssetSchema.js";
+} from "../src/assetSchema.js";
 
 describe("createDefaultAssetSchema", () => {
   it("includes all base fields in properties and required", () => {

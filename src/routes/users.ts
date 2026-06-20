@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 import { validate } from "../middleware/validate.js";
 import { requireAdmin } from "../middleware/authorize.js";
 import {

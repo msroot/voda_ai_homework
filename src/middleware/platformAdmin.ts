@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { AppError } from "../errors/appError.js";
+import { AppError } from "../appError.js";
 
 // Platform-level provisioning (creating/deleting tenants) is authenticated with
 // a shared secret sent as the x-admin-key header, not a tenant JWT. This keeps

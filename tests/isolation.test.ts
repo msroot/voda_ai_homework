@@ -5,7 +5,7 @@ import { createApp } from "../src/app.js";
 import { closeSeedConnections, runSeed } from "../seed/index.js";
 import pool from "../src/clients/postgres.js";
 import { closeMongo } from "../src/clients/mongo.js";
-import { closeCache } from "../src/cache/cache.js";
+import { closeCache } from "../src/cache.js";
 import { closeRateLimiter } from "../src/middleware/rateLimit.js";
 
 const app = createApp();

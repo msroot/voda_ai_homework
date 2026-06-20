@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { getRole } from "../context/authContext.js";
-import { AppError } from "../errors/appError.js";
+import { getRole } from "../auth.js";
+import { AppError } from "../appError.js";
 import type { UserRole } from "../types.js";
 
 // Role-based guard. Runs after authenticate(), so the role is available from

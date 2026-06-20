@@ -6,7 +6,7 @@ import assetRoutes from "./routes/assets.js";
 import reportRoutes from "./routes/reports.js";
 import { requireAuthUnlessPublic } from "./middleware/auth.js";
 import { rateLimiter } from "./middleware/rateLimit.js";
-import { AppError } from "./errors/appError.js";
+import { AppError } from "./appError.js";
 
 // Builds the Express app without starting a server, so it can be mounted both by
 // the real entry point (src/index.ts) and by integration tests (supertest).

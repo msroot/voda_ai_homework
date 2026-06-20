@@ -1,6 +1,6 @@
 import pg from "pg";
 import "dotenv/config";
-import { tryGetTenantId } from "../context/authContext.js";
+import { tryGetTenantId } from "../auth.js";
 
 if (!process.env.APP_DATABASE_URL) {
   console.warn(

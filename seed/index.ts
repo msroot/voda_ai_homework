@@ -1,8 +1,8 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import pg from "pg";
-import { hashPassword } from "../src/auth/password.js";
-import { normalizeAssetData } from "../src/assets/assetData.js";
+import { hashPassword } from "../src/auth.js";
+import { normalizeAssetData } from "../src/assetSchema.js";
 import { closeMongo } from "../src/clients/mongo.js";
 import {
   ensureAssetIndexes,

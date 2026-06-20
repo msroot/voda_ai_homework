@@ -1,5 +1,17 @@
-import type { Asset } from "../types.js";
-import { formatSchemaVersion } from "./schemaVersion.js";
+import type { Asset, User } from "./types.js";
+
+/** Public label for an asset schema version (API + reports). DB/Mongo store the integer. */
+export function formatSchemaVersion(version: number): string {
+  return `v_${version}`;
+}
+
+export function parseSchemaVersion(label: string): number {
+  const match = /^v_(\d+)$/.exec(label);
+  if (!match) {
+    throw new Error(`Invalid schema version label: ${label}`);
+  }
+  return Number(match[1]);
+}
 
 /** Public asset shape returned by every asset endpoint (create, update, get, list). */
 export interface AssetResponse {
@@ -29,6 +41,16 @@ export interface MongoAssetRecord {
   extra_fields: Record<string, unknown>;
   created_at: Date;
   updated_at: Date;
+}
+
+/** Public user shape returned by every user endpoint. */
+export interface UserResponse {
+  id: string;
+  tenant_id: string;
+  name: string;
+  email: string;
+  role: User["role"];
+  created_at: string;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -73,5 +95,16 @@ export function postgresAssetToResponse(asset: Asset): AssetResponse {
     extra_fields: asRecord(data.extra_fields),
     created_at: asset.created_at.toISOString(),
     updated_at: null,
+  };
+}
+
+export function userToResponse(user: User): UserResponse {
+  return {
+    id: user.id,
+    tenant_id: user.tenant_id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    created_at: user.created_at.toISOString(),
   };
 }

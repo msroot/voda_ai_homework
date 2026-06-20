@@ -1,5 +1,8 @@
 import { readFileSync } from "fs";
 import { join } from "path";
+import Ajv2020 from "ajv/dist/2020.js";
+import { type ErrorObject } from "ajv";
+import addFormats from "ajv-formats";
 
 type SchemaObject = Record<string, unknown>;
 
@@ -15,6 +18,7 @@ export const DEFAULT_ASSET_BASE_FIELDS = [
 ] as const;
 
 const baseFields = new Set<string>(DEFAULT_ASSET_BASE_FIELDS);
+const baseFieldSet = new Set<string>(DEFAULT_ASSET_BASE_FIELDS);
 
 const defaultAssetSchema = JSON.parse(
   readFileSync(join(process.cwd(), "seed/schemas/default-asset.schema.json"), "utf-8")
@@ -124,4 +128,117 @@ export function validateAssetSchemaBaseFields(
   }
 
   return { valid: true };
+}
+
+function formatErrors(errors: ErrorObject[] | null | undefined): string[] {
+  if (!errors) {
+    return ["Invalid asset data"];
+  }
+
+  return errors.map((error) => {
+    const path = error.instancePath || "data";
+    return `${path}: ${error.message ?? "invalid"}`;
+  });
+}
+
+function compileAssetValidator(schema: Record<string, unknown>) {
+  const compileSchema = structuredClone(schema);
+  delete compileSchema.$id;
+  delete compileSchema.$schema;
+
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  return ajv.compile(compileSchema);
+}
+
+export function validateAssetSchema(
+  schema: Record<string, unknown>
+): { valid: true } | { valid: false; errors: string[] } {
+  try {
+    compileAssetValidator(schema);
+    return { valid: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Invalid JSON Schema";
+    return { valid: false, errors: [message] };
+  }
+}
+
+export function validateAssetData(
+  schema: Record<string, unknown>,
+  data: unknown
+): { valid: true } | { valid: false; errors: string[] } {
+  const validate = compileAssetValidator(schema);
+  const valid = validate(data);
+
+  if (!valid) {
+    return { valid: false, errors: formatErrors(validate.errors) };
+  }
+
+  return { valid: true };
+}
+
+export function normalizeAssetData(
+  input: Record<string, unknown>,
+  tenantId: string,
+  id: string
+): Record<string, unknown> {
+  const base: Record<string, unknown> = {
+    id,
+    tenant_id: tenantId,
+  };
+  const extraFields: Record<string, unknown> = {};
+
+  if (input.extra_fields) {
+    Object.assign(extraFields, asRecord(input.extra_fields));
+  }
+
+  for (const [key, value] of Object.entries(input)) {
+    if (key === "extra_fields") {
+      continue;
+    }
+
+    if (baseFieldSet.has(key)) {
+      base[key] = value;
+    } else {
+      extraFields[key] = value;
+    }
+  }
+
+  return {
+    ...base,
+    extra_fields: extraFields,
+  };
+}
+
+export function mergeAssetData(
+  existing: Record<string, unknown>,
+  patch: Record<string, unknown>
+): Record<string, unknown> {
+  const extraFields = {
+    ...asRecord(existing.extra_fields),
+    ...asRecord(patch.extra_fields),
+  };
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (key !== "extra_fields" && !baseFieldSet.has(key)) {
+      extraFields[key] = value;
+    }
+  }
+
+  const merged: Record<string, unknown> = {
+    id: existing.id,
+    tenant_id: existing.tenant_id,
+    extra_fields: extraFields,
+  };
+
+  for (const source of [existing, patch]) {
+    for (const [key, value] of Object.entries(source)) {
+      if (key === "extra_fields" || !baseFieldSet.has(key)) {
+        continue;
+      }
+      merged[key] = value;
+    }
+  }
+
+  return merged;
 }

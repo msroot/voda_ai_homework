@@ -1,6 +1,6 @@
-import { formatSchemaVersion } from "../api/schemaVersion.js";
-import { getTenantId } from "../context/authContext.js";
-import { AppError } from "../errors/appError.js";
+import { formatSchemaVersion } from "../responses.js";
+import { getTenantId } from "../auth.js";
+import { AppError } from "../appError.js";
 import {
   aggregateAssetSchemaVersionCounts,
   aggregateAssetStatusCounts,

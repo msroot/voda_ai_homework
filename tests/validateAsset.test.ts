@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultAssetSchema } from "../src/assets/mergeAssetSchema.js";
-import {
-  validateAssetData,
-  validateAssetSchema,
-} from "../src/assets/validateAsset.js";
+import { createDefaultAssetSchema, validateAssetData, validateAssetSchema } from "../src/assetSchema.js";
 
 describe("validateAssetSchema", () => {
   it("accepts the default asset JSON Schema", () => {

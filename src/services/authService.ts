@@ -1,7 +1,6 @@
-import { signToken } from "../auth/jwt.js";
-import { verifyPassword } from "../auth/password.js";
-import { userToResponse, type UserResponse } from "../api/userResponse.js";
-import { AppError } from "../errors/appError.js";
+import { signToken, verifyPassword } from "../auth.js";
+import { userToResponse, type UserResponse } from "../responses.js";
+import { AppError } from "../appError.js";
 import { findUserByEmail } from "../repositories/userRepository.js";
 import type { LoginInput } from "../types.js";
 

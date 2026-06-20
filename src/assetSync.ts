@@ -1,17 +1,39 @@
-import { Worker, type ConnectionOptions } from "bullmq";
-import { createRedisConnection } from "../clients/redis.js";
-import { runWithAuthContext } from "../context/authContext.js";
+import { Queue, Worker, type ConnectionOptions } from "bullmq";
+import { createRedisConnection } from "./clients/redis.js";
+import { invalidateTenantAssets } from "./cache.js";
+import { runWithAuthContext } from "./auth.js";
 import {
   findAssetById,
   hardDeleteAsset,
   markAssetSynced,
-} from "../repositories/assetRepository.js";
+} from "./repositories/assetRepository.js";
 import {
   deleteAssetDocument,
   upsertAssetDocument,
-} from "../repositories/assetMongoRepository.js";
-import { invalidateTenantAssets } from "../cache/assetCache.js";
-import { ASSET_SYNC_QUEUE, type AssetSyncJobData } from "./assetSyncQueue.js";
+} from "./repositories/assetMongoRepository.js";
+
+export const ASSET_SYNC_QUEUE = "asset-sync";
+const ASSET_SYNC_JOB = "sync";
+
+export interface AssetSyncJobData {
+  assetId: string;
+  tenantId: string;
+  userId: string;
+}
+
+const queue = new Queue<AssetSyncJobData, void, string>(ASSET_SYNC_QUEUE, {
+  connection: createRedisConnection() as unknown as ConnectionOptions,
+  defaultJobOptions: {
+    attempts: 5,
+    backoff: { type: "exponential", delay: 2000 },
+    removeOnComplete: true,
+    removeOnFail: false,
+  },
+});
+
+export async function enqueueAssetSync(data: AssetSyncJobData): Promise<void> {
+  await queue.add(ASSET_SYNC_JOB, data, { jobId: data.assetId });
+}
 
 export function createAssetSyncWorker(): Worker<AssetSyncJobData, void, string> {
   const worker = new Worker<AssetSyncJobData, void, string>(
@@ -19,21 +41,14 @@ export function createAssetSyncWorker(): Worker<AssetSyncJobData, void, string> 
     async (job) => {
       const { assetId, tenantId, userId } = job.data;
 
-      // Trusted system context: the sync worker acts on behalf of the tenant.
-      // The job is only a trigger; the row's current `action` is the source of
-      // truth (so the latest create/update/delete always wins).
       await runWithAuthContext({ userId, tenantId, role: "admin" }, async () => {
         const asset = await findAssetById(assetId);
 
-        // Row already gone (e.g. a delete finalized on a previous attempt).
         if (!asset) {
           return;
         }
 
         if (asset.action === "delete") {
-          // Clear the read model first, then drop the outbox row. If the second
-          // step fails the row stays a 'pending' tombstone and is re-polled;
-          // the Mongo delete is idempotent.
           await deleteAssetDocument(assetId);
           await hardDeleteAsset(assetId);
         } else {
@@ -42,8 +57,6 @@ export function createAssetSyncWorker(): Worker<AssetSyncJobData, void, string> 
         }
       });
 
-      // The read model now reflects the change; drop any cache that was
-      // repopulated during the eventual-consistency window.
       await invalidateTenantAssets(tenantId);
     },
     { connection: createRedisConnection() as unknown as ConnectionOptions }

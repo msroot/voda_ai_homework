@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { findPendingAssets } from "./repositories/assetRepository.js";
-import { enqueueAssetSync } from "./queue/assetSyncQueue.js";
+import { enqueueAssetSync } from "./assetSync.js";
 
 const POLL_INTERVAL_MS = Number(process.env.OUTBOX_POLL_INTERVAL_MS ?? 2000);
 const BATCH_SIZE = Number(process.env.OUTBOX_BATCH_SIZE ?? 50);

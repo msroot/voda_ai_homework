@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 import { getTenantOverviewReport } from "../services/reportService.js";
 
 const router = Router();
