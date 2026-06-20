@@ -16,6 +16,7 @@ This document explains how the multi-tenant asset service works end to end: comp
 8. [Security](#8-security)
 9. [Error handling](#9-error-handling)
 10. [Source layout](#10-source-layout)
+11. [Production improvements](#11-production-improvements)
 
 ---
 
@@ -604,6 +605,125 @@ src/
 | Report asset counts | Mongo | After worker sync |
 
 This is **eventual consistency** between Postgres write model and Mongo read model, typically seconds under normal load.
+
+---
+
+## 11. Production improvements
+
+The current design is intentionally lean for a homework / demo scope: one Postgres outbox on `assets`, a polling listener, BullMQ on Redis, and Mongo as the read model. For a **production** deployment, the following changes would be priorities.
+
+### 11.1 Processing dead-letter trap
+
+§3.3 notes that rows left in `processing` can be recovered by a future poll. That is incomplete for production.
+
+If a **malformed payload** or persistent Mongo validation error crashes the worker on every attempt, rows can sit in `processing` forever while BullMQ keeps retrying the same job. The asset never reaches `synced`, and the read model drifts permanently.
+
+**Production changes:**
+
+- **Max processing retry threshold** — after N worker failures for the same `assetId`, mark the Postgres row `failed` (or move to a `dead_letter` status) and stop enqueueing.
+- **Automated cleanup policy** — scheduled job to detect `processing` rows older than a TTL and either requeue (`pending`) or escalate to ops.
+- **Dead-letter queue (DLQ)** — failed BullMQ jobs land in a separate queue/topic with payload, error, and tenant context for manual replay or fix.
+- **Alerting** — metrics on `pending` age, `processing` stuck count, and DLQ depth.
+
+### 11.2 Geospatial sync contract
+
+§5.1 treats `lat` / `lng` as flat root platform fields in Postgres and API responses. MongoDB **2dsphere** indexes require **GeoJSON**:
+
+```json
+"location": { "type": "Point", "coordinates": [lng, lat] }
+```
+
+Today the sync worker copies flat `lat` / `lng` into Mongo documents. That is fine for filtering by scalar fields, but **not** for native geospatial queries.
+
+**Production changes:**
+
+- Document and implement an explicit **sync mapping** in the worker: flat SQL/API coordinates → `location` GeoJSON Point (note **longitude first** in `coordinates`).
+- Extend Mongo `$jsonSchema` (Layer 2) to allow or require `location` when geospatial search is enabled.
+- Keep flat `lat` / `lng` in API responses for backward compatibility, or expose GeoJSON only on read paths that need it.
+
+### 11.3 Redis `SCAN` clustering hazard
+
+§7 invalidates cache keys with `SCAN` + `DEL` on a pattern like `tenant:{tenantId}:assets:*`.
+
+On a **single Redis node**, this is acceptable at moderate scale. On **Redis Cluster**, keys for one tenant may live on different hash slots; a global `SCAN` can cause high CPU, incomplete deletes, or failures when scripts touch cross-slot keys.
+
+**Production changes:**
+
+- **Track cache keys explicitly** — maintain a Redis `SET` per tenant/resource of known keys at write time; invalidate with pipelined `DEL` (no scan).
+- **Hash tags** — use keys like `tenant:{tenantId}:assets:{hash}` with `{tenantId}` in the hash tag so related keys share a slot in cluster mode.
+- **TTL-only fallback** — for low-risk reads, rely on short TTL instead of broad invalidation under load.
+- **Separate Redis instance** for cache vs BullMQ/rate-limit (already partially separated by connection, but worth isolating in prod).
+
+### 11.4 Replace the outbox poller with Kafka (or an event bus)
+
+The listener polls Postgres on a fixed interval (`OUTBOX_POLL_INTERVAL_MS`). That is simple but adds latency, wastes DB round-trips when idle, and couples sync throughput to poll batch size.
+
+**Production changes:**
+
+- **Skip the poller** — after a successful Postgres write, publish an `asset.sync` event (same transaction via transactional outbox to a `outbox_events` table, or CDC from Postgres with Debezium).
+- **Kafka (or Pulsar / SNS+SQS)** as the durable log — consumers scale horizontally; partitions keyed by `tenant_id` or `asset_id` preserve ordering per asset.
+- **Idempotency unchanged** — still use `asset.id` as the message key and Mongo `_id` so consumers remain safe under at-least-once delivery.
+- **Listener becomes optional** — only for backfill / reconciliation, not the primary path.
+
+Rough flow:
+
+```text
+POST /assets → Postgres (ACID) → publish to Kafka → consumer upserts Mongo → mark synced
+```
+
+### 11.5 Logs and monitoring
+
+Today the API, listener, and worker mostly use **console output** (`console.log` / `console.error`). That is enough for local dev but not for production — you cannot debug sync lag, tenant isolation issues, or worker failures at scale without structured **logs**, **metrics**, and **tracing**.
+
+**Structured logging**
+
+- JSON logs with a stable schema: `timestamp`, `level`, `service` (`api` | `listener` | `worker`), `requestId`, `tenantId`, `userId`, `assetId`, `durationMs`, `error`.
+- **Correlation id** — propagate from `Authorization` request through listener enqueue and worker sync (same id in all three processes).
+- Never log passwords, JWTs, or `PLATFORM_ADMIN_KEY`; redact PII where policy requires it.
+- Central aggregation (e.g. CloudWatch Logs, Loki, Datadog Logs, Elasticsearch) with retention and search.
+
+**Metrics (RED + domain)**
+
+| Category | Examples |
+|----------|----------|
+| **API** | Request rate, latency (p50/p95/p99), 4xx/5xx by route, rate-limit 429 count |
+| **Sync pipeline** | `pending` / `processing` / `synced` row counts, **sync lag** (time from write to `synced_at`), BullMQ queue depth, job success/fail rate |
+| **Data stores** | Postgres pool wait time, Mongo query latency, Redis cache hit ratio |
+| **Security** | Failed login attempts, 401/403 spikes per tenant |
+
+Export via **Prometheus** scrape endpoints or OTLP; dashboards in Grafana (or vendor UI).
+
+**Distributed tracing**
+
+- **OpenTelemetry** spans on HTTP handlers, Postgres/Mongo/Redis calls, BullMQ job processing.
+- One trace from `POST /assets` → enqueue → worker → Mongo upsert → `markAssetSynced` to see where latency or errors occur.
+
+**Alerting (examples)**
+
+- Sync lag p95 &gt; SLO (e.g. 30s) for 5 minutes.
+- `processing` rows older than threshold (ties to §11.1 dead-letter trap).
+- DLQ depth &gt; 0.
+- API error rate &gt; 1% or readiness check failing (Postgres / Mongo / Redis down).
+
+**Health vs readiness**
+
+- Keep `GET /health` as **liveness** (process up).
+- Add **readiness** — can reach Postgres, Mongo, Redis, and worker consumer is not stalled.
+
+### 11.6 Additional production hardening
+
+| Area | Current (demo) | Production direction |
+|------|----------------|---------------------|
+| **Read-your-writes** | `GET /assets/:id` reads Mongo only; may 404 until sync | Postgres fallback when row exists but Mongo doc missing |
+| **Secrets** | Env vars in compose | Secret manager, rotation for `JWT_SECRET`, `PLATFORM_ADMIN_KEY`, DB URLs |
+| **Mongo reads** | Single primary | Read replicas + secondaryPreferred for list/report queries |
+| **API scale** | Single PM2 stack | Horizontally scaled API pods; shared Redis for cache/rate limits |
+| **Tenant tiers** | One global rate limit | Per-tenant or per-plan limits in Redis |
+| **Backups & DR** | Not covered | PITR for Postgres, Mongo backup schedule, replay procedure from Postgres if Mongo is rebuilt |
+| **Schema config** | Insert-once `asset_schemas` | Versioned config with explicit migration path if tenant rules change (still validate old assets against bound version) |
+| **Health checks** | `/health` liveness only | Readiness: Postgres, Mongo, Redis, queue consumer lag (see [§11.5](#115-logs-and-monitoring)) |
+
+These items are **documented intent**, not implemented in this repository.
 
 ---
 
