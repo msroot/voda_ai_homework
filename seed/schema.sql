@@ -14,8 +14,15 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash   TEXT NOT NULL,
     role            TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'viewer')),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (email)
+    -- Soft delete: when set, the user is treated as deleted but the row is kept
+    -- so references (e.g. assets.created_by) stay valid and history is preserved.
+    deleted_at      TIMESTAMPTZ
 );
+
+-- Email is unique among active (non-soft-deleted) users only, so an email freed
+-- by a soft delete can be reused by a new user.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_active
+    ON users(email) WHERE deleted_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS assets (
     id          UUID PRIMARY KEY,
@@ -40,9 +47,9 @@ CREATE INDEX IF NOT EXISTS idx_assets_tenant_id ON assets(tenant_id);
 -- Paginated user listing: tenant scope + created_at ordering.
 CREATE INDEX IF NOT EXISTS idx_users_tenant_created ON users(tenant_id, created_at);
 
--- Note: login looks up a user by email (bypasses RLS). The UNIQUE (email)
--- constraint above already provides the backing index, so no separate one is
--- needed here.
+-- Note: login looks up an active user by email (bypasses RLS). The partial
+-- unique index idx_users_email_active above already provides the backing index,
+-- so no separate one is needed here.
 
 -- Outbox poll: find rows still awaiting sync, oldest first. Partial index keeps
 -- it tiny since most rows are already 'synced'.
