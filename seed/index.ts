@@ -38,20 +38,22 @@ async function createSchema() {
 async function seedTenants() {
   for (const tenant of tenants) {
     await adminPool.query(
-      `INSERT INTO tenants (id, name, slug, asset_schema, created_at)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO tenants (id, name, slug, created_at)
+       VALUES ($1, $2, $3, $4)
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
          slug = EXCLUDED.slug,
-         asset_schema = EXCLUDED.asset_schema,
          created_at = EXCLUDED.created_at`,
-      [
-        tenant.id,
-        tenant.name,
-        tenant.slug,
-        JSON.stringify(tenant.asset_schema),
-        tenant.created_at,
-      ]
+      [tenant.id, tenant.name, tenant.slug, tenant.created_at]
+    );
+
+    // Seed each tenant's schema as version 1.
+    await adminPool.query(
+      `INSERT INTO asset_schemas (tenant_id, version, schema)
+       VALUES ($1, 1, $2)
+       ON CONFLICT (tenant_id, version) DO UPDATE SET
+         schema = EXCLUDED.schema`,
+      [tenant.id, JSON.stringify(tenant.asset_schema)]
     );
   }
 }
@@ -108,17 +110,19 @@ async function seedAssets() {
     // Seeded rows are written directly to Mongo below, so they start as
     // 'synced' and are not re-processed by the outbox/worker.
     await adminPool.query(
-      `INSERT INTO assets (id, tenant_id, status, data, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO assets (id, tenant_id, status, schema_version, data, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (id) DO UPDATE SET
          tenant_id = EXCLUDED.tenant_id,
          status = EXCLUDED.status,
+         schema_version = EXCLUDED.schema_version,
          data = EXCLUDED.data,
          created_by = EXCLUDED.created_by`,
       [
         asset.id,
         asset.tenant_id,
         "synced",
+        1,
         JSON.stringify(normalizedAsset),
         createdBy,
       ]
@@ -129,6 +133,7 @@ async function seedAssets() {
       tenant_id: asset.tenant_id,
       status: "synced",
       action: "upsert",
+      schema_version: 1,
       data: normalizedAsset,
       created_by: createdBy,
       created_at: new Date(),

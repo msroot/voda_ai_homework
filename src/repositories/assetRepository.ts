@@ -9,7 +9,7 @@ interface PendingAsset {
 }
 
 const assetColumns =
-  "id, tenant_id, status, action, data, created_by, created_at";
+  "id, tenant_id, status, action, schema_version, data, created_by, created_at";
 
 export async function findAssetById(id: string): Promise<Asset | null> {
   const { rows } = await query<Asset>(
@@ -22,15 +22,16 @@ export async function findAssetById(id: string): Promise<Asset | null> {
 export async function createAsset(
   id: string,
   status: string,
+  schemaVersion: number,
   data: Record<string, unknown>,
   createdBy: string
 ): Promise<Asset> {
   const tenantId = getTenantId();
   const { rows } = await query<Asset>(
-    `INSERT INTO assets (id, tenant_id, status, action, data, created_by)
-     VALUES ($1, $2, $3, 'upsert', $4, $5)
+    `INSERT INTO assets (id, tenant_id, status, action, schema_version, data, created_by)
+     VALUES ($1, $2, $3, 'upsert', $4, $5, $6)
      RETURNING ${assetColumns}`,
-    [id, tenantId, status, JSON.stringify(data), createdBy]
+    [id, tenantId, status, schemaVersion, JSON.stringify(data), createdBy]
   );
   return rows[0];
 }

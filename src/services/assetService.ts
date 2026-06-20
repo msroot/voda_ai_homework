@@ -13,7 +13,10 @@ import {
   findAssetDocuments,
   type AssetView,
 } from "../repositories/assetMongoRepository.js";
-import { findTenantAssetSchema } from "../repositories/tenantRepository.js";
+import {
+  findAssetSchemaByVersion,
+  findLatestAssetSchema,
+} from "../repositories/tenantRepository.js";
 import {
   getCachedAsset,
   getCachedAssetList,
@@ -77,15 +80,17 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
   const userId = getUserId();
   const tenantId = getTenantId();
 
-  const schema = await findTenantAssetSchema();
-  if (!schema) {
+  // New assets validate against, and are pinned to, the tenant's latest schema
+  // version.
+  const latest = await findLatestAssetSchema();
+  if (!latest) {
     throw new AppError(404, "Tenant not found");
   }
 
   const assetId = typeof data.id === "string" ? data.id : randomUUID();
   const assetData = normalizeAssetData(data, tenantId, assetId);
 
-  const validation = validateAssetData(schema, assetData);
+  const validation = validateAssetData(latest.schema, assetData);
   if (!validation.valid) {
     throw new AppError(400, "Asset validation failed", validation.errors);
   }
@@ -94,7 +99,13 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
   // listener (polling) and synced to MongoDB by the worker, which flips it to
   // "synced". No separate event publish is needed.
   try {
-    const created = await createAssetRecord(assetId, "pending", assetData, userId);
+    const created = await createAssetRecord(
+      assetId,
+      "pending",
+      latest.version,
+      assetData,
+      userId
+    );
     await invalidateTenantAssets(tenantId);
     return created;
   } catch (err) {
@@ -120,9 +131,11 @@ export async function updateAsset(
   let nextData = existing.data;
 
   if (data !== undefined) {
-    const schema = await findTenantAssetSchema();
+    // Re-validate against the schema version this asset was created with, so a
+    // later tenant schema change can't break edits to an older asset.
+    const schema = await findAssetSchemaByVersion(existing.schema_version);
     if (!schema) {
-      throw new AppError(404, "Tenant not found");
+      throw new AppError(404, "Asset schema version not found");
     }
 
     nextData = mergeAssetData(existing.data, data);

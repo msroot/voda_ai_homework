@@ -15,8 +15,14 @@ export interface Tenant {
   id: string;
   name: string;
   slug: string;
-  asset_schema: Record<string, unknown>;
   created_at: Date;
+}
+
+// Tenant plus its current (latest) asset schema and version, as returned by the
+// tenant self-management endpoints.
+export interface TenantWithSchema extends Tenant {
+  schema_version: number;
+  asset_schema: Record<string, unknown>;
 }
 
 export interface User {
@@ -35,6 +41,7 @@ export interface Asset {
   tenant_id: string;
   status: string;
   action: AssetAction;
+  schema_version: number;
   data: Record<string, unknown>;
   created_by: string;
   created_at: Date;

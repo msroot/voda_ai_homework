@@ -2,8 +2,19 @@ CREATE TABLE IF NOT EXISTS tenants (
     id            UUID PRIMARY KEY,
     name          TEXT NOT NULL,
     slug          TEXT NOT NULL UNIQUE,
-    asset_schema  JSONB NOT NULL,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Versioned tenant asset schemas. Each tenant schema change inserts a new
+-- version (never mutates an old one). New assets are validated against and
+-- pinned to the latest version; existing assets keep validating against the
+-- version they were created with.
+CREATE TABLE IF NOT EXISTS asset_schemas (
+    tenant_id   UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    version     INT NOT NULL,
+    schema      JSONB NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (tenant_id, version)
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -35,9 +46,15 @@ CREATE TABLE IF NOT EXISTS assets (
     -- 'delete' (a tombstone; the worker removes the Mongo doc, then hard-deletes
     -- this row).
     action      TEXT NOT NULL DEFAULT 'upsert',
+    -- Asset schema version this asset was validated against. Updates re-validate
+    -- against this same version, so a later tenant schema change never breaks
+    -- edits to older assets.
+    schema_version INT NOT NULL,
     data        JSONB NOT NULL,
     created_by  UUID NOT NULL REFERENCES users(id),
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (tenant_id, schema_version)
+        REFERENCES asset_schemas(tenant_id, version)
 );
 
 -- Tenant scoping (RLS filters every query by tenant_id).
@@ -68,6 +85,8 @@ $$ LANGUAGE sql STABLE;
 
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
+ALTER TABLE asset_schemas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE asset_schemas FORCE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users FORCE ROW LEVEL SECURITY;
 ALTER TABLE assets ENABLE ROW LEVEL SECURITY;
@@ -78,6 +97,12 @@ CREATE POLICY tenants_tenant_isolation ON tenants
   FOR ALL
   USING (app_bypass_rls() OR id = app_current_tenant_id())
   WITH CHECK (app_bypass_rls() OR id = app_current_tenant_id());
+
+DROP POLICY IF EXISTS asset_schemas_tenant_isolation ON asset_schemas;
+CREATE POLICY asset_schemas_tenant_isolation ON asset_schemas
+  FOR ALL
+  USING (app_bypass_rls() OR tenant_id = app_current_tenant_id())
+  WITH CHECK (app_bypass_rls() OR tenant_id = app_current_tenant_id());
 
 DROP POLICY IF EXISTS users_tenant_isolation ON users;
 CREATE POLICY users_tenant_isolation ON users

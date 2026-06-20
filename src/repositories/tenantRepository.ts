@@ -1,7 +1,13 @@
+import { getTenantId } from "../context/authContext.js";
 import { query, withBypassTransaction } from "../db.js";
 import type { Tenant, User, UserRole } from "../types.js";
 
-const tenantColumns = "id, name, slug, asset_schema, created_at";
+const tenantColumns = "id, name, slug, created_at";
+
+interface AssetSchemaVersion {
+  version: number;
+  schema: Record<string, unknown>;
+}
 
 export async function findTenantById(id: string): Promise<Tenant | null> {
   const { rows } = await query<Tenant>(
@@ -11,11 +17,46 @@ export async function findTenantById(id: string): Promise<Tenant | null> {
   return rows[0] ?? null;
 }
 
-export async function findTenantAssetSchema(): Promise<Record<string, unknown> | null> {
-  const { rows } = await query<{ asset_schema: Record<string, unknown> }>(
-    "SELECT asset_schema FROM tenants"
+// The current (highest-version) asset schema for the caller's tenant. New assets
+// validate against and are pinned to this version.
+export async function findLatestAssetSchema(): Promise<AssetSchemaVersion | null> {
+  const { rows } = await query<AssetSchemaVersion>(
+    `SELECT version, schema FROM asset_schemas
+      WHERE tenant_id = $1
+      ORDER BY version DESC
+      LIMIT 1`,
+    [getTenantId()]
   );
-  return rows[0]?.asset_schema ?? null;
+  return rows[0] ?? null;
+}
+
+// A specific historical schema version. Used to re-validate edits to an existing
+// asset against the version it was created with.
+export async function findAssetSchemaByVersion(
+  version: number
+): Promise<Record<string, unknown> | null> {
+  const { rows } = await query<{ schema: Record<string, unknown> }>(
+    `SELECT schema FROM asset_schemas WHERE tenant_id = $1 AND version = $2`,
+    [getTenantId(), version]
+  );
+  return rows[0]?.schema ?? null;
+}
+
+// Appends a new schema version (latest + 1) for the caller's tenant. The version
+// is computed in-statement so it's correct under the normal (low-concurrency)
+// admin update path.
+export async function insertNextAssetSchema(
+  schema: string
+): Promise<AssetSchemaVersion> {
+  const { rows } = await query<AssetSchemaVersion>(
+    `INSERT INTO asset_schemas (tenant_id, version, schema)
+     SELECT $1, COALESCE(MAX(version), 0) + 1, $2::jsonb
+       FROM asset_schemas
+      WHERE tenant_id = $1
+     RETURNING version, schema`,
+    [getTenantId(), schema]
+  );
+  return rows[0];
 }
 
 // Onboarding: insert the tenant and its first admin user in one transaction so
@@ -34,10 +75,17 @@ export async function createTenantWithAdmin(params: {
 }): Promise<{ tenant: Tenant; user: User }> {
   return withBypassTransaction(async (client) => {
     const tenantResult = await client.query<Tenant>(
-      `INSERT INTO tenants (id, name, slug, asset_schema)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO tenants (id, name, slug)
+       VALUES ($1, $2, $3)
        RETURNING ${tenantColumns}`,
-      [params.tenantId, params.name, params.slug, JSON.stringify(params.assetSchema)]
+      [params.tenantId, params.name, params.slug]
+    );
+
+    // Seed the tenant's first asset schema as version 1.
+    await client.query(
+      `INSERT INTO asset_schemas (tenant_id, version, schema)
+       VALUES ($1, 1, $2)`,
+      [params.tenantId, JSON.stringify(params.assetSchema)]
     );
 
     const userResult = await client.query<User>(
@@ -58,20 +106,20 @@ export async function createTenantWithAdmin(params: {
   });
 }
 
+// Updates tenant metadata only. The asset schema is versioned separately via
+// insertNextAssetSchema.
 export async function updateTenant(
   id: string,
   name: string | null,
-  slug: string | null,
-  assetSchema: string | null
+  slug: string | null
 ): Promise<Tenant | null> {
   const { rows } = await query<Tenant>(
     `UPDATE tenants
      SET name = COALESCE($2, name),
-         slug = COALESCE($3, slug),
-         asset_schema = COALESCE($4, asset_schema)
+         slug = COALESCE($3, slug)
      WHERE id = $1
      RETURNING ${tenantColumns}`,
-    [id, name, slug, assetSchema]
+    [id, name, slug]
   );
   return rows[0] ?? null;
 }

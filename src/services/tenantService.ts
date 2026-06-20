@@ -11,11 +11,19 @@ import {
 } from "../errors/appError.js";
 import {
   createTenantWithAdmin,
+  findLatestAssetSchema,
   findTenantById,
+  insertNextAssetSchema,
   updateTenant as updateTenantRecord,
 } from "../repositories/tenantRepository.js";
 import { findUserById } from "../repositories/userRepository.js";
-import type { CreateTenantInput, Tenant, UpdateTenantInput, User } from "../types.js";
+import type {
+  CreateTenantInput,
+  Tenant,
+  TenantWithSchema,
+  UpdateTenantInput,
+  User,
+} from "../types.js";
 
 // Authoritative (DB-backed) check that the caller is an admin of their own
 // tenant. findUserById is RLS-scoped, so the user is only found when they belong
@@ -30,15 +38,21 @@ async function assertCurrentUserIsTenantAdmin(): Promise<void> {
 }
 
 // Returns the caller's own tenant (derived from the auth context), never an
-// arbitrary one.
-export async function getCurrentTenant(): Promise<Tenant> {
+// arbitrary one, together with its current (latest) asset schema and version.
+export async function getCurrentTenant(): Promise<TenantWithSchema> {
   const tenant = await findTenantById(getTenantId());
 
   if (!tenant) {
     throw new AppError(404, "Tenant not found");
   }
 
-  return tenant;
+  const latest = await findLatestAssetSchema();
+
+  if (!latest) {
+    throw new AppError(500, "Tenant asset schema missing");
+  }
+
+  return { ...tenant, schema_version: latest.version, asset_schema: latest.schema };
 }
 
 // Onboarding: creates the tenant and its first admin user atomically (one
@@ -76,50 +90,44 @@ export async function createTenant(
   }
 }
 
-// Updates the caller's own tenant. asset_schema is merged into (not replaced)
-// the existing schema.
+// Updates the caller's own tenant. A provided asset_schema is merged into (not
+// replaced) the current schema and stored as a NEW version; older assets keep
+// validating against the version they were created with.
 export async function updateCurrentTenant(
   input: UpdateTenantInput
-): Promise<Tenant> {
+): Promise<TenantWithSchema> {
   await assertCurrentUserIsTenantAdmin();
 
   const tenantId = getTenantId();
   const { name, slug, asset_schema } = input;
 
-  let mergedAssetSchema: string | null = null;
-
-  if (asset_schema !== undefined) {
-    const existing = await findTenantById(tenantId);
-
-    if (!existing) {
-      throw new AppError(404, "Tenant not found");
-    }
-
-    mergedAssetSchema = JSON.stringify(
-      extendAssetSchema(existing.asset_schema, asset_schema)
-    );
-  }
-
+  let tenant: Tenant | null;
   try {
-    const tenant = await updateTenantRecord(
-      tenantId,
-      name ?? null,
-      slug ?? null,
-      mergedAssetSchema
-    );
-
-    if (!tenant) {
-      throw new AppError(404, "Tenant not found");
-    }
-
-    return tenant;
+    tenant =
+      name !== undefined || slug !== undefined
+        ? await updateTenantRecord(tenantId, name ?? null, slug ?? null)
+        : await findTenantById(tenantId);
   } catch (err) {
-    if (err instanceof AppError) {
-      throw err;
-    }
     if (isUniqueViolation(err)) {
       throw new AppError(409, "slug already exists");
     }
     throw err;
   }
+
+  if (!tenant) {
+    throw new AppError(404, "Tenant not found");
+  }
+
+  let latest = await findLatestAssetSchema();
+  if (!latest) {
+    throw new AppError(500, "Tenant asset schema missing");
+  }
+
+  // A schema extension creates a new version that becomes the current one.
+  if (asset_schema !== undefined) {
+    const merged = extendAssetSchema(latest.schema, asset_schema);
+    latest = await insertNextAssetSchema(JSON.stringify(merged));
+  }
+
+  return { ...tenant, schema_version: latest.version, asset_schema: latest.schema };
 }
