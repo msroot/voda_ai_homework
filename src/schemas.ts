@@ -19,6 +19,13 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+// Tenant admins extend the asset schema with custom fields under extra_fields.
+export const assetSchemaExtensionSchema = z.object({
+  properties: z.record(z.string(), z.unknown()).optional(),
+  required: z.array(z.string()).optional(),
+});
+export type AssetSchemaExtension = z.infer<typeof assetSchemaExtensionSchema>;
+
 export const createTenantSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
@@ -27,16 +34,15 @@ export const createTenantSchema = z.object({
     email: z.string().email(),
     password: z.string().min(1),
   }),
+  asset_schema: assetSchemaExtensionSchema.optional(),
 });
 export type CreateTenantInput = z.infer<typeof createTenantSchema>;
 
-// asset_schema is passed through as-is (only checked to be an object); its JSON
-// Schema structure is intentionally not validated by zod.
 export const updateTenantSchema = z
   .object({
     name: z.string().min(1).optional(),
     slug: z.string().min(1).optional(),
-    asset_schema: z.record(z.string(), z.unknown()).optional(),
+    asset_schema: assetSchemaExtensionSchema.optional(),
   })
   .refine(
     (data) =>

@@ -2,8 +2,11 @@ import { randomUUID } from "crypto";
 import { hashPassword } from "../auth/password.js";
 import { getTenantId, getUserId } from "../context/authContext.js";
 import {
+  buildTenantAssetSchema,
   createDefaultAssetSchema,
   extendAssetSchema,
+  normalizeAssetSchema,
+  validateAssetSchemaBaseFields,
 } from "../assets/mergeAssetSchema.js";
 import {
   AppError,
@@ -29,6 +32,17 @@ import type {
 // tenant. findUserById is RLS-scoped, so the user is only found when they belong
 // to the caller's tenant; the role comes from the DB, not the (possibly stale)
 // JWT claim.
+function finalizeAssetSchema(schema: Record<string, unknown>): Record<string, unknown> {
+  const normalized = normalizeAssetSchema(schema);
+  const validation = validateAssetSchemaBaseFields(normalized);
+
+  if (!validation.valid) {
+    throw new AppError(500, "Asset schema is missing required base fields", validation.errors);
+  }
+
+  return normalized;
+}
+
 async function assertCurrentUserIsTenantAdmin(): Promise<void> {
   const user = await findUserById(getUserId());
 
@@ -61,15 +75,21 @@ export async function getCurrentTenant(): Promise<TenantWithSchema> {
 export async function createTenant(
   input: CreateTenantInput
 ): Promise<{ tenant: Tenant; user: User }> {
-  const { name, slug, admin } = input;
+  const { name, slug, admin, asset_schema } = input;
   const passwordHash = await hashPassword(admin.password);
+
+  const assetSchema = finalizeAssetSchema(
+    asset_schema !== undefined
+      ? buildTenantAssetSchema(asset_schema)
+      : createDefaultAssetSchema()
+  );
 
   try {
     return await createTenantWithAdmin({
       tenantId: randomUUID(),
       name,
       slug,
-      assetSchema: createDefaultAssetSchema(),
+      assetSchema,
       userId: randomUUID(),
       userName: admin.name,
       userEmail: admin.email,
@@ -125,7 +145,9 @@ export async function updateCurrentTenant(
 
   // A schema extension creates a new version that becomes the current one.
   if (asset_schema !== undefined) {
-    const merged = extendAssetSchema(latest.schema, asset_schema);
+    const merged = finalizeAssetSchema(
+      extendAssetSchema(latest.schema, asset_schema)
+    );
     latest = await insertNextAssetSchema(JSON.stringify(merged));
   }
 
