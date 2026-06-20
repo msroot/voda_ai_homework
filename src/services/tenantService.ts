@@ -8,6 +8,7 @@ import {
   normalizeAssetSchema,
   validateAssetSchemaBaseFields,
 } from "../assets/mergeAssetSchema.js";
+import { validateAssetSchema } from "../assets/validateAsset.js";
 import {
   AppError,
   isUniqueViolation,
@@ -34,10 +35,15 @@ import type {
 // JWT claim.
 function finalizeAssetSchema(schema: Record<string, unknown>): Record<string, unknown> {
   const normalized = normalizeAssetSchema(schema);
-  const validation = validateAssetSchemaBaseFields(normalized);
 
-  if (!validation.valid) {
-    throw new AppError(500, "Asset schema is missing required base fields", validation.errors);
+  const baseFields = validateAssetSchemaBaseFields(normalized);
+  if (!baseFields.valid) {
+    throw new AppError(500, "Asset schema is missing required base fields", baseFields.errors);
+  }
+
+  const ajvCheck = validateAssetSchema(normalized);
+  if (!ajvCheck.valid) {
+    throw new AppError(400, "Invalid asset JSON Schema", ajvCheck.errors);
   }
 
   return normalized;
@@ -69,12 +75,11 @@ export async function getCurrentTenant(): Promise<TenantWithSchema> {
   return { ...tenant, schema_version: latest.version, asset_schema: latest.schema };
 }
 
-// Onboarding: creates the tenant and its first admin user atomically (one
-// transaction) so the new tenant can immediately authenticate and manage
-// itself, with no risk of an orphaned tenant if the user insert fails.
+// Onboarding: creates the tenant, version-1 asset schema, and first admin user
+// atomically so the tenant can create assets immediately after login.
 export async function createTenant(
   input: CreateTenantInput
-): Promise<{ tenant: Tenant; user: User }> {
+): Promise<{ tenant: TenantWithSchema; user: User }> {
   const { name, slug, admin, asset_schema } = input;
   const passwordHash = await hashPassword(admin.password);
 
@@ -85,7 +90,7 @@ export async function createTenant(
   );
 
   try {
-    return await createTenantWithAdmin({
+    const { tenant, user } = await createTenantWithAdmin({
       tenantId: randomUUID(),
       name,
       slug,
@@ -96,6 +101,15 @@ export async function createTenant(
       passwordHash,
       role: "admin",
     });
+
+    return {
+      tenant: {
+        ...tenant,
+        schema_version: 1,
+        asset_schema: assetSchema,
+      },
+      user,
+    };
   } catch (err) {
     if (isUniqueViolation(err)) {
       const constraint = (err as { constraint?: string }).constraint ?? "";

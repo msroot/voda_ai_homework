@@ -81,7 +81,7 @@ export async function createTenantWithAdmin(params: {
       [params.tenantId, params.name, params.slug]
     );
 
-    // Seed the tenant's first asset schema as version 1.
+    // Version 1: default AJV schema so the tenant can create assets immediately.
     await client.query(
       `INSERT INTO asset_schemas (tenant_id, version, schema)
        VALUES ($1, 1, $2)`,

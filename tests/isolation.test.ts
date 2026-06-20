@@ -224,23 +224,47 @@ describe("platform provisioning (x-admin-key)", () => {
   });
 
   it.runIf(ADMIN_KEY)(
-    "creates a tenant with the platform admin key (201)",
+    "creates a tenant with default schema version 1 and can create assets (201)",
     async () => {
+      const slug = `keyed-${Date.now()}`;
+      const email = `root-${Date.now()}@keyed.test`;
       const res = await request(app)
         .post("/tenants")
         .set("x-admin-key", ADMIN_KEY as string)
         .send({
           name: "Keyed Co",
-          slug: `keyed-${Date.now()}`,
+          slug,
           admin: {
             name: "Root",
-            email: `root-${Date.now()}@keyed.test`,
+            email,
             password: "password123",
           },
         });
       expect(res.status, JSON.stringify(res.body)).toBe(201);
       expect(res.body.tenant).toBeDefined();
       expect(res.body.user).toBeDefined();
+      expect(res.body.tenant.schema_version).toBe(1);
+      expect(res.body.tenant.asset_schema).toBeDefined();
+      expect(res.body.tenant.asset_schema.required).toContain("tenant_id");
+      expect(res.body.tenant.asset_schema.required).toContain("status");
+      expect(res.body.tenant.asset_schema.required).toContain("name");
+
+      const token = await login(email);
+      const assetRes = await request(app)
+        .post("/assets")
+        .set(auth(token))
+        .send({
+          data: {
+            name: `TEST-${Date.now()}`,
+            type: "sensor",
+            status: "ok",
+            lat: 42.1,
+            lng: -71.1,
+            installed_at: "2020-01-01",
+          },
+        });
+      expect(assetRes.status, JSON.stringify(assetRes.body)).toBe(201);
+      expect(assetRes.body.tenant_id).toBe(res.body.tenant.id);
     }
   );
 });
