@@ -138,9 +138,9 @@ async function seedAssets() {
     });
   }
 
-  // Mirror the seed set into the Mongo read model and ensure its indexes.
-  await replaceAssetDocuments(assetDocs);
+  // Apply collection validator/indexes before inserting the read-model mirror.
   await ensureAssetIndexes();
+  await replaceAssetDocuments(assetDocs);
 
   return assets.length;
 }

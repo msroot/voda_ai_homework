@@ -30,10 +30,85 @@ interface AssetDocument {
 
 export type AssetView = Omit<AssetDocument, "_id">;
 
+// Second-layer validation at the Mongo collection level (after AJV + Postgres).
+// Rejects writes whose resulting document does not match the expected shape.
+const ASSET_COLLECTION_VALIDATOR = {
+  $jsonSchema: {
+    bsonType: "object",
+    required: [
+      "asset_id",
+      "tenant_id",
+      "schema_version",
+      "name",
+      "type",
+      "status",
+      "location",
+      "installed_at",
+      "custom_fields",
+      "created_at",
+      "updated_at",
+    ],
+    properties: {
+      _id: { bsonType: "string" },
+      asset_id: { bsonType: "string" },
+      tenant_id: { bsonType: "string" },
+      schema_version: { bsonType: ["int", "long", "double"] },
+      name: { bsonType: "string", minLength: 1 },
+      type: { bsonType: "string", minLength: 1 },
+      status: {
+        bsonType: ["string", "null"],
+        enum: ["ok", "warning", "critical", null],
+      },
+      location: {
+        bsonType: ["object", "null"],
+        properties: {
+          type: { enum: ["Point"] },
+          coordinates: {
+            bsonType: "array",
+            minItems: 2,
+            maxItems: 2,
+            items: { bsonType: ["double", "int", "long"] },
+          },
+        },
+      },
+      installed_at: { bsonType: ["string", "null"] },
+      custom_fields: { bsonType: "object" },
+      created_at: { bsonType: "date" },
+      updated_at: { bsonType: "date" },
+    },
+    additionalProperties: false,
+  },
+};
+
+async function ensureAssetCollectionValidator(): Promise<void> {
+  const db = await getMongoDb();
+  const collections = await db
+    .listCollections({ name: COLLECTION }, { nameOnly: true })
+    .toArray();
+
+  if (collections.length === 0) {
+    await db.createCollection(COLLECTION, {
+      validator: ASSET_COLLECTION_VALIDATOR,
+      validationLevel: "strict",
+      validationAction: "error",
+    });
+    return;
+  }
+
+  await db.command({
+    collMod: COLLECTION,
+    validator: ASSET_COLLECTION_VALIDATOR,
+    validationLevel: "strict",
+    validationAction: "error",
+  });
+}
+
 // Mongo reads are always tenant-scoped, so each index leads with tenant_id.
 // _id (= asset_id) is covered by the default index, serving find-by-id, upsert
 // and delete.
 export async function ensureAssetIndexes(): Promise<void> {
+  await ensureAssetCollectionValidator();
+
   const db = await getMongoDb();
   await db.collection<AssetDocument>(COLLECTION).createIndexes([
     { key: { tenant_id: 1, created_at: -1 }, name: "tenant_created_at" },
