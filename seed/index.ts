@@ -2,7 +2,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import pg from "pg";
 import { hashPassword } from "../src/auth/password.js";
-import { normalizeAssetData } from "../src/assetData.js";
+import { normalizeAssetData } from "../src/assets/assetData.js";
 import { closeMongo } from "../src/mongo.js";
 import {
   ensureAssetIndexes,

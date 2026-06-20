@@ -4,7 +4,7 @@ import { getTenantId, getUserId } from "../context/authContext.js";
 import {
   createDefaultAssetSchema,
   extendAssetSchema,
-} from "../mergeAssetSchema.js";
+} from "../assets/mergeAssetSchema.js";
 import {
   AppError,
   isUniqueViolation,

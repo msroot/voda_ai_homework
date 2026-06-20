@@ -1,5 +1,6 @@
 import { getTenantId } from "../context/authContext.js";
 import { getMongoDb } from "../mongo.js";
+import type { AssetFilter } from "../schemas.js";
 import type { Asset } from "../types.js";
 
 const COLLECTION = "assets";
@@ -78,17 +79,10 @@ function toView(doc: AssetDocument): AssetView {
   return view;
 }
 
-export interface AssetFilter {
-  type?: string;
-  status?: string;
-  limit: number;
-  offset: number;
-}
-
 // Read path: assets are served from MongoDB (the synced copy). Mongo has no
 // row-level security, so every read is explicitly scoped to the caller's tenant
-// using the tenant id from the request context. `type` is a top-level field;
-// `status` lives inside the custom_fields bucket.
+// using the tenant id from the request context. `type` and `status` are
+// top-level document fields.
 export async function findAssetDocuments(
   filter: AssetFilter
 ): Promise<{ rows: AssetView[]; total: number }> {

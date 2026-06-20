@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { mergeAssetData, normalizeAssetData } from "../assetData.js";
+import { mergeAssetData, normalizeAssetData } from "../assets/assetData.js";
 import { getTenantId, getUserId } from "../context/authContext.js";
 import { AppError, isUniqueViolation } from "../errors/appError.js";
 import {
@@ -22,7 +22,7 @@ import {
   setCachedAsset,
   setCachedAssetList,
 } from "../cache/assetCache.js";
-import { validateAssetData } from "../validateAsset.js";
+import { validateAssetData } from "../assets/validateAsset.js";
 import type { AssetFilter } from "../schemas.js";
 import type {
   Asset,
