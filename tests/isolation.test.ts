@@ -93,7 +93,7 @@ describe("tenant isolation - assets (Mongo read model)", () => {
     const res = await request(app)
       .put(`/assets/${bAssetId}`)
       .set(auth(adminA))
-      .send({ status: "critical" });
+      .send({ data: { status: "critical" } });
     expect(res.status).toBe(404);
   });
 
@@ -114,6 +114,36 @@ describe("tenant isolation - users", () => {
       expect(user.email).not.toContain("beacon.test");
     }
   });
+
+  it("cannot read another tenant's user by id (404)", async () => {
+    const listB = await request(app).get("/users?limit=1").set(auth(adminB));
+    const userId = listB.body.data[0].id as string;
+    const res = await request(app).get(`/users/${userId}`).set(auth(adminA));
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("asset filtering", () => {
+  it("filters assets by type and status", async () => {
+    const byType = await request(app)
+      .get("/assets?type=sensor&limit=100")
+      .set(auth(adminA));
+    expect(byType.status).toBe(200);
+    expect(byType.body.data.length).toBeGreaterThan(0);
+    for (const asset of byType.body.data) {
+      expect(asset.type).toBe("sensor");
+      expect(asset.tenant_id).toBe(TENANT_A);
+    }
+
+    const byStatus = await request(app)
+      .get("/assets?status=ok&limit=100")
+      .set(auth(adminA));
+    expect(byStatus.status).toBe(200);
+    expect(byStatus.body.data.length).toBeGreaterThan(0);
+    for (const asset of byStatus.body.data) {
+      expect(asset.status).toBe("ok");
+    }
+  });
 });
 
 describe("tenant isolation - report", () => {
@@ -123,6 +153,21 @@ describe("tenant isolation - report", () => {
     expect(res.body.tenant.id).toBe(TENANT_A);
     expect(res.body.total).toBeGreaterThan(0);
     expect(typeof res.body.by_status).toBe("object");
+
+    const statusSum = Object.values(res.body.by_status as Record<string, number>).reduce(
+      (a, b) => a + b,
+      0
+    );
+    expect(statusSum).toBe(res.body.total);
+  });
+
+  it("scopes report counts to each tenant separately", async () => {
+    const resA = await request(app).get("/reports/asset-status").set(auth(adminA));
+    const resB = await request(app).get("/reports/asset-status").set(auth(adminB));
+    expect(resA.body.tenant.id).toBe(TENANT_A);
+    expect(resB.body.tenant.id).toBe(TENANT_B);
+    expect(resA.body.total).toBeGreaterThan(0);
+    expect(resB.body.total).toBeGreaterThan(0);
   });
 });
 

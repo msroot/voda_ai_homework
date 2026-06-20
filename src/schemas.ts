@@ -84,12 +84,7 @@ export const assetFilterSchema = paginationSchema.extend({
 });
 export type AssetFilter = z.infer<typeof assetFilterSchema>;
 
-export const updateAssetSchema = z
-  .object({
-    data: z.record(z.string(), z.unknown()).optional(),
-    status: z.string().min(1).optional(),
-  })
-  .refine((data) => data.data !== undefined || data.status !== undefined, {
-    message: "at least one of data or status is required",
-  });
+export const updateAssetSchema = z.object({
+  data: z.record(z.string(), z.unknown()),
+});
 export type UpdateAssetInput = z.infer<typeof updateAssetSchema>;

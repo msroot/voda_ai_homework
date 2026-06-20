@@ -38,17 +38,16 @@ export async function createAsset(
 
 export async function updateAsset(
   id: string,
-  data: string | null,
-  status: string | null
+  data: string
 ): Promise<Asset | null> {
   const { rows } = await query<Asset>(
     `UPDATE assets
-     SET data = COALESCE($2, data),
-         status = COALESCE($3, status),
+     SET data = $2,
+         status = 'pending',
          action = 'upsert'
      WHERE id = $1
      RETURNING ${assetColumns}`,
-    [id, data, status]
+    [id, data]
   );
   return rows[0] ?? null;
 }

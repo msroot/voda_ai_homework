@@ -120,7 +120,7 @@ export async function updateAsset(
   id: string,
   input: UpdateAssetInput
 ): Promise<Asset> {
-  const { data, status } = input;
+  const { data } = input;
 
   const existing = await findAssetById(id);
 
@@ -128,30 +128,21 @@ export async function updateAsset(
     throw new AppError(404, "Asset not found");
   }
 
-  let nextData = existing.data;
-
-  if (data !== undefined) {
-    // Re-validate against the tenant's immutable asset schema.
-    const schema = await findAssetSchemaByVersion(existing.schema_version);
-    if (!schema) {
-      throw new AppError(404, "Asset schema version not found");
-    }
-
-    nextData = mergeAssetData(existing.data, data);
-
-    const validation = validateAssetData(schema, nextData);
-    if (!validation.valid) {
-      throw new AppError(400, "Asset validation failed", validation.errors);
-    }
+  // Re-validate against the tenant's immutable asset schema.
+  const schema = await findAssetSchemaByVersion(existing.schema_version);
+  if (!schema) {
+    throw new AppError(404, "Asset schema version not found");
   }
 
-  // A data change must re-enter the outbox (status -> "pending") so the worker
-  // re-syncs it to MongoDB; otherwise the Mongo-backed reads would stay stale.
-  const asset = await updateAssetRecord(
-    id,
-    data !== undefined ? JSON.stringify(nextData) : null,
-    data !== undefined ? "pending" : status ?? null
-  );
+  const nextData = mergeAssetData(existing.data, data);
+
+  const validation = validateAssetData(schema, nextData);
+  if (!validation.valid) {
+    throw new AppError(400, "Asset validation failed", validation.errors);
+  }
+
+  // Re-enter the outbox so the worker re-syncs the read model in MongoDB.
+  const asset = await updateAssetRecord(id, JSON.stringify(nextData));
 
   if (!asset) {
     throw new AppError(404, "Asset not found");
