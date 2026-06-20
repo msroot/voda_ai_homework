@@ -17,6 +17,10 @@ export function tryGetTenantId(): string | undefined {
   return authStorage.getStore()?.tenantId;
 }
 
+export function tryGetUserId(): string | undefined {
+  return authStorage.getStore()?.userId;
+}
+
 function getRequired<K extends keyof AuthContext>(key: K): AuthContext[K] {
   const value = authStorage.getStore()?.[key];
 
