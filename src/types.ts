@@ -26,6 +26,8 @@ export interface Asset {
   schema_version: number;
   data: Record<string, unknown>;
   created_by: string;
+  modified_by: string;
+  synced_at: Date | null;
   created_at: Date;
 }
 

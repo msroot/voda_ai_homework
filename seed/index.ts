@@ -108,14 +108,16 @@ async function seedAssets() {
     // Seeded rows are written directly to Mongo below, so they start as
     // 'synced' and are not re-processed by the outbox/worker.
     await adminPool.query(
-      `INSERT INTO assets (id, tenant_id, status, schema_version, data, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO assets (id, tenant_id, status, schema_version, data, created_by, modified_by, synced_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $6, NOW())
        ON CONFLICT (id) DO UPDATE SET
          tenant_id = EXCLUDED.tenant_id,
          status = EXCLUDED.status,
          schema_version = EXCLUDED.schema_version,
          data = EXCLUDED.data,
-         created_by = EXCLUDED.created_by`,
+         created_by = EXCLUDED.created_by,
+         modified_by = EXCLUDED.modified_by,
+         synced_at = EXCLUDED.synced_at`,
       [
         asset.id,
         asset.tenant_id,
@@ -134,6 +136,8 @@ async function seedAssets() {
       schema_version: 1,
       data: normalizedAsset,
       created_by: createdBy,
+      modified_by: createdBy,
+      synced_at: new Date(),
       created_at: new Date(),
     });
   }

@@ -22,6 +22,8 @@ const ASSET_COLLECTION_VALIDATOR = {
       "extra_fields",
       "created_at",
       "updated_at",
+      "synced_at",
+      "synced_by",
     ],
     properties: {
       _id: { bsonType: "string" },
@@ -39,6 +41,8 @@ const ASSET_COLLECTION_VALIDATOR = {
       extra_fields: { bsonType: "object" },
       created_at: { bsonType: "date" },
       updated_at: { bsonType: "date" },
+      synced_at: { bsonType: "date" },
+      synced_by: { bsonType: "string" },
     },
     additionalProperties: false,
   },
@@ -50,7 +54,16 @@ interface AssetDocument extends MongoAssetRecord {
 
 type MutableAssetFields = Pick<
   AssetDocument,
-  "name" | "type" | "status" | "lat" | "lng" | "installed_at" | "extra_fields" | "updated_at"
+  | "name"
+  | "type"
+  | "status"
+  | "lat"
+  | "lng"
+  | "installed_at"
+  | "extra_fields"
+  | "updated_at"
+  | "synced_at"
+  | "synced_by"
 >;
 
 async function ensureAssetCollectionValidator(): Promise<void> {
@@ -93,7 +106,7 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function toDocument(asset: Asset): AssetDocument {
+function toDocument(asset: Asset, syncedBy: string, syncedAt: Date): AssetDocument {
   const data = asset.data;
 
   return {
@@ -108,7 +121,9 @@ function toDocument(asset: Asset): AssetDocument {
     installed_at: typeof data.installed_at === "string" ? data.installed_at : null,
     extra_fields: asRecord(data.extra_fields),
     created_at: asset.created_at,
-    updated_at: new Date(),
+    updated_at: syncedAt,
+    synced_at: syncedAt,
+    synced_by: syncedBy,
   };
 }
 
@@ -122,6 +137,8 @@ function toMutableFields(doc: AssetDocument): MutableAssetFields {
     installed_at: doc.installed_at,
     extra_fields: doc.extra_fields,
     updated_at: doc.updated_at,
+    synced_at: doc.synced_at,
+    synced_by: doc.synced_by,
   };
 }
 
@@ -220,9 +237,10 @@ export async function deleteAssetDocument(id: string): Promise<void> {
     .deleteOne({ _id: id, tenant_id: tenantId });
 }
 
-export async function upsertAssetDocument(asset: Asset): Promise<void> {
+export async function upsertAssetDocument(asset: Asset, syncedBy: string): Promise<void> {
   const db = await getMongoDb();
-  const doc = toDocument(asset);
+  const syncedAt = new Date();
+  const doc = toDocument(asset, syncedBy, syncedAt);
   const collection = db.collection<AssetDocument>(COLLECTION);
 
   const existing = await collection.findOne({ _id: doc._id });
@@ -252,6 +270,9 @@ export async function replaceAssetDocuments(assets: Asset[]): Promise<void> {
 
   await collection.deleteMany({});
   if (assets.length > 0) {
-    await collection.insertMany(assets.map(toDocument));
+    const seededAt = new Date();
+    await collection.insertMany(
+      assets.map((asset) => toDocument(asset, asset.modified_by, asset.synced_at ?? seededAt))
+    );
   }
 }

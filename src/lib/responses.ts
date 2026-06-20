@@ -26,6 +26,8 @@ export interface AssetResponse {
   extra_fields: Record<string, unknown>;
   created_at: string;
   updated_at: string | null;
+  synced_at: string | null;
+  synced_by: string | null;
 }
 
 export interface MongoAssetRecord {
@@ -40,6 +42,8 @@ export interface MongoAssetRecord {
   extra_fields: Record<string, unknown>;
   created_at: Date;
   updated_at: Date;
+  synced_at: Date;
+  synced_by: string;
 }
 
 export interface UserResponse {
@@ -122,6 +126,8 @@ export function assetRecordToResponse(
     extra_fields: record.extra_fields,
     created_at: record.created_at.toISOString(),
     updated_at: record.updated_at.toISOString(),
+    synced_at: record.synced_at.toISOString(),
+    synced_by: record.synced_by,
   };
 }
 
@@ -140,7 +146,9 @@ export function postgresAssetToResponse(asset: Asset): AssetResponse {
     installed_at: typeof data.installed_at === "string" ? data.installed_at : null,
     extra_fields: asRecord(data.extra_fields),
     created_at: asset.created_at.toISOString(),
-    updated_at: null,
+    updated_at: asset.synced_at?.toISOString() ?? null,
+    synced_at: asset.synced_at?.toISOString() ?? null,
+    synced_by: asset.synced_at ? asset.modified_by : null,
   };
 }
 

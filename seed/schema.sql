@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS assets (
     schema_version INT NOT NULL,
     data        JSONB NOT NULL,
     created_by  UUID NOT NULL REFERENCES users(id),
+    modified_by UUID NOT NULL REFERENCES users(id),
+    synced_at   TIMESTAMPTZ,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     FOREIGN KEY (tenant_id, schema_version)
         REFERENCES asset_schemas(tenant_id, version)

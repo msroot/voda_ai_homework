@@ -130,7 +130,7 @@ export async function updateAsset(
     throw new AppError(400, "Asset validation failed", validation.errors);
   }
 
-  const asset = await updateAssetRecord(id, JSON.stringify(nextData));
+  const asset = await updateAssetRecord(id, JSON.stringify(nextData), getUserId());
 
   if (!asset) {
     throw new AppError(404, "Asset not found");
@@ -141,7 +141,7 @@ export async function updateAsset(
 }
 
 export async function deleteAsset(id: string): Promise<void> {
-  const marked = await markAssetForDeletion(id);
+  const marked = await markAssetForDeletion(id, getUserId());
 
   if (!marked) {
     throw new AppError(404, "Asset not found");

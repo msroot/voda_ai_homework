@@ -211,6 +211,8 @@ describe("RBAC - asset writes", () => {
     expect(res.body.tenant_id).toBe(TENANT_A);
     expect(res.body.extra_fields).toMatchObject({ material: "copper", diameter_mm: 100 });
     expect(res.body.updated_at).toBeNull();
+    expect(res.body.synced_at).toBeNull();
+    expect(res.body.synced_by).toBeNull();
   });
 
   it("allows a viewer to read assets (200)", async () => {

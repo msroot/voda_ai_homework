@@ -36,7 +36,7 @@ const worker = new Worker<SyncAssetJobData, void, string>(
         await deleteAssetDocument(assetId);
         await hardDeleteAsset(assetId);
       } else {
-        await upsertAssetDocument(asset);
+        await upsertAssetDocument(asset, userId);
         await markAssetSynced(assetId);
       }
     });

@@ -12,7 +12,7 @@ async function poll() {
     await enqueueSyncAsset({
       assetId: asset.id,
       tenantId: asset.tenant_id,
-      userId: asset.created_by,
+      userId: asset.modified_by,
     });
   }
 
