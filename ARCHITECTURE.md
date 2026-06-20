@@ -219,6 +219,14 @@ Asset attributes are split into immutable system tracking properties and structu
 
 During tenant onboarding (`POST /tenants`), an enterprise’s structural validation constraints are stored directly as language-agnostic JSON Schema blocks in the **`tenant_asset_configs`** meta-table (implemented as `asset_schemas` in Postgres — one config row per tenant, insert-once).
 
+**Atomic onboarding transaction:** `createTenantWithAdmin()` wraps all provisioning in one Postgres transaction (`withBypassTransaction` in `tenantRepository.ts`):
+
+1. `INSERT` tenant row (`tenants`)
+2. `INSERT` JSON Schema config row (`asset_schemas` / `tenant_asset_configs`)
+3. `INSERT` first admin user (`users`)
+
+If any step fails, the whole transaction rolls back — no orphaned tenant without a user or schema config. RLS is bypassed for this path only (no tenant context exists yet before the first user is created).
+
 `tenant_id` and config binding on an asset row are **immutable** after create (DB triggers). Core platform fields cannot be overridden by tenant extensions.
 
 ### 5.2 Decoupled AJV validation engine
@@ -280,6 +288,7 @@ The end-to-end path is: **client payload → AJV (tenant config) → Postgres wr
 | **Repository** | `repositories/*` | Hide SQL/Mongo behind stable interfaces per store |
 | **Service layer** | `services/*` | Business rules, orchestration, error mapping |
 | **Outbox** | `assets` table + listener | Embedded control plane; `FOR UPDATE SKIP LOCKED` polling |
+| **Transactional onboarding** | `createTenantWithAdmin` | Tenant + schema config + admin user in one `BEGIN/COMMIT` |
 | **Pessimistic concurrency** | Listener transaction | No duplicate enqueue across parallel pollers |
 | **CQRS (light)** | PG write / Mongo read | Optimize each path independently |
 | **Read model sync** | Worker + BullMQ | Retryable, scalable projection updates |
@@ -336,20 +345,6 @@ tenant:{tenantId}:users:{hash of sorted query params}
 ```
 
 The hash covers `type`, `status`, `limit`, `offset` for asset lists, or `id` for single-resource keys. Tenant id in the key prevents cross-tenant cache leaks (see [Security](#8-security)).
-
-```mermaid
-flowchart TD
-  GET[GET /assets or /users]
-  KEY[Build tenant-scoped cache key]
-  HIT{Redis key exists?}
-  DB[(Mongo or Postgres)]
-  SET[SET with EX TTL_SECONDS]
-  RET[Return JSON]
-
-  GET --> KEY --> HIT
-  HIT -->|yes| RET
-  HIT -->|no| DB --> SET --> RET
-```
 
 ---
 
@@ -479,6 +474,15 @@ Invalid input → `400` with `{ error, details? }` — no write to Postgres.
 
 ### 8.6 Database hardening
 
+- **Tenant context via AsyncLocalStorage** — the caller’s `tenant_id` is never taken from the request body or route params for authorization. Flow:
+
+  1. JWT middleware verifies the token and stores `tenantId`, `userId`, and `role` in **AsyncLocalStorage** (`lib/authContext.ts`).
+  2. Repositories read `getTenantId()` from that context — handlers and services do not pass `tenant_id` as an untrusted application parameter.
+  3. **Postgres** — every scoped query runs inside a short transaction that sets `app.current_tenant_id` from AsyncLocalStorage (`clients/postgres.ts` → `query()`). RLS policies filter rows automatically; most `SELECT`/`UPDATE`/`DELETE` SQL does not need `tenant_id` in the query string because the session variable enforces scope. `INSERT` statements set `tenant_id` from `getTenantId()` (required `NOT NULL` column, still must match RLS `WITH CHECK`).
+  4. **Mongo** — repositories explicitly add `tenant_id: getTenantId()` to every filter (Mongo has no RLS).
+
+  This keeps tenant scoping consistent deep in the stack without trusting client-supplied tenant ids.
+
 - **RLS** on tenant-scoped Postgres tables (see §8.1).
 - **Immutable columns (triggers)** — even if the API has a bug, Postgres rejects illegal changes:
 
@@ -569,7 +573,7 @@ src/
 
 **Data flow summary:**
 
-1. **Tenant onboarding** (`POST /tenants`) → Postgres tenant + admin user + `tenant_asset_configs` JSON Schema row.
+1. **Tenant onboarding** (`POST /tenants`) — single transaction: tenant + `tenant_asset_configs` + admin user (rollback on any failure; RLS bypass).
 2. **User CRUD** → Postgres only (RLS + triggers).
 3. **Asset write** → Zod → AJV (`custom_fields`) → Postgres `assets` (`pending`) → listener (`FOR UPDATE SKIP LOCKED`, `processing`) → BullMQ → worker → Mongo `$jsonSchema` → `synced`.
 4. **Asset read** → Redis cache → Mongo (tenant-scoped query).
