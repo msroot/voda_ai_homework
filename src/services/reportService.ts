@@ -3,7 +3,7 @@ import { AppError } from "../errors/appError.js";
 import { aggregateAssetStatusCounts } from "../repositories/assetMongoRepository.js";
 import { findTenantById } from "../repositories/tenantRepository.js";
 
-export interface AssetStatusReport {
+interface AssetStatusReport {
   tenant: { id: string; name: string; slug: string };
   total: number;
   by_status: Record<string, number>;

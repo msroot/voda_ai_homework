@@ -5,7 +5,7 @@ import type { Asset } from "../types.js";
 
 const COLLECTION = "assets";
 
-export interface AssetLocation {
+interface AssetLocation {
   type: "Point";
   coordinates: [number, number]; // [longitude, latitude]
 }
@@ -13,7 +13,7 @@ export interface AssetLocation {
 // The base asset fields map to dedicated document fields; lat/lng become the
 // GeoJSON `location`. Only tenant-defined extension fields (the asset's
 // extra_fields) land in the polymorphic custom_fields bucket.
-export interface AssetDocument {
+interface AssetDocument {
   _id: string; // mirrors asset_id, keeps the upsert idempotent
   asset_id: string; // relational pointer to the PostgreSQL UUID
   tenant_id: string; // data isolation partition boundary
@@ -110,7 +110,7 @@ export async function findAssetDocuments(
   return { rows: docs.map(toView), total };
 }
 
-export interface AssetStatusCount {
+interface AssetStatusCount {
   status: string | null;
   count: number;
 }

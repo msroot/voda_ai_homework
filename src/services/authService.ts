@@ -4,7 +4,7 @@ import { AppError } from "../errors/appError.js";
 import { findUserByEmail } from "../repositories/userRepository.js";
 import type { LoginInput, User } from "../types.js";
 
-export interface LoginResult {
+interface LoginResult {
   token: string;
   user: User;
 }

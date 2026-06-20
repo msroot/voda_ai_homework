@@ -4,7 +4,7 @@ import type { User, UserRole } from "../types.js";
 
 const userColumns = "id, tenant_id, name, email, role, created_at";
 
-export interface UserWithPassword extends User {
+interface UserWithPassword extends User {
   password_hash: string;
 }
 

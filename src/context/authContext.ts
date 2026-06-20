@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { UserRole } from "../types.js";
 
-export interface AuthContext {
+interface AuthContext {
   userId: string;
   tenantId: string;
   role: UserRole;

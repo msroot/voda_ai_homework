@@ -4,7 +4,7 @@ import type { UserRole } from "../types.js";
 const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-me";
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN ?? "24h") as SignOptions["expiresIn"];
 
-export interface AuthTokenPayload {
+interface AuthTokenPayload {
   sub: string;
   tenant_id: string;
   email: string;

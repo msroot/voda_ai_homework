@@ -2,7 +2,7 @@ import { getTenantId } from "../context/authContext.js";
 import { query, queryWithoutTenantContext } from "../db.js";
 import type { Asset } from "../types.js";
 
-export interface PendingAsset {
+interface PendingAsset {
   id: string;
   tenant_id: string;
   created_by: string;
