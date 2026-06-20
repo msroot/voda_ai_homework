@@ -604,3 +604,7 @@ src/
 | Report asset counts | Mongo | After worker sync |
 
 This is **eventual consistency** between Postgres write model and Mongo read model, typically seconds under normal load.
+
+---
+
+**Author:** [Yannis Kolovos](https://msroot.me/) · June 2026

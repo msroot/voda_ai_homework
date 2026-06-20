@@ -512,4 +512,6 @@ After create/update, `synced_at`, `synced_by`, and `updated_at` are `null` until
 
 Data merged from Postgres (tenant, users, schema) and Mongo (asset aggregates).
 
-**Errors:** `401`, `404`, `500`.
+---
+
+**Author:** [Yannis Kolovos](https://msroot.me/) · June 2026**Errors:** `401`, `404`, `500`.

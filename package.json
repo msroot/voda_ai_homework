@@ -2,6 +2,7 @@
   "name": "voda-ai-homework",
   "version": "1.0.0",
   "private": true,
+  "author": "Yannis Kolovos <https://msroot.me/>",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "dev:listener": "tsx watch src/listener.ts",
