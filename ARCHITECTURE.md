@@ -10,7 +10,7 @@ This document explains how the multi-tenant asset service works end to end: comp
 2. [Process layout](#2-process-layout)
 3. [Write path (create / update / delete)](#3-write-path-create--update--delete)
 4. [Read path (list / get)](#4-read-path-list--get)
-5. [Asset schema versioning & validation](#5-asset-schema-versioning--validation)
+5. [Asset validation & dynamic metadata](#5-asset-validation--dynamic-metadata)
 6. [Patterns & why](#6-patterns--why)
 7. [Caching](#7-caching)
 8. [Security](#8-security)
@@ -27,7 +27,7 @@ The service manages **tenants**, **users**, and **assets**. Each tenant is fully
 
 | Store | Role |
 |-------|------|
-| **PostgreSQL** | Source of truth for tenants, users, asset writes, outbox, RLS |
+| **PostgreSQL** | Source of truth for tenants, users, asset writes (embedded outbox), RLS |
 | **MongoDB** | Read model for assets (fast queries, aggregations) |
 | **Redis** | Response cache, rate-limit counters, BullMQ job queue |
 
@@ -71,7 +71,7 @@ Three long-running processes (PM2 in Docker, or separate terminals locally):
 | Process | Entry | Responsibility |
 |---------|-------|----------------|
 | **API** | `src/index.ts` | HTTP, auth, validation, handlers |
-| **Listener** | `src/listener.ts` | Poll Postgres outbox, enqueue sync jobs |
+| **Listener** | `src/listener.ts` | Poll `assets` with `FOR UPDATE SKIP LOCKED`, enqueue sync jobs |
 | **Worker** | `src/worker.ts` | Consume queue, upsert/delete Mongo, mark synced |
 
 ```mermaid
@@ -84,7 +84,7 @@ flowchart LR
   MG[(Mongo)]
 
   API -->|asset writes| PG
-  L -->|poll outbox| PG
+  L -->|poll assets FOR UPDATE SKIP LOCKED| PG
   L -->|enqueue| Q
   W -->|dequeue| Q
   W -->|upsert/delete| MG
@@ -109,23 +109,22 @@ sequenceDiagram
   participant W as Worker
   participant MG as Mongo
 
-  C->>API: POST/PUT/DELETE /assets
-  API->>API: JWT + RBAC + validate body
-  API->>API: Validate asset vs tenant JSON Schema
-  API->>PG: INSERT/UPDATE asset row (status=pending)
-  API->>PG: INSERT outbox row (action=upsert|delete)
+  C->>API: POST/PATCH/DELETE /assets
+  API->>API: JWT + RBAC + Zod validation
+  API->>API: AJV validate req.body / custom_fields
+  API->>PG: INSERT/UPDATE assets row (sync status=pending)
   API-->>C: 201/200/204 (synced_* may be null)
 
   loop every poll interval
-    L->>PG: SELECT pending outbox rows
-    L->>Q: enqueueSyncAsset(asset, modified_by)
-    L->>PG: mark outbox processed
+    L->>PG: BEGIN — SELECT pending FOR UPDATE SKIP LOCKED
+    L->>PG: UPDATE status=processing
+    L->>Q: enqueueSyncAsset
+    L->>PG: COMMIT
   end
 
   W->>Q: take job
-  W->>MG: upsert or delete document
+  W->>MG: upsert/delete — Mongo $jsonSchema validation
   W->>PG: mark asset synced + synced_at
-  Note over MG: updated_at set on Mongo doc
 ```
 
 ### 3.2 Postgres asset row
@@ -133,19 +132,42 @@ sequenceDiagram
 On write, Postgres stores:
 
 - `tenant_id`, `schema_version` — set on create, **immutable** (DB trigger)
-- `data` — JSON blob (base fields + `extra_fields`)
-- `status` — **sync state**: `pending` → `synced` (not business `ok/warning/critical`)
+- `data` — JSON blob: core attributes at root + tenant extensions in `custom_fields`
+- `status` — **sync state**: `pending` → `processing` → `synced` (not business `ok/warning/critical`)
+- `action` — `upsert` or `delete` (delete tombstone flow)
 - `modified_by` — user who performed the write
 - `synced_at` — set when worker confirms Mongo sync
-- `created_at`, `updated_at` — `updated_at` null until sync for eventual consistency with Mongo
+- `created_at` — row creation time
 
-### 3.3 Outbox
+The `assets` table is both the **write model** and the **outbox control plane** — there is no separate outbox table.
 
-Each asset mutation also inserts an **outbox** row: `asset_id`, `tenant_id`, `action` (`upsert` | `delete`), payload snapshot. The listener polls unprocessed rows, pushes jobs to BullMQ, then marks outbox processed. If the worker fails, jobs retry; idempotent upserts prevent duplicate documents.
+### 3.3 Outbox & concurrency-safe polling
+
+To guarantee high-throughput stability and zero processing duplication across scaled out-of-process instances, the listener treats the `assets` table as a strict **system control plane** utilizing **pessimistic concurrency control**.
+
+When polling for processing targets, the query locks records dynamically using a transaction-isolated cursor:
+
+- **`FOR UPDATE`** — places an immediate lock on the selected rows, preventing concurrent polling processes from mutating or re-reading them.
+- **`SKIP LOCKED`** — instructs parallel workers to immediately bypass locked records and process the next available rows in the stream without hanging.
+
+**Lifecycle:** within the same transaction block, the listener updates the sync `status` of these rows to `processing` and dispatches them to BullMQ via Redis before executing a `COMMIT`, freeing up resources cleanly.
+
+Poll query (conceptually):
+
+```sql
+SELECT id, tenant_id, modified_by
+  FROM assets
+ WHERE status = 'pending'
+ ORDER BY created_at
+ LIMIT $batch
+ FOR UPDATE SKIP LOCKED;
+```
+
+If the worker fails after enqueue, BullMQ retries; idempotent Mongo upserts prevent duplicate documents. Rows left in `processing` can be recovered by a future poll policy or ops tooling.
 
 ### 3.4 Delete path
 
-Delete sets outbox `action=delete`. Worker removes the Mongo document and Postgres may hard-delete the row after processing (tombstone flow).
+Delete sets `action=delete` and sync `status=pending`. Worker removes the Mongo document and Postgres hard-deletes the row after processing (tombstone flow).
 
 ### 3.5 API response timing
 
@@ -183,63 +205,55 @@ Cache keys are tenant-scoped. Writes invalidate cache entries — see [Caching](
 
 ---
 
-## 5. Asset schema versioning & validation
+## 5. Asset validation & dynamic metadata
 
-Each tenant has a JSON Schema for assets stored in Postgres (`asset_schemas` table) with an integer `version`. The API exposes labels like `v_1`, `v_2`, … via `formatSchemaVersion()` in `lib/responses.ts`.
+Validation is **data-driven at runtime** — tenant constraints live as JSON Schema rows in Postgres, compiled and enforced by AJV on every write. No application redeploy is required to change tenant field rules.
 
-### 5.1 Base schema + tenant extensions
+### 5.1 Dynamic runtime metadata models
 
-- **Base schema** (`seed/schemas/default-asset.schema.json`, built in `lib/assetSchema.ts`): `id`, `tenant_id`, `name`, `type`, `status`, `lat`, `lng`, `installed_at`, and optional `extra_fields`.
-- **Tenant extension** (on `POST /tenants`): custom properties merged into `extra_fields` in the JSON Schema. Base fields cannot be removed or overridden.
-- **Immutable on asset row**: `tenant_id` and `schema_version` are set on create and cannot change (Postgres trigger). An asset always keeps the schema version it was created with.
+Asset attributes are split into immutable system tracking properties and structural tenant extensions. Instead of maintaining compiling schema versions or long-running database migrations, schema configuration is treated as **pure database rows**.
 
-Custom tenant fields are sent at the top level in API requests; they are normalized into `extra_fields` in stored data and appear under `extra_fields` in API responses.
+**Core attributes (root level):** Fields like `id`, `tenant_id`, `name`, `type`, `status`, `lat`, `lng`, and `installed_at` are strictly enforced by the core platform. They remain entirely flat at the document surface to enable rapid composite indexing and native geospatial query routing.
 
-### 5.2 AJV validation on every write (API layer)
+**Extended fields sandbox (`custom_fields`):** All tenant-specific parameters defined during the onboarding phase are stored under a dedicated `custom_fields` sub-document mapping (API may accept them at the top level; the server normalizes them into `custom_fields` before storage).
 
-Asset **business validation** runs in the API using **AJV** (`ajv` + `ajv-formats`) in `lib/assetSchema.ts`:
+During tenant onboarding (`POST /tenants`), an enterprise’s structural validation constraints are stored directly as language-agnostic JSON Schema blocks in the **`tenant_asset_configs`** meta-table (implemented as `asset_schemas` in Postgres — one config row per tenant, insert-once).
+
+`tenant_id` and config binding on an asset row are **immutable** after create (DB triggers). Core platform fields cannot be overridden by tenant extensions.
+
+### 5.2 Decoupled AJV validation engine
+
+Rather than relying on application code changes, business validation is fully schema-driven and executed at the Express service boundary via **AJV** (Another JSON Schema Validator) in `lib/assetSchema.ts`:
 
 | Step | Function | Purpose |
 |------|----------|---------|
-| Compile schema | `compileAssetValidator()` | Builds an AJV validator from the tenant JSON Schema |
-| Validate data | `validateAssetData(schema, data)` | Runs AJV against normalized asset data |
-| Format errors | `formatErrors()` | Returns paths like `/name: must be string` |
+| Load config | `findLatestAssetSchema()` / `findAssetSchemaByVersion()` | Read JSON Schema from `tenant_asset_configs` |
+| Normalize | `normalizeAssetData()` / `mergeAssetData()` | Server sets `id`, `tenant_id`; merges client fields into `custom_fields` |
+| Compile | `compileAssetValidator()` | Build AJV validator from stored JSON Schema |
+| Validate | `validateAssetData(schema, data)` | Runtime check against tenant rules |
 
-**Create (`POST /assets`)**
+**Zero-trust input separation:** Client updates (`PATCH /assets/:id`) are strictly limited to the `custom_fields` sub-document payload. Core infrastructure fields are parsed out-of-band by the server context, eliminating the risk of cross-tenant data pollution or spatial index corruption.
 
-1. Load the tenant’s **current** schema via `findLatestAssetSchema()`.
-2. Normalize the flat request body with `normalizeAssetData()` (sets `id`, `tenant_id`, merges custom fields into `extra_fields`).
-3. Validate with AJV against that schema.
-4. On success, insert into Postgres with `schema_version = latest.version` (e.g. `1` → API shows `v_1`).
+**Create (`POST /assets`)** — load current tenant config, normalize body, AJV validate, write Postgres with `status=pending`.
 
-**Update (`PUT /assets/:id`)**
+**Update (`PATCH /assets/:id`)** — load asset’s bound config, merge `custom_fields` patch, AJV validate, write Postgres.
 
-1. Load the existing asset from Postgres.
-2. Load the schema for **that asset’s `schema_version`** via `findAssetSchemaByVersion(existing.schema_version)` — not the latest tenant schema.
-3. Merge the patch with `mergeAssetData()`.
-4. Validate the merged data with AJV against the **same version** the asset was created with.
-5. On success, update Postgres (`schema_version` stays unchanged).
-
-This means older assets remain valid under the rules they were created with, even if the tenant schema definition changes in the future.
-
-Failed validation returns `400` with `{ "error": "Asset validation failed", "details": [...] }`.
+Failed validation → `400` with `{ "error": "Asset validation failed", "details": [...] }`.
 
 ```mermaid
-flowchart TD
-  REQ[POST or PUT /assets]
+flowchart LR
+  BODY[req.body / custom_fields]
   NORM[normalizeAssetData / mergeAssetData]
-  SCH{Create or update?}
-  LATEST[findLatestAssetSchema]
-  BYVER[findAssetSchemaByVersion on row]
+  CFG[tenant_asset_configs JSON Schema]
   AJV[validateAssetData — AJV]
-  PG[Write Postgres + outbox]
-  FAIL[400 Asset validation failed]
+  PG[(Postgres assets)]
+  W[Worker]
+  MONGO[(Mongo $jsonSchema)]
 
-  REQ --> NORM --> SCH
-  SCH -->|create| LATEST --> AJV
-  SCH -->|update| BYVER --> AJV
+  BODY --> NORM --> AJV
+  CFG --> AJV
   AJV -->|valid| PG
-  AJV -->|invalid| FAIL
+  PG --> W --> MONGO
 ```
 
 ### 5.3 Mongo collection validator (second layer)
@@ -248,33 +262,14 @@ When the sync worker writes to Mongo, documents pass a **second validation** —
 
 | Layer | Where | What it checks |
 |-------|-------|----------------|
-| **1 — AJV (API)** | `POST` / `PUT` handlers | Full tenant JSON Schema: base fields + tenant `extra_fields` rules |
+| **1 — AJV (API)** | `POST` / `PATCH` handlers | Full tenant JSON Schema: core fields + `custom_fields` rules |
 | **2 — Mongo `$jsonSchema`** | `upsertAssetDocument()` | Document **shape**: required keys, BSON types, `status` enum, no extra top-level properties |
 
-The Mongo validator is **structural** — it enforces that every synced document has the expected fields and types, but it does **not** re-run tenant-specific rules inside `extra_fields` (those are already enforced by AJV before Postgres accepts the write).
+The Mongo validator is **structural** — it enforces that every synced document has the expected fields and types, but it does **not** re-run tenant-specific rules inside `custom_fields` (those are already enforced by AJV before Postgres accepts the write).
 
 If Mongo validation fails, the worker job errors and BullMQ retries. In normal operation, AJV on the API path prevents invalid data from reaching Postgres, so Mongo validation acts as a **safety net** on the read model.
 
-```mermaid
-flowchart LR
-  API[API write]
-  AJV[AJV validateAssetData]
-  PG[(Postgres)]
-  W[Worker]
-  MONGO[(Mongo $jsonSchema)]
-
-  API --> AJV --> PG
-  PG --> W --> MONGO
-```
-
-### 5.4 Version labels in the API
-
-| Store | `schema_version` format | Example |
-|-------|-------------------------|---------|
-| Postgres / Mongo | integer | `1` |
-| API responses / reports | string label | `v_1` |
-
-The version on an asset row is set at create time and copied into the Mongo document on sync. Reports can aggregate assets by `schema_version` to show how many assets exist per version.
+The end-to-end path is: **client payload → AJV (tenant config) → Postgres write model → worker → Mongo structural validator → read model.**
 
 ---
 
@@ -284,8 +279,8 @@ The version on an asset row is set at create time and copied into the Mongo docu
 |---------|-------|-----|
 | **Repository** | `repositories/*` | Hide SQL/Mongo behind stable interfaces per store |
 | **Service layer** | `services/*` | Business rules, orchestration, error mapping |
-| **Outbox** | Postgres `outbox` + listener | Reliable handoff to async sync without dual-write races |
-| **Transactional outbox** | Same DB transaction as asset row | No lost events if API crashes after write |
+| **Outbox** | `assets` table + listener | Embedded control plane; `FOR UPDATE SKIP LOCKED` polling |
+| **Pessimistic concurrency** | Listener transaction | No duplicate enqueue across parallel pollers |
 | **CQRS (light)** | PG write / Mongo read | Optimize each path independently |
 | **Read model sync** | Worker + BullMQ | Retryable, scalable projection updates |
 | **AsyncLocalStorage context** | `authContext` | Tenant/user available deep in stack without parameter drilling |
@@ -544,36 +539,41 @@ Asset schema validation failures return `400` with structured `details` from JSO
 
 ## 10. Source layout
 
+Lean, store-native layout — each process has a single entry file; data access is isolated per database.
+
 ```
 src/
-  index.ts          API entry
-  listener.ts       Outbox poller
-  worker.ts         Sync consumer
-  app.ts            Express app wiring
+  index.ts              API server entry
+  listener.ts           Concurrency-safe outbox poller (assets FOR UPDATE SKIP LOCKED)
+  worker.ts             Mongo sync consumer (BullMQ)
+  app.ts                Express wiring + global middleware
 
-  clients/          postgres, mongo, redis connections
-  lib/              jwt, authContext, password, cache, assetSchema,
-                    responses, appError
-  middleware/       auth, authorize, validateRequest, rateLimit,
-                    platformAdmin, asyncHandler
-  repositories/     assetRepository (PG), assetMongoRepository (MG),
-                    tenantRepository, userRepository
-  routes/           auth, tenants, users, assets, reports
-  services/         auth, tenant, user, asset, report
+  clients/              Database connections (postgres, mongo, redis)
+  lib/                  Cross-cutting: jwt, authContext, password, cache,
+                        assetSchema (AJV), responses, appError
+  middleware/           auth, authorize, validateRequest (Zod), rateLimit,
+                        platformAdmin, asyncHandler
+  repositories/         One repository per store / aggregate
+                          assetRepository.ts      Postgres write model + outbox polling
+                          assetMongoRepository.ts Mongo read model + $jsonSchema validator
+                          tenantRepository.ts     tenants + tenant_asset_configs
+                          userRepository.ts       users (RLS-scoped)
+  routes/               Thin HTTP handlers: auth, tenants, users, assets, reports
+  services/             Business logic: auth, tenant, user, asset, report
   worker/
-    syncAsset.ts    BullMQ queue + enqueueSyncAsset
+    syncAsset.ts        BullMQ queue definition + enqueueSyncAsset
 
-  schemas.ts        Zod input schemas
-  types.ts          Domain types
+  schemas.ts            Zod HTTP input schemas
+  types.ts              Domain types (Asset, User, Tenant, …)
 ```
 
 **Data flow summary:**
 
-1. **Tenant onboarding** (`POST /tenants`) → Postgres tenant + admin user + schema; no Mongo yet.
-2. **User CRUD** → Postgres only.
-3. **Asset write** → Postgres + outbox → listener → queue → worker → Mongo.
-4. **Asset read** → Mongo (+ cache).
-5. **Report** → Postgres + Mongo aggregates.
+1. **Tenant onboarding** (`POST /tenants`) → Postgres tenant + admin user + `tenant_asset_configs` JSON Schema row.
+2. **User CRUD** → Postgres only (RLS + triggers).
+3. **Asset write** → Zod → AJV (`custom_fields`) → Postgres `assets` (`pending`) → listener (`FOR UPDATE SKIP LOCKED`, `processing`) → BullMQ → worker → Mongo `$jsonSchema` → `synced`.
+4. **Asset read** → Redis cache → Mongo (tenant-scoped query).
+5. **Report** → Postgres metadata + Mongo aggregations.
 
 ---
 
