@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { findPendingAssets } from "./repositories/assetRepository.js";
-import { enqueueAssetSync } from "./assetSync.js";
+import { enqueueSyncAsset } from "./worker/syncAsset.js";
 
 const POLL_INTERVAL_MS = Number(process.env.OUTBOX_POLL_INTERVAL_MS ?? 2000);
 const BATCH_SIZE = Number(process.env.OUTBOX_BATCH_SIZE ?? 50);
@@ -9,7 +9,7 @@ async function poll() {
   const pending = await findPendingAssets(BATCH_SIZE);
 
   for (const asset of pending) {
-    await enqueueAssetSync({
+    await enqueueSyncAsset({
       assetId: asset.id,
       tenantId: asset.tenant_id,
       userId: asset.created_by,

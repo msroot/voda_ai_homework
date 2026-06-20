@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
-import { hashPassword, getRole, getTenantId } from "../auth.js";
-import { userToResponse, type UserResponse } from "../responses.js";
-import { AppError, isForeignKeyViolation, isUniqueViolation } from "../appError.js";
+import { getRole, getTenantId } from "../lib/authContext.js";
+import { hashPassword } from "../lib/password.js";
+import { userToResponse, type UserResponse } from "../lib/responses.js";
+import { AppError, isForeignKeyViolation, isUniqueViolation } from "../lib/appError.js";
 import {
   createUser as createUserRecord,
   deleteUser as deleteUserRecord,
@@ -15,7 +16,7 @@ import {
   invalidateTenantUsers,
   setCachedUser,
   setCachedUserList,
-} from "../cache.js";
+} from "../lib/cache.js";
 import type { CreateUserInput, Pagination, UpdateUserInput } from "../schemas.js";
 import type { Paginated } from "../types.js";
 

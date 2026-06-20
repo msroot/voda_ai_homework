@@ -1,5 +1,5 @@
-import type { MongoAssetRecord } from "../responses.js";
-import { getTenantId } from "../auth.js";
+import type { MongoAssetRecord } from "../lib/responses.js";
+import { getTenantId } from "../lib/authContext.js";
 import { getMongoDb } from "../clients/mongo.js";
 import type { AssetFilter } from "../schemas.js";
 import type { Asset } from "../types.js";

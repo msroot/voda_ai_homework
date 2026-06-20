@@ -1,4 +1,4 @@
-import type { Asset, Tenant, User } from "./types.js";
+import type { Asset, Tenant, User } from "../types.js";
 
 /** Public label for an asset schema version (API + reports). DB/Mongo store the integer. */
 export function formatSchemaVersion(version: number): string {

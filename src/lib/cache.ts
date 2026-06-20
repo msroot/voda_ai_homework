@@ -1,8 +1,8 @@
 import { createHash } from "crypto";
-import { createRedisConnection } from "./clients/redis.js";
+import { createRedisConnection } from "../clients/redis.js";
+import type { AssetFilter, Pagination } from "../schemas.js";
+import type { Paginated } from "../types.js";
 import type { AssetResponse, UserResponse } from "./responses.js";
-import type { AssetFilter, Pagination } from "./schemas.js";
-import type { Paginated } from "./types.js";
 
 const TTL_SECONDS = Number(process.env.CACHE_TTL_SECONDS ?? 60);
 

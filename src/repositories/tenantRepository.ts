@@ -1,4 +1,4 @@
-import { getTenantId } from "../auth.js";
+import { getTenantId } from "../lib/authContext.js";
 import { query, withBypassTransaction } from "../clients/postgres.js";
 import type { UserRole } from "../schemas.js";
 import type { Tenant, User } from "../types.js";

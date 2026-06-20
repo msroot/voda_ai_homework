@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultAssetSchema, validateAssetData, validateAssetSchema } from "../src/assetSchema.js";
+import { createDefaultAssetSchema, validateAssetData, validateAssetSchema } from "../src/lib/assetSchema.js";
 
 describe("validateAssetSchema", () => {
   it("accepts the default asset JSON Schema", () => {

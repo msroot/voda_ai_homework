@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { validate } from "../middleware/validate.js";
+import { validateRequest } from "../middleware/validateRequest.js";
 import { requireWrite } from "../middleware/authorize.js";
 import {
   assetFilterSchema,
@@ -20,7 +20,7 @@ const router = Router();
 
 router.get(
   "/",
-  validate(assetFilterSchema, "query"),
+  validateRequest(assetFilterSchema, "query"),
   asyncHandler(async (req, res) => {
     res.json(await listAssets(req.query as unknown as AssetFilter));
   })
@@ -28,7 +28,7 @@ router.get(
 
 router.get(
   "/:id",
-  validate(idParamSchema, "params"),
+  validateRequest(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     res.json(await getAsset(req.params.id));
   })
@@ -37,7 +37,7 @@ router.get(
 router.post(
   "/",
   requireWrite,
-  validate(assetWriteSchema),
+  validateRequest(assetWriteSchema),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createAsset(req.body));
   })
@@ -46,8 +46,8 @@ router.post(
 router.put(
   "/:id",
   requireWrite,
-  validate(idParamSchema, "params"),
-  validate(assetWriteSchema),
+  validateRequest(idParamSchema, "params"),
+  validateRequest(assetWriteSchema),
   asyncHandler(async (req, res) => {
     res.json(await updateAsset(req.params.id, req.body));
   })
@@ -56,7 +56,7 @@ router.put(
 router.delete(
   "/:id",
   requireWrite,
-  validate(idParamSchema, "params"),
+  validateRequest(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     await deleteAsset(req.params.id);
     res.status(204).send();

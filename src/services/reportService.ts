@@ -1,6 +1,6 @@
-import { formatSchemaVersion, type TenantOverviewReport } from "../responses.js";
-import { getTenantId } from "../auth.js";
-import { AppError } from "../appError.js";
+import { formatSchemaVersion, type TenantOverviewReport } from "../lib/responses.js";
+import { getTenantId } from "../lib/authContext.js";
+import { AppError } from "../lib/appError.js";
 import {
   aggregateAssetSchemaVersionCounts,
   aggregateAssetStatusCounts,

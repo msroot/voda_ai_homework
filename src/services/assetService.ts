@@ -3,10 +3,10 @@ import {
   assetRecordToResponse,
   postgresAssetToResponse,
   type AssetResponse,
-} from "../responses.js";
-import { mergeAssetData, normalizeAssetData, validateAssetData } from "../assetSchema.js";
-import { getTenantId, getUserId } from "../auth.js";
-import { AppError, isUniqueViolation } from "../appError.js";
+} from "../lib/responses.js";
+import { mergeAssetData, normalizeAssetData, validateAssetData } from "../lib/assetSchema.js";
+import { getTenantId, getUserId } from "../lib/authContext.js";
+import { AppError, isUniqueViolation } from "../lib/appError.js";
 import {
   createAsset as createAssetRecord,
   markAssetForDeletion,
@@ -27,7 +27,7 @@ import {
   invalidateTenantAssets,
   setCachedAsset,
   setCachedAssetList,
-} from "../cache.js";
+} from "../lib/cache.js";
 import type { AssetFilter, AssetWriteInput } from "../schemas.js";
 import type { Paginated } from "../types.js";
 

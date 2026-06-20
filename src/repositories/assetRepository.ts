@@ -1,4 +1,4 @@
-import { getTenantId } from "../auth.js";
+import { getTenantId } from "../lib/authContext.js";
 import { query, queryWithoutTenantContext } from "../clients/postgres.js";
 import type { Asset } from "../types.js";
 

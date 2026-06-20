@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { validate } from "../middleware/validate.js";
+import { validateRequest } from "../middleware/validateRequest.js";
 import { requireAdmin } from "../middleware/authorize.js";
 import {
   createUserSchema,
@@ -21,7 +21,7 @@ const router = Router();
 
 router.get(
   "/",
-  validate(paginationSchema, "query"),
+  validateRequest(paginationSchema, "query"),
   asyncHandler(async (req, res) => {
     res.json(await listUsers(req.query as unknown as Pagination));
   })
@@ -29,7 +29,7 @@ router.get(
 
 router.get(
   "/:id",
-  validate(idParamSchema, "params"),
+  validateRequest(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     res.json(await getUser(req.params.id));
   })
@@ -38,7 +38,7 @@ router.get(
 router.post(
   "/",
   requireAdmin,
-  validate(createUserSchema),
+  validateRequest(createUserSchema),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createUser(req.body));
   })
@@ -47,8 +47,8 @@ router.post(
 router.put(
   "/:id",
   requireAdmin,
-  validate(idParamSchema, "params"),
-  validate(updateUserSchema),
+  validateRequest(idParamSchema, "params"),
+  validateRequest(updateUserSchema),
   asyncHandler(async (req, res) => {
     res.json(await updateUser(req.params.id, req.body));
   })
@@ -57,7 +57,7 @@ router.put(
 router.delete(
   "/:id",
   requireAdmin,
-  validate(idParamSchema, "params"),
+  validateRequest(idParamSchema, "params"),
   asyncHandler(async (req, res) => {
     await deleteUser(req.params.id);
     res.status(204).send();

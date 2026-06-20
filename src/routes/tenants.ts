@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
-import { validate } from "../middleware/validate.js";
+import { validateRequest } from "../middleware/validateRequest.js";
 import { requirePlatformAdmin } from "../middleware/platformAdmin.js";
 import { requireAdmin } from "../middleware/authorize.js";
 import { createTenantSchema, updateTenantSchema } from "../schemas.js";
@@ -16,7 +16,7 @@ const router = Router();
 router.post(
   "/",
   requirePlatformAdmin,
-  validate(createTenantSchema),
+  validateRequest(createTenantSchema),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createTenant(req.body));
   })
@@ -33,7 +33,7 @@ router.get(
 router.put(
   "/current",
   requireAdmin,
-  validate(updateTenantSchema),
+  validateRequest(updateTenantSchema),
   asyncHandler(async (req, res) => {
     res.json(await updateCurrentTenant(req.body));
   })

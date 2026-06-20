@@ -1,7 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import type { ZodType } from "zod";
 
-export function validate<T>(
+/** Validates HTTP request input (body, query, or params) against a Zod schema from schemas.ts. */
+export function validateRequest<T>(
   schema: ZodType<T>,
   source: "body" | "params" | "query" = "body"
 ) {

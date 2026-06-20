@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { verifyToken, runWithAuthContext } from "../auth.js";
+import { verifyToken } from "../lib/jwt.js";
+import { runWithAuthContext } from "../lib/authContext.js";
 
 // Requests that must NOT go through tenant JWT auth. This covers truly public
 // routes plus platform provisioning routes, which are authenticated separately

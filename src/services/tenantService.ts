@@ -1,19 +1,20 @@
 import { randomUUID } from "crypto";
-import { hashPassword, getTenantId, getUserId } from "../auth.js";
+import { getTenantId, getUserId } from "../lib/authContext.js";
+import { hashPassword } from "../lib/password.js";
 import {
   tenantToResponse,
   userToResponse,
   type TenantResponse,
   type UserResponse,
-} from "../responses.js";
+} from "../lib/responses.js";
 import {
   buildTenantAssetSchema,
   createDefaultAssetSchema,
   normalizeAssetSchema,
   validateAssetSchema,
   validateAssetSchemaBaseFields,
-} from "../assetSchema.js";
-import { AppError, isUniqueViolation } from "../appError.js";
+} from "../lib/assetSchema.js";
+import { AppError, isUniqueViolation } from "../lib/appError.js";
 import type { CreateTenantInput, UpdateTenantInput } from "../schemas.js";
 import {
   createTenantWithAdmin,
