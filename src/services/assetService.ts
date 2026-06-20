@@ -28,7 +28,7 @@ import {
   setCachedAsset,
   setCachedAssetList,
 } from "../lib/cache.js";
-import type { AssetFilter, AssetWriteInput } from "../schemas.js";
+import type { AssetFilter, AssetUpdateInput, AssetWriteInput } from "../schemas.js";
 import type { Paginated } from "../types.js";
 
 export async function listAssets(
@@ -71,7 +71,6 @@ export async function getAsset(id: string): Promise<AssetResponse> {
 }
 
 export async function createAsset(input: AssetWriteInput): Promise<AssetResponse> {
-  const { data } = input;
   const userId = getUserId();
   const tenantId = getTenantId();
 
@@ -80,8 +79,8 @@ export async function createAsset(input: AssetWriteInput): Promise<AssetResponse
     throw new AppError(404, "Tenant not found");
   }
 
-  const assetId = typeof data.id === "string" ? data.id : randomUUID();
-  const assetData = normalizeAssetData(data, tenantId, assetId);
+  const assetId = typeof input.id === "string" ? input.id : randomUUID();
+  const assetData = normalizeAssetData(input, tenantId, assetId);
 
   const validation = validateAssetData(latest.schema, assetData);
   if (!validation.valid) {
@@ -108,10 +107,8 @@ export async function createAsset(input: AssetWriteInput): Promise<AssetResponse
 
 export async function updateAsset(
   id: string,
-  input: AssetWriteInput
+  input: AssetUpdateInput
 ): Promise<AssetResponse> {
-  const { data } = input;
-
   const existing = await findAssetById(id);
 
   if (!existing) {
@@ -123,7 +120,7 @@ export async function updateAsset(
     throw new AppError(404, "Asset schema version not found");
   }
 
-  const nextData = mergeAssetData(existing.data, data);
+  const nextData = mergeAssetData(existing.data, input);
 
   const validation = validateAssetData(schema, nextData);
   if (!validation.valid) {

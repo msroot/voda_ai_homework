@@ -4,6 +4,7 @@ import { validateRequest } from "../middleware/validateRequest.js";
 import { requireWrite } from "../middleware/authorize.js";
 import {
   assetFilterSchema,
+  assetUpdateSchema,
   assetWriteSchema,
   idParamSchema,
   type AssetFilter,
@@ -47,7 +48,7 @@ router.put(
   "/:id",
   requireWrite,
   validateRequest(idParamSchema, "params"),
-  validateRequest(assetWriteSchema),
+  validateRequest(assetUpdateSchema),
   asyncHandler(async (req, res) => {
     res.json(await updateAsset(req.params.id, req.body));
   })

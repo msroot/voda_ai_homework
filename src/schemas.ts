@@ -71,10 +71,15 @@ export const updateUserSchema = z
   );
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 
-export const assetWriteSchema = z.object({
-  data: z.record(z.string(), z.unknown()),
-});
+export const assetWriteSchema = z.record(z.string(), z.unknown());
 export type AssetWriteInput = z.infer<typeof assetWriteSchema>;
+
+export const assetUpdateSchema = z
+  .record(z.string(), z.unknown())
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "at least one field is required",
+  });
+export type AssetUpdateInput = z.infer<typeof assetUpdateSchema>;
 
 export const assetFilterSchema = paginationSchema.extend({
   type: z.string().min(1).optional(),

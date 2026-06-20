@@ -93,7 +93,7 @@ describe("tenant isolation - assets (Mongo read model)", () => {
     const res = await request(app)
       .put(`/assets/${bAssetId}`)
       .set(auth(adminA))
-      .send({ data: { status: "critical" } });
+      .send({ status: "critical" });
     expect(res.status).toBe(404);
   });
 
@@ -186,7 +186,7 @@ describe("RBAC - asset writes", () => {
     const res = await request(app)
       .post("/assets")
       .set(auth(viewerA))
-      .send({ data: {} });
+      .send({});
     expect(res.status).toBe(403);
   });
 
@@ -195,16 +195,14 @@ describe("RBAC - asset writes", () => {
       .post("/assets")
       .set(auth(editorA))
       .send({
-        data: {
-          name: `TEST-${Date.now()}`,
-          type: "sensor",
-          status: "ok",
-          lat: 42.1,
-          lng: -71.1,
-          installed_at: "2020-01-01",
-          material: "copper",
-          diameter_mm: 100,
-        },
+        name: `TEST-${Date.now()}`,
+        type: "sensor",
+        status: "ok",
+        lat: 42.1,
+        lng: -71.1,
+        installed_at: "2020-01-01",
+        material: "copper",
+        diameter_mm: 100,
       });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body.id).toBeDefined();
@@ -213,6 +211,63 @@ describe("RBAC - asset writes", () => {
     expect(res.body.updated_at).toBeNull();
     expect(res.body.synced_at).toBeNull();
     expect(res.body.synced_by).toBeNull();
+  });
+
+  it("GET /assets/:id matches POST /assets fields after Mongo sync", async () => {
+    const assetName = `SYNC-TEST-${Date.now()}`;
+    const createRes = await request(app)
+      .post("/assets")
+      .set(auth(editorA))
+      .send({
+        name: assetName,
+        type: "sensor",
+        status: "ok",
+        lat: 42.1,
+        lng: -71.1,
+        installed_at: "2020-01-01",
+        material: "copper",
+        diameter_mm: 100,
+      });
+    expect(createRes.status).toBe(201);
+
+    const { findAssetById } = await import("../src/repositories/assetRepository.js");
+    const { upsertAssetDocument } = await import(
+      "../src/repositories/assetMongoRepository.js"
+    );
+    const { runWithAuthContext } = await import("../src/lib/authContext.js");
+
+    let asset: Awaited<ReturnType<typeof findAssetById>> = null;
+    await runWithAuthContext(
+      { userId: "23b8c1e9-3924-46de-beb1-3b9046685257", tenantId: TENANT_A, role: "admin" },
+      async () => {
+        asset = await findAssetById(createRes.body.id as string);
+        if (asset) {
+          await upsertAssetDocument(asset, asset.modified_by);
+        }
+      }
+    );
+    expect(asset).not.toBeNull();
+
+    const getRes = await request(app)
+      .get(`/assets/${createRes.body.id}`)
+      .set(auth(viewerA));
+    expect(getRes.status).toBe(200);
+
+    expect(getRes.body).toMatchObject({
+      id: createRes.body.id,
+      tenant_id: createRes.body.tenant_id,
+      schema_version: createRes.body.schema_version,
+      name: createRes.body.name,
+      type: createRes.body.type,
+      status: createRes.body.status,
+      lat: createRes.body.lat,
+      lng: createRes.body.lng,
+      installed_at: createRes.body.installed_at,
+      extra_fields: createRes.body.extra_fields,
+    });
+    expect(getRes.body.synced_at).not.toBeNull();
+    expect(getRes.body.synced_by).toBe(asset!.modified_by);
+    expect(getRes.body.updated_at).not.toBeNull();
   });
 
   it("allows a viewer to read assets (200)", async () => {
@@ -242,6 +297,10 @@ describe("RBAC - user management (admin only)", () => {
       });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body.tenant_id).toBe(TENANT_A);
+
+    const getRes = await request(app).get(`/users/${res.body.id}`).set(auth(adminA));
+    expect(getRes.status).toBe(200);
+    expect(getRes.body).toEqual(res.body);
   });
 });
 
@@ -314,14 +373,12 @@ describe("platform provisioning (x-admin-key)", () => {
         .post("/assets")
         .set(auth(token))
         .send({
-          data: {
-            name: `TEST-${Date.now()}`,
-            type: "sensor",
-            status: "ok",
-            lat: 42.1,
-            lng: -71.1,
-            installed_at: "2020-01-01",
-          },
+          name: `TEST-${Date.now()}`,
+          type: "sensor",
+          status: "ok",
+          lat: 42.1,
+          lng: -71.1,
+          installed_at: "2020-01-01",
         });
       expect(assetRes.status, JSON.stringify(assetRes.body)).toBe(201);
       expect(assetRes.body.id).toBeDefined();

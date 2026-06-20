@@ -1,4 +1,4 @@
-import type { MongoAssetRecord } from "../lib/responses.js";
+import { extractAssetDataFields, type MongoAssetRecord } from "../lib/responses.js";
 import { getTenantId } from "../lib/authContext.js";
 import { getMongoDb } from "../clients/mongo.js";
 import type { AssetFilter } from "../schemas.js";
@@ -100,26 +100,14 @@ export async function ensureAssetIndexes(): Promise<void> {
   ]);
 }
 
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
 function toDocument(asset: Asset, syncedBy: string, syncedAt: Date): AssetDocument {
-  const data = asset.data;
+  const fields = extractAssetDataFields(asset.data as Record<string, unknown>);
 
   return {
     _id: asset.id,
     tenant_id: asset.tenant_id,
     schema_version: asset.schema_version,
-    name: typeof data.name === "string" ? data.name : "",
-    type: typeof data.type === "string" ? data.type : "",
-    status: typeof data.status === "string" ? data.status : null,
-    lat: typeof data.lat === "number" ? data.lat : null,
-    lng: typeof data.lng === "number" ? data.lng : null,
-    installed_at: typeof data.installed_at === "string" ? data.installed_at : null,
-    extra_fields: asRecord(data.extra_fields),
+    ...fields,
     created_at: asset.created_at,
     updated_at: syncedAt,
     synced_at: syncedAt,
