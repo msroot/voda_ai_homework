@@ -6,6 +6,18 @@ import type { Asset } from "../types.js";
 
 const COLLECTION = "assets";
 
+interface GeoJsonPoint {
+  type: "Point";
+  coordinates: [number, number];
+}
+
+function buildGeoJsonPoint(lat: number | null, lng: number | null): GeoJsonPoint | null {
+  if (typeof lat === "number" && typeof lng === "number") {
+    return { type: "Point", coordinates: [lng, lat] };
+  }
+  return null;
+}
+
 // Static validator: default asset keys only. extra_fields contents are not checked.
 const ASSET_COLLECTION_VALIDATOR = {
   $jsonSchema: {
@@ -18,6 +30,7 @@ const ASSET_COLLECTION_VALIDATOR = {
       "status",
       "lat",
       "lng",
+      "location",
       "installed_at",
       "extra_fields",
       "created_at",
@@ -37,6 +50,19 @@ const ASSET_COLLECTION_VALIDATOR = {
       },
       lat: { bsonType: ["double", "int", "long", "null"] },
       lng: { bsonType: ["double", "int", "long", "null"] },
+      location: {
+        bsonType: ["object", "null"],
+        properties: {
+          type: { enum: ["Point"] },
+          coordinates: {
+            bsonType: "array",
+            minItems: 2,
+            maxItems: 2,
+            items: { bsonType: ["double", "int", "long"] },
+          },
+        },
+        required: ["type", "coordinates"],
+      },
       installed_at: { bsonType: ["string", "null"] },
       extra_fields: { bsonType: "object" },
       created_at: { bsonType: "date" },
@@ -50,6 +76,7 @@ const ASSET_COLLECTION_VALIDATOR = {
 
 interface AssetDocument extends MongoAssetRecord {
   _id: string; // same UUID as Postgres assets.id
+  location: GeoJsonPoint | null;
 }
 
 type MutableAssetFields = Pick<
@@ -59,6 +86,7 @@ type MutableAssetFields = Pick<
   | "status"
   | "lat"
   | "lng"
+  | "location"
   | "installed_at"
   | "extra_fields"
   | "updated_at"
@@ -97,6 +125,11 @@ export async function ensureAssetIndexes(): Promise<void> {
     { key: { tenant_id: 1, created_at: -1 }, name: "tenant_created_at" },
     { key: { tenant_id: 1, type: 1 }, name: "tenant_type" },
     { key: { tenant_id: 1, status: 1 }, name: "tenant_status" },
+    {
+      key: { tenant_id: 1, location: "2dsphere" },
+      name: "tenant_location_2dsphere",
+      sparse: true,
+    },
   ]);
 }
 
@@ -108,6 +141,7 @@ function toDocument(asset: Asset, syncedBy: string, syncedAt: Date): AssetDocume
     tenant_id: asset.tenant_id,
     schema_version: asset.schema_version,
     ...fields,
+    location: buildGeoJsonPoint(fields.lat, fields.lng),
     created_at: asset.created_at,
     updated_at: syncedAt,
     synced_at: syncedAt,
@@ -122,6 +156,7 @@ function toMutableFields(doc: AssetDocument): MutableAssetFields {
     status: doc.status,
     lat: doc.lat,
     lng: doc.lng,
+    location: doc.location,
     installed_at: doc.installed_at,
     extra_fields: doc.extra_fields,
     updated_at: doc.updated_at,
@@ -131,8 +166,9 @@ function toMutableFields(doc: AssetDocument): MutableAssetFields {
 }
 
 function toRecord(doc: AssetDocument): MongoAssetRecord {
-  const { _id, ...record } = doc;
+  const { _id, location, ...record } = doc;
   void _id;
+  void location;
   return record;
 }
 

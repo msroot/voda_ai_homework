@@ -227,7 +227,15 @@ Validation is **data-driven at runtime** — tenant constraints live as JSON Sch
 
 Asset attributes are split into immutable system tracking properties and structural tenant extensions. Instead of maintaining compiling schema versions or long-running database migrations, schema configuration is treated as **pure database rows**.
 
-**Core attributes (root level):** Fields like `id`, `tenant_id`, `name`, `type`, `status`, `lat`, `lng`, and `installed_at` are strictly enforced by the core platform. They remain entirely flat at the document surface to enable rapid composite indexing and native geospatial query routing.
+**Core attributes (root level):** Fields like `id`, `tenant_id`, `name`, `type`, `status`, `lat`, `lng`, and `installed_at` are strictly enforced by the core platform. They remain flat at the document surface in Postgres and API responses for simple filtering and indexing.
+
+**Geospatial sync:** On worker sync to Mongo, flat `lat` / `lng` are also mapped to a GeoJSON Point for native geospatial queries:
+
+```json
+"location": { "type": "Point", "coordinates": [lng, lat] }
+```
+
+Longitude is first in `coordinates`. If either coordinate is missing, `location` is `null`. API responses still expose flat `lat` / `lng` only.
 
 **Extended fields sandbox (`custom_fields`):** All tenant-specific parameters defined during the onboarding phase are stored under a dedicated `custom_fields` sub-document mapping (API may accept them at the top level; the server normalizes them into `custom_fields` before storage).
 
@@ -285,7 +293,7 @@ When the sync worker writes to Mongo, documents pass a **second validation** —
 | Layer | Where | What it checks |
 |-------|-------|----------------|
 | **1 — AJV (API)** | `POST` / `PATCH` handlers | Full tenant JSON Schema: core fields + `custom_fields` rules |
-| **2 — Mongo `$jsonSchema`** | `upsertAssetDocument()` | Document **shape**: required keys, BSON types, `status` enum, no extra top-level properties |
+| **2 — Mongo `$jsonSchema`** | `upsertAssetDocument()` | Document shape: required keys, BSON types, `status` enum, `location` GeoJSON Point, no extra top-level properties |
 
 The Mongo validator is **structural** — it enforces that every synced document has the expected fields and types, but it does **not** re-run tenant-specific rules inside `custom_fields` (those are already enforced by AJV before Postgres accepts the write).
 
@@ -625,21 +633,11 @@ If a **malformed payload** or persistent Mongo validation error crashes the work
 - **Dead-letter queue (DLQ)** — failed BullMQ jobs land in a separate queue/topic with payload, error, and tenant context for manual replay or fix.
 - **Alerting** — metrics on `pending` age, `processing` stuck count, and DLQ depth.
 
-### 11.2 Geospatial sync contract
+### 11.2 Geospatial sync contract (implemented)
 
-§5.1 treats `lat` / `lng` as flat root platform fields in Postgres and API responses. MongoDB **2dsphere** indexes require **GeoJSON**:
+Flat `lat` / `lng` remain in Postgres and API responses. The sync worker maps them to Mongo `location` GeoJSON (`[lng, lat]`) and a sparse compound **2dsphere** index (`tenant_id` + `location`) supports tenant-scoped geospatial queries.
 
-```json
-"location": { "type": "Point", "coordinates": [lng, lat] }
-```
-
-Today the sync worker copies flat `lat` / `lng` into Mongo documents. That is fine for filtering by scalar fields, but **not** for native geospatial queries.
-
-**Production changes:**
-
-- Document and implement an explicit **sync mapping** in the worker: flat SQL/API coordinates → `location` GeoJSON Point (note **longitude first** in `coordinates`).
-- Extend Mongo `$jsonSchema` (Layer 2) to allow or require `location` when geospatial search is enabled.
-- Keep flat `lat` / `lng` in API responses for backward compatibility, or expose GeoJSON only on read paths that need it.
+Future production work: expose radius / `$geoWithin` search endpoints using that index.
 
 ### 11.3 Redis `SCAN` clustering hazard
 
