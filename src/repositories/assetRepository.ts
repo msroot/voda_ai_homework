@@ -61,13 +61,21 @@ export async function markAssetSynced(id: string): Promise<void> {
 
 // Outbox poll: reads pending rows across all tenants (a trusted system process),
 // so it bypasses RLS. The actual sync/update runs per-tenant in the worker.
+//
+// FOR UPDATE SKIP LOCKED locks each row the moment it is read and tells any
+// other concurrent poller to skip past locked rows to the next available ones.
+// This lets the outbox listener scale horizontally without two pollers grabbing
+// the same batch (the row locks live for this statement's transaction). Durable
+// de-duplication across poll ticks is handled separately by the queue, which
+// keys jobs on assetId so an in-flight asset is never enqueued twice.
 export async function findPendingAssets(limit: number): Promise<PendingAsset[]> {
   const { rows } = await queryWithoutTenantContext<PendingAsset>(
     `SELECT id, tenant_id, created_by
        FROM assets
       WHERE status = 'pending'
       ORDER BY created_at
-      LIMIT $1`,
+      LIMIT $1
+      FOR UPDATE SKIP LOCKED`,
     [limit]
   );
   return rows;
