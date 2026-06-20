@@ -33,7 +33,7 @@ async function firstAssetId(token: string): Promise<string> {
   const res = await request(app).get("/assets?limit=1").set(auth(token));
   expect(res.status).toBe(200);
   expect(res.body.data.length).toBeGreaterThan(0);
-  return res.body.data[0].asset_id as string;
+  return res.body.data[0].id as string;
 }
 
 // Tokens for tenant A (admin/editor/viewer) and tenant B (admin).
@@ -197,7 +197,10 @@ describe("RBAC - asset writes", () => {
         },
       });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.id).toBeDefined();
     expect(res.body.tenant_id).toBe(TENANT_A);
+    expect(res.body.extra_fields).toMatchObject({ material: "copper", diameter_mm: 100 });
+    expect(res.body.updated_at).toBeNull();
   });
 
   it("allows a viewer to read assets (200)", async () => {
@@ -309,6 +312,7 @@ describe("platform provisioning (x-admin-key)", () => {
           },
         });
       expect(assetRes.status, JSON.stringify(assetRes.body)).toBe(201);
+      expect(assetRes.body.id).toBeDefined();
       expect(assetRes.body.tenant_id).toBe(res.body.tenant.id);
     }
   );

@@ -1,4 +1,9 @@
 import { randomUUID } from "crypto";
+import {
+  assetRecordToResponse,
+  postgresAssetToResponse,
+  type AssetResponse,
+} from "../api/assetResponse.js";
 import { mergeAssetData, normalizeAssetData } from "../assets/assetData.js";
 import { getTenantId, getUserId } from "../context/authContext.js";
 import { AppError, isUniqueViolation } from "../errors/appError.js";
@@ -11,7 +16,6 @@ import {
 import {
   findAssetDocumentById,
   findAssetDocuments,
-  type AssetView,
 } from "../repositories/assetMongoRepository.js";
 import {
   findAssetSchemaByVersion,
@@ -26,20 +30,11 @@ import {
 } from "../cache/assetCache.js";
 import { validateAssetData } from "../assets/validateAsset.js";
 import type { AssetFilter } from "../schemas.js";
-import type {
-  Asset,
-  CreateAssetInput,
-  Paginated,
-  UpdateAssetInput,
-} from "../types.js";
+import type { CreateAssetInput, Paginated, UpdateAssetInput } from "../types.js";
 
-// Reads are served from MongoDB in the structured read model and cached in
-// Redis. An asset only appears here once the outbox worker has synced it from
-// Postgres, so freshly created assets become readable after the sync completes
-// (eventual consistency). The cache is invalidated on every write and sync.
 export async function listAssets(
   filter: AssetFilter
-): Promise<Paginated<AssetView>> {
+): Promise<Paginated<AssetResponse>> {
   const tenantId = getTenantId();
 
   const cached = await getCachedAssetList(tenantId, filter);
@@ -48,8 +43,8 @@ export async function listAssets(
   }
 
   const { rows, total } = await findAssetDocuments(filter);
-  const result: Paginated<AssetView> = {
-    data: rows,
+  const result: Paginated<AssetResponse> = {
+    data: rows.map(({ id, record }) => assetRecordToResponse(id, record)),
     pagination: { limit: filter.limit, offset: filter.offset, total },
   };
 
@@ -57,7 +52,7 @@ export async function listAssets(
   return result;
 }
 
-export async function getAsset(id: string): Promise<AssetView> {
+export async function getAsset(id: string): Promise<AssetResponse> {
   const tenantId = getTenantId();
 
   const cached = await getCachedAsset(tenantId, id);
@@ -71,17 +66,16 @@ export async function getAsset(id: string): Promise<AssetView> {
     throw new AppError(404, "Asset not found");
   }
 
-  await setCachedAsset(tenantId, id, asset);
-  return asset;
+  const response = assetRecordToResponse(asset.id, asset.record);
+  await setCachedAsset(tenantId, id, response);
+  return response;
 }
 
-export async function createAsset(input: CreateAssetInput): Promise<Asset> {
+export async function createAsset(input: CreateAssetInput): Promise<AssetResponse> {
   const { data } = input;
   const userId = getUserId();
   const tenantId = getTenantId();
 
-  // New assets validate against, and are pinned to, the tenant's latest schema
-  // version.
   const latest = await findLatestAssetSchema();
   if (!latest) {
     throw new AppError(404, "Tenant not found");
@@ -95,9 +89,6 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
     throw new AppError(400, "Asset validation failed", validation.errors);
   }
 
-  // The row itself is the outbox entry: status "pending" is picked up by the
-  // listener (polling) and synced to MongoDB by the worker, which flips it to
-  // "synced". No separate event publish is needed.
   try {
     const created = await createAssetRecord(
       assetId,
@@ -107,7 +98,7 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
       userId
     );
     await invalidateTenantAssets(tenantId);
-    return created;
+    return postgresAssetToResponse(created);
   } catch (err) {
     if (isUniqueViolation(err)) {
       throw new AppError(409, "Asset id already exists");
@@ -119,7 +110,7 @@ export async function createAsset(input: CreateAssetInput): Promise<Asset> {
 export async function updateAsset(
   id: string,
   input: UpdateAssetInput
-): Promise<Asset> {
+): Promise<AssetResponse> {
   const { data } = input;
 
   const existing = await findAssetById(id);
@@ -128,7 +119,6 @@ export async function updateAsset(
     throw new AppError(404, "Asset not found");
   }
 
-  // Re-validate against the tenant's immutable asset schema.
   const schema = await findAssetSchemaByVersion(existing.schema_version);
   if (!schema) {
     throw new AppError(404, "Asset schema version not found");
@@ -141,7 +131,6 @@ export async function updateAsset(
     throw new AppError(400, "Asset validation failed", validation.errors);
   }
 
-  // Re-enter the outbox so the worker re-syncs the read model in MongoDB.
   const asset = await updateAssetRecord(id, JSON.stringify(nextData));
 
   if (!asset) {
@@ -149,14 +138,10 @@ export async function updateAsset(
   }
 
   await invalidateTenantAssets(getTenantId());
-  return asset;
+  return postgresAssetToResponse(asset);
 }
 
 export async function deleteAsset(id: string): Promise<void> {
-  // Same outbox path as create/update: mark the row as a delete tombstone in
-  // Postgres and let the worker remove it from MongoDB, then hard-delete the
-  // row. The cache is expired now so reads don't serve the soon-to-be-gone asset
-  // from Redis.
   const marked = await markAssetForDeletion(id);
 
   if (!marked) {

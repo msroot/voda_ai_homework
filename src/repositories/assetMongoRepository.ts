@@ -1,3 +1,4 @@
+import type { MongoAssetRecord } from "../api/assetResponse.js";
 import { getTenantId } from "../context/authContext.js";
 import { getMongoDb } from "../mongo.js";
 import type { AssetFilter } from "../schemas.js";
@@ -5,26 +6,25 @@ import type { Asset } from "../types.js";
 
 const COLLECTION = "assets";
 
-// Static Mongo validator: default asset keys only. custom_fields is unchecked.
+// Static validator: default asset keys only. extra_fields contents are not checked.
 const ASSET_COLLECTION_VALIDATOR = {
   $jsonSchema: {
     bsonType: "object",
     required: [
-      "asset_id",
       "tenant_id",
       "schema_version",
       "name",
       "type",
       "status",
-      "location",
+      "lat",
+      "lng",
       "installed_at",
-      "custom_fields",
+      "extra_fields",
       "created_at",
       "updated_at",
     ],
     properties: {
       _id: { bsonType: "string" },
-      asset_id: { bsonType: "string" },
       tenant_id: { bsonType: "string" },
       schema_version: { bsonType: ["int", "long", "double"] },
       name: { bsonType: "string", minLength: 1 },
@@ -33,20 +33,10 @@ const ASSET_COLLECTION_VALIDATOR = {
         bsonType: ["string", "null"],
         enum: ["ok", "warning", "critical", null],
       },
-      location: {
-        bsonType: ["object", "null"],
-        properties: {
-          type: { enum: ["Point"] },
-          coordinates: {
-            bsonType: "array",
-            minItems: 2,
-            maxItems: 2,
-            items: { bsonType: ["double", "int", "long"] },
-          },
-        },
-      },
+      lat: { bsonType: ["double", "int", "long", "null"] },
+      lng: { bsonType: ["double", "int", "long", "null"] },
       installed_at: { bsonType: ["string", "null"] },
-      custom_fields: { bsonType: "object" },
+      extra_fields: { bsonType: "object" },
       created_at: { bsonType: "date" },
       updated_at: { bsonType: "date" },
     },
@@ -54,30 +44,14 @@ const ASSET_COLLECTION_VALIDATOR = {
   },
 };
 
-interface AssetLocation {
-  type: "Point";
-  coordinates: [number, number]; // [longitude, latitude]
+interface AssetDocument extends MongoAssetRecord {
+  _id: string; // same UUID as Postgres assets.id
 }
 
-// The base asset fields map to dedicated document fields; lat/lng become the
-// GeoJSON `location`. Only tenant-defined extension fields (the asset's
-// extra_fields) land in the polymorphic custom_fields bucket.
-interface AssetDocument {
-  _id: string; // mirrors asset_id, keeps the upsert idempotent
-  asset_id: string; // relational pointer to the PostgreSQL UUID
-  tenant_id: string; // immutable partition boundary (set on insert only)
-  schema_version: number; // immutable schema pin (set on insert only)
-  name: string;
-  type: string;
-  status: string | null;
-  location: AssetLocation | null;
-  installed_at: string | null;
-  custom_fields: Record<string, unknown>; // tenant-defined extension fields
-  created_at: Date;
-  updated_at: Date;
-}
-
-export type AssetView = Omit<AssetDocument, "_id">;
+type MutableAssetFields = Pick<
+  AssetDocument,
+  "name" | "type" | "status" | "lat" | "lng" | "installed_at" | "extra_fields" | "updated_at"
+>;
 
 async function ensureAssetCollectionValidator(): Promise<void> {
   const db = await getMongoDb();
@@ -102,9 +76,6 @@ async function ensureAssetCollectionValidator(): Promise<void> {
   });
 }
 
-// Mongo reads are always tenant-scoped, so each index leads with tenant_id.
-// _id (= asset_id) is covered by the default index, serving find-by-id, upsert
-// and delete.
 export async function ensureAssetIndexes(): Promise<void> {
   await ensureAssetCollectionValidator();
 
@@ -122,63 +93,47 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function buildLocation(data: Record<string, unknown>): AssetLocation | null {
-  const { lng, lat } = data;
-  if (typeof lng === "number" && typeof lat === "number") {
-    return { type: "Point", coordinates: [lng, lat] };
-  }
-  return null;
-}
-
 function toDocument(asset: Asset): AssetDocument {
   const data = asset.data;
 
   return {
     _id: asset.id,
-    asset_id: asset.id,
     tenant_id: asset.tenant_id,
     schema_version: asset.schema_version,
     name: typeof data.name === "string" ? data.name : "",
     type: typeof data.type === "string" ? data.type : "",
     status: typeof data.status === "string" ? data.status : null,
-    location: buildLocation(data),
+    lat: typeof data.lat === "number" ? data.lat : null,
+    lng: typeof data.lng === "number" ? data.lng : null,
     installed_at: typeof data.installed_at === "string" ? data.installed_at : null,
-    custom_fields: asRecord(data.extra_fields),
+    extra_fields: asRecord(data.extra_fields),
     created_at: asset.created_at,
     updated_at: new Date(),
   };
 }
-
-type MutableAssetFields = Pick<
-  AssetDocument,
-  "name" | "type" | "status" | "location" | "installed_at" | "custom_fields" | "updated_at"
->;
 
 function toMutableFields(doc: AssetDocument): MutableAssetFields {
   return {
     name: doc.name,
     type: doc.type,
     status: doc.status,
-    location: doc.location,
+    lat: doc.lat,
+    lng: doc.lng,
     installed_at: doc.installed_at,
-    custom_fields: doc.custom_fields,
+    extra_fields: doc.extra_fields,
     updated_at: doc.updated_at,
   };
 }
 
-function toView(doc: AssetDocument): AssetView {
-  const { _id, ...view } = doc;
+function toRecord(doc: AssetDocument): MongoAssetRecord {
+  const { _id, ...record } = doc;
   void _id;
-  return view;
+  return record;
 }
 
-// Read path: assets are served from MongoDB (the synced copy). Mongo has no
-// row-level security, so every read is explicitly scoped to the caller's tenant
-// using the tenant id from the request context. `type` and `status` are
-// top-level document fields.
 export async function findAssetDocuments(
   filter: AssetFilter
-): Promise<{ rows: AssetView[]; total: number }> {
+): Promise<{ rows: Array<{ id: string; record: MongoAssetRecord }>; total: number }> {
   const tenantId = getTenantId();
   const db = await getMongoDb();
 
@@ -200,19 +155,15 @@ export async function findAssetDocuments(
     .limit(filter.limit)
     .toArray();
 
-  return { rows: docs.map(toView), total };
+  return {
+    rows: docs.map((doc) => ({ id: doc._id, record: toRecord(doc) })),
+    total,
+  };
 }
 
-interface AssetStatusCount {
-  status: string | null;
-  count: number;
-}
-
-// Cross-store report input: asset counts grouped by business status for one
-// tenant, read from MongoDB. Tenant isolation is enforced via the $match.
 export async function aggregateAssetStatusCounts(
   tenantId: string
-): Promise<AssetStatusCount[]> {
+): Promise<Array<{ status: string | null; count: number }>> {
   const db = await getMongoDb();
 
   const results = await db
@@ -228,7 +179,7 @@ export async function aggregateAssetStatusCounts(
 
 export async function findAssetDocumentById(
   id: string
-): Promise<AssetView | null> {
+): Promise<{ id: string; record: MongoAssetRecord } | null> {
   const tenantId = getTenantId();
   const db = await getMongoDb();
 
@@ -236,7 +187,7 @@ export async function findAssetDocumentById(
     .collection<AssetDocument>(COLLECTION)
     .findOne({ _id: id, tenant_id: tenantId });
 
-  return doc ? toView(doc) : null;
+  return doc ? { id: doc._id, record: toRecord(doc) } : null;
 }
 
 export async function deleteAssetDocument(id: string): Promise<void> {
@@ -267,7 +218,6 @@ export async function upsertAssetDocument(asset: Asset): Promise<void> {
       );
     }
 
-    // tenant_id and schema_version are set only on insert; updates touch mutable fields.
     await collection.updateOne({ _id: doc._id }, { $set: toMutableFields(doc) });
     return;
   }
@@ -275,7 +225,6 @@ export async function upsertAssetDocument(asset: Asset): Promise<void> {
   await collection.insertOne(doc);
 }
 
-// Seeding: replace the whole collection with the seed set in one pass.
 export async function replaceAssetDocuments(assets: Asset[]): Promise<void> {
   const db = await getMongoDb();
   const collection = db.collection<AssetDocument>(COLLECTION);

@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { hashPassword } from "../auth/password.js";
+import { userToResponse, type UserResponse } from "../api/userResponse.js";
 import { getRole, getTenantId } from "../context/authContext.js";
 import {
   AppError,
@@ -21,11 +22,11 @@ import {
   setCachedUserList,
 } from "../cache/userCache.js";
 import type { Pagination } from "../schemas.js";
-import type { CreateUserInput, Paginated, UpdateUserInput, User } from "../types.js";
+import type { CreateUserInput, Paginated, UpdateUserInput } from "../types.js";
 
 export async function listUsers(
   pagination: Pagination
-): Promise<Paginated<User>> {
+): Promise<Paginated<UserResponse>> {
   const tenantId = getTenantId();
 
   const cached = await getCachedUserList(tenantId, pagination);
@@ -34,8 +35,8 @@ export async function listUsers(
   }
 
   const { rows, total } = await findUsers(pagination.limit, pagination.offset);
-  const result: Paginated<User> = {
-    data: rows,
+  const result: Paginated<UserResponse> = {
+    data: rows.map(userToResponse),
     pagination: { limit: pagination.limit, offset: pagination.offset, total },
   };
 
@@ -43,7 +44,7 @@ export async function listUsers(
   return result;
 }
 
-export async function getUser(id: string): Promise<User> {
+export async function getUser(id: string): Promise<UserResponse> {
   const tenantId = getTenantId();
 
   const cached = await getCachedUser(tenantId, id);
@@ -57,11 +58,12 @@ export async function getUser(id: string): Promise<User> {
     throw new AppError(404, "User not found");
   }
 
-  await setCachedUser(tenantId, id, user);
-  return user;
+  const response = userToResponse(user);
+  await setCachedUser(tenantId, id, response);
+  return response;
 }
 
-export async function createUser(input: CreateUserInput): Promise<User> {
+export async function createUser(input: CreateUserInput): Promise<UserResponse> {
   const { name, email, password, role } = input;
 
   try {
@@ -74,7 +76,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
       role
     );
     await invalidateTenantUsers(getTenantId());
-    return user;
+    return userToResponse(user);
   } catch (err) {
     if (isUniqueViolation(err)) {
       throw new AppError(409, "email already exists");
@@ -86,11 +88,12 @@ export async function createUser(input: CreateUserInput): Promise<User> {
   }
 }
 
-export async function updateUser(id: string, input: UpdateUserInput): Promise<User> {
+export async function updateUser(
+  id: string,
+  input: UpdateUserInput
+): Promise<UserResponse> {
   const { name, password, role } = input;
 
-  // Only admins may change a user's role. This guards the role escalation path
-  // at the domain layer, independent of route middleware.
   if (role !== undefined && getRole() !== "admin") {
     throw new AppError(403, "Only admins can change a user's role");
   }
@@ -105,7 +108,7 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
   }
 
   await invalidateTenantUsers(getTenantId());
-  return user;
+  return userToResponse(user);
 }
 
 export async function deleteUser(id: string): Promise<void> {

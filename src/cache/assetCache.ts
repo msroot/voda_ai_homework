@@ -1,5 +1,5 @@
 import { cacheKey, getCached, invalidateResource, setCached } from "./cache.js";
-import type { AssetView } from "../repositories/assetMongoRepository.js";
+import type { AssetResponse } from "../api/assetResponse.js";
 import type { AssetFilter } from "../schemas.js";
 import type { Paginated } from "../types.js";
 
@@ -17,8 +17,8 @@ function listParams(filter: AssetFilter): Record<string, unknown> {
 export function getCachedAssetList(
   tenantId: string,
   filter: AssetFilter
-): Promise<Paginated<AssetView> | null> {
-  return getCached<Paginated<AssetView>>(
+): Promise<Paginated<AssetResponse> | null> {
+  return getCached<Paginated<AssetResponse>>(
     cacheKey(tenantId, RESOURCE, listParams(filter))
   );
 }
@@ -26,7 +26,7 @@ export function getCachedAssetList(
 export function setCachedAssetList(
   tenantId: string,
   filter: AssetFilter,
-  assets: Paginated<AssetView>
+  assets: Paginated<AssetResponse>
 ): Promise<void> {
   return setCached(cacheKey(tenantId, RESOURCE, listParams(filter)), assets);
 }
@@ -34,14 +34,14 @@ export function setCachedAssetList(
 export function getCachedAsset(
   tenantId: string,
   id: string
-): Promise<AssetView | null> {
-  return getCached<AssetView>(cacheKey(tenantId, RESOURCE, { id }));
+): Promise<AssetResponse | null> {
+  return getCached<AssetResponse>(cacheKey(tenantId, RESOURCE, { id }));
 }
 
 export function setCachedAsset(
   tenantId: string,
   id: string,
-  asset: AssetView
+  asset: AssetResponse
 ): Promise<void> {
   return setCached(cacheKey(tenantId, RESOURCE, { id }), asset);
 }

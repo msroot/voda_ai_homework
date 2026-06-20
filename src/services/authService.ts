@@ -1,12 +1,13 @@
 import { signToken } from "../auth/jwt.js";
 import { verifyPassword } from "../auth/password.js";
+import { userToResponse, type UserResponse } from "../api/userResponse.js";
 import { AppError } from "../errors/appError.js";
 import { findUserByEmail } from "../repositories/userRepository.js";
-import type { LoginInput, User } from "../types.js";
+import type { LoginInput } from "../types.js";
 
 interface LoginResult {
   token: string;
-  user: User;
+  user: UserResponse;
 }
 
 export async function login(input: LoginInput): Promise<LoginResult> {
@@ -17,6 +18,7 @@ export async function login(input: LoginInput): Promise<LoginResult> {
   }
 
   const { password_hash, ...user } = found;
+  void password_hash;
 
   const token = signToken({
     sub: user.id,
@@ -25,5 +27,5 @@ export async function login(input: LoginInput): Promise<LoginResult> {
     role: user.role,
   });
 
-  return { token, user };
+  return { token, user: userToResponse(user) };
 }

@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { hashPassword } from "../auth/password.js";
+import { userToResponse, type UserResponse } from "../api/userResponse.js";
 import { getTenantId, getUserId } from "../context/authContext.js";
 import {
   buildTenantAssetSchema,
@@ -23,7 +24,6 @@ import type {
   CreateTenantInput,
   TenantWithSchema,
   UpdateTenantInput,
-  User,
 } from "../types.js";
 
 // Authoritative (DB-backed) check that the caller is an admin of their own
@@ -76,7 +76,7 @@ export async function getCurrentTenant(): Promise<TenantWithSchema> {
 // atomically so the tenant can create assets immediately after login.
 export async function createTenant(
   input: CreateTenantInput
-): Promise<{ tenant: TenantWithSchema; user: User }> {
+): Promise<{ tenant: TenantWithSchema; user: UserResponse }> {
   const { name, slug, admin, asset_schema } = input;
   const passwordHash = await hashPassword(admin.password);
 
@@ -105,7 +105,7 @@ export async function createTenant(
         schema_version: 1,
         asset_schema: assetSchema,
       },
-      user,
+      user: userToResponse(user),
     };
   } catch (err) {
     if (isUniqueViolation(err)) {
