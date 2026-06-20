@@ -27,11 +27,11 @@ The service manages **tenants**, **users**, and **assets**. Each tenant is fully
 
 | Store | Role |
 |-------|------|
-| **PostgreSQL** | Source of truth for tenants, users, asset writes (embedded outbox), RLS |
-| **MongoDB** | Read model for assets (fast queries, aggregations) |
+| **PostgreSQL** | ACID writes — source of truth for tenants, users, and asset mutations (embedded outbox), RLS |
+| **MongoDB** | Asset **read model** — list/get, filters, aggregations (reports) |
 | **Redis** | Response cache, rate-limit counters, BullMQ job queue |
 
-**Why two databases for assets?** Writes need transactional consistency and an outbox; reads need flexible filtering and aggregations without heavy Postgres JSON work. Postgres holds the write model; Mongo holds the read model, synced asynchronously.
+**Why two databases for assets?** Asset **writes** go to Postgres for **ACID** transactions (atomic writes, outbox polling, tenant onboarding). Asset **reads** (`GET /assets`, reports) go to Mongo for fast queries and aggregations on the synced projection. Postgres holds the write model; Mongo holds the read model, updated asynchronously by the worker.
 
 ```mermaid
 flowchart TB
@@ -176,6 +176,8 @@ Create/update responses are built from Postgres immediately. Fields `synced_at`,
 ---
 
 ## 4. Read path (list / get)
+
+Asset reads are served from **MongoDB** (not Postgres). Postgres is only used on the write path; the worker projects accepted writes into Mongo for query-friendly access.
 
 ```mermaid
 sequenceDiagram
