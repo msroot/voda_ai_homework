@@ -5,33 +5,7 @@ import type { Asset } from "../types.js";
 
 const COLLECTION = "assets";
 
-interface AssetLocation {
-  type: "Point";
-  coordinates: [number, number]; // [longitude, latitude]
-}
-
-// The base asset fields map to dedicated document fields; lat/lng become the
-// GeoJSON `location`. Only tenant-defined extension fields (the asset's
-// extra_fields) land in the polymorphic custom_fields bucket.
-interface AssetDocument {
-  _id: string; // mirrors asset_id, keeps the upsert idempotent
-  asset_id: string; // relational pointer to the PostgreSQL UUID
-  tenant_id: string; // immutable partition boundary (set on insert only)
-  schema_version: number; // immutable schema pin (set on insert only)
-  name: string;
-  type: string;
-  status: string | null;
-  location: AssetLocation | null;
-  installed_at: string | null;
-  custom_fields: Record<string, unknown>; // tenant-defined extension fields
-  created_at: Date;
-  updated_at: Date;
-}
-
-export type AssetView = Omit<AssetDocument, "_id">;
-
-// Second-layer validation at the Mongo collection level (after AJV + Postgres).
-// Rejects writes whose resulting document does not match the expected shape.
+// Static Mongo validator: default asset keys only. custom_fields is unchecked.
 const ASSET_COLLECTION_VALIDATOR = {
   $jsonSchema: {
     bsonType: "object",
@@ -79,6 +53,31 @@ const ASSET_COLLECTION_VALIDATOR = {
     additionalProperties: false,
   },
 };
+
+interface AssetLocation {
+  type: "Point";
+  coordinates: [number, number]; // [longitude, latitude]
+}
+
+// The base asset fields map to dedicated document fields; lat/lng become the
+// GeoJSON `location`. Only tenant-defined extension fields (the asset's
+// extra_fields) land in the polymorphic custom_fields bucket.
+interface AssetDocument {
+  _id: string; // mirrors asset_id, keeps the upsert idempotent
+  asset_id: string; // relational pointer to the PostgreSQL UUID
+  tenant_id: string; // immutable partition boundary (set on insert only)
+  schema_version: number; // immutable schema pin (set on insert only)
+  name: string;
+  type: string;
+  status: string | null;
+  location: AssetLocation | null;
+  installed_at: string | null;
+  custom_fields: Record<string, unknown>; // tenant-defined extension fields
+  created_at: Date;
+  updated_at: Date;
+}
+
+export type AssetView = Omit<AssetDocument, "_id">;
 
 async function ensureAssetCollectionValidator(): Promise<void> {
   const db = await getMongoDb();
