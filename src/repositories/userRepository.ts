@@ -64,7 +64,7 @@ export async function createUser(
   return rows[0];
 }
 
-// email is immutable after creation, so it is intentionally not updatable.
+// email and tenant_id are immutable after creation.
 export async function updateUser(
   id: string,
   name: string | null,

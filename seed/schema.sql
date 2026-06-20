@@ -98,6 +98,41 @@ CREATE TRIGGER asset_schemas_no_delete
   BEFORE DELETE ON asset_schemas
   FOR EACH ROW EXECUTE FUNCTION asset_schemas_immutable();
 
+-- assets.tenant_id and assets.schema_version are set at creation and never change.
+CREATE OR REPLACE FUNCTION assets_identity_immutable()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.tenant_id IS DISTINCT FROM OLD.tenant_id THEN
+    RAISE EXCEPTION 'assets.tenant_id is immutable';
+  END IF;
+  IF NEW.schema_version IS DISTINCT FROM OLD.schema_version THEN
+    RAISE EXCEPTION 'assets.schema_version is immutable';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS assets_identity_immutable ON assets;
+CREATE TRIGGER assets_identity_immutable
+  BEFORE UPDATE ON assets
+  FOR EACH ROW EXECUTE FUNCTION assets_identity_immutable();
+
+-- users.tenant_id is set at creation and never changes.
+CREATE OR REPLACE FUNCTION users_tenant_id_immutable()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.tenant_id IS DISTINCT FROM OLD.tenant_id THEN
+    RAISE EXCEPTION 'users.tenant_id is immutable';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS users_tenant_id_immutable ON users;
+CREATE TRIGGER users_tenant_id_immutable
+  BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION users_tenant_id_immutable();
+
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
 ALTER TABLE asset_schemas ENABLE ROW LEVEL SECURITY;

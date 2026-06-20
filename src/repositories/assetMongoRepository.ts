@@ -16,7 +16,8 @@ interface AssetLocation {
 interface AssetDocument {
   _id: string; // mirrors asset_id, keeps the upsert idempotent
   asset_id: string; // relational pointer to the PostgreSQL UUID
-  tenant_id: string; // data isolation partition boundary
+  tenant_id: string; // immutable partition boundary (set on insert only)
+  schema_version: number; // immutable schema pin (set on insert only)
   name: string;
   type: string;
   status: string | null;
@@ -62,6 +63,7 @@ function toDocument(asset: Asset): AssetDocument {
     _id: asset.id,
     asset_id: asset.id,
     tenant_id: asset.tenant_id,
+    schema_version: asset.schema_version,
     name: typeof data.name === "string" ? data.name : "",
     type: typeof data.type === "string" ? data.type : "",
     status: typeof data.status === "string" ? data.status : null,
@@ -70,6 +72,23 @@ function toDocument(asset: Asset): AssetDocument {
     custom_fields: asRecord(data.extra_fields),
     created_at: asset.created_at,
     updated_at: new Date(),
+  };
+}
+
+type MutableAssetFields = Pick<
+  AssetDocument,
+  "name" | "type" | "status" | "location" | "installed_at" | "custom_fields" | "updated_at"
+>;
+
+function toMutableFields(doc: AssetDocument): MutableAssetFields {
+  return {
+    name: doc.name,
+    type: doc.type,
+    status: doc.status,
+    location: doc.location,
+    installed_at: doc.installed_at,
+    custom_fields: doc.custom_fields,
+    updated_at: doc.updated_at,
   };
 }
 
@@ -157,11 +176,29 @@ export async function deleteAssetDocument(id: string): Promise<void> {
 
 export async function upsertAssetDocument(asset: Asset): Promise<void> {
   const db = await getMongoDb();
-  const { _id, ...fields } = toDocument(asset);
+  const doc = toDocument(asset);
+  const collection = db.collection<AssetDocument>(COLLECTION);
 
-  await db
-    .collection<AssetDocument>(COLLECTION)
-    .updateOne({ _id }, { $set: fields }, { upsert: true });
+  const existing = await collection.findOne({ _id: doc._id });
+
+  if (existing) {
+    if (existing.tenant_id !== doc.tenant_id) {
+      throw new Error(
+        `Mongo asset ${doc._id}: tenant_id is immutable (${existing.tenant_id} -> ${doc.tenant_id})`
+      );
+    }
+    if (existing.schema_version !== doc.schema_version) {
+      throw new Error(
+        `Mongo asset ${doc._id}: schema_version is immutable (${existing.schema_version} -> ${doc.schema_version})`
+      );
+    }
+
+    // tenant_id and schema_version are set only on insert; updates touch mutable fields.
+    await collection.updateOne({ _id: doc._id }, { $set: toMutableFields(doc) });
+    return;
+  }
+
+  await collection.insertOne(doc);
 }
 
 // Seeding: replace the whole collection with the seed set in one pass.
