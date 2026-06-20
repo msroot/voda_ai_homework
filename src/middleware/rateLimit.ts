@@ -1,5 +1,5 @@
 import { ipKeyGenerator, rateLimit } from "express-rate-limit";
-import { RedisStore } from "rate-limit-redis";
+import { RedisStore, type RedisReply } from "rate-limit-redis";
 import { createRedisConnection } from "../redis.js";
 import { tryGetTenantId, tryGetUserId } from "../context/authContext.js";
 
@@ -17,8 +17,8 @@ export const rateLimiter = rateLimit({
   legacyHeaders: false,
   store: new RedisStore({
     prefix: "rl:",
-    sendCommand: (...args: string[]) =>
-      redis.call(...args) as Promise<number | string | (number | string)[] | null>,
+    sendCommand: (...args: string[]): Promise<RedisReply> =>
+      redis.call(args[0], ...args.slice(1)) as Promise<RedisReply>,
   }),
   // Authenticated requests are limited per user (this middleware runs inside the
   // auth context); public routes (e.g. login) fall back to a per-IP limit.

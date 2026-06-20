@@ -55,20 +55,19 @@ export const createUserSchema = z.object({
 });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
+// email is immutable after creation, so it is intentionally not updatable here.
 export const updateUserSchema = z
   .object({
     name: z.string().min(1).optional(),
-    email: z.string().email().optional(),
     password: z.string().min(1).optional(),
     role: userRoleSchema.optional(),
   })
   .refine(
     (data) =>
       data.name !== undefined ||
-      data.email !== undefined ||
       data.password !== undefined ||
       data.role !== undefined,
-    { message: "at least one of name, email, password, or role is required" }
+    { message: "at least one of name, password, or role is required" }
   );
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 

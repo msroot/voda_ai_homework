@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { hashPassword } from "../auth/password.js";
-import { getTenantId } from "../context/authContext.js";
+import { getRole, getTenantId } from "../context/authContext.js";
 import {
   AppError,
   isForeignKeyViolation,
@@ -87,35 +87,25 @@ export async function createUser(input: CreateUserInput): Promise<User> {
 }
 
 export async function updateUser(id: string, input: UpdateUserInput): Promise<User> {
-  const { name, email, password, role } = input;
+  const { name, password, role } = input;
 
-  try {
-    const passwordHash =
-      password !== undefined ? await hashPassword(password) : null;
-
-    const user = await updateUserRecord(
-      id,
-      name ?? null,
-      email ?? null,
-      passwordHash,
-      role ?? null
-    );
-
-    if (!user) {
-      throw new AppError(404, "User not found");
-    }
-
-    await invalidateTenantUsers(getTenantId());
-    return user;
-  } catch (err) {
-    if (err instanceof AppError) {
-      throw err;
-    }
-    if (isUniqueViolation(err)) {
-      throw new AppError(409, "email already exists");
-    }
-    throw err;
+  // Only admins may change a user's role. This guards the role escalation path
+  // at the domain layer, independent of route middleware.
+  if (role !== undefined && getRole() !== "admin") {
+    throw new AppError(403, "Only admins can change a user's role");
   }
+
+  const passwordHash =
+    password !== undefined ? await hashPassword(password) : null;
+
+  const user = await updateUserRecord(id, name ?? null, passwordHash, role ?? null);
+
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+
+  await invalidateTenantUsers(getTenantId());
+  return user;
 }
 
 export async function deleteUser(id: string): Promise<void> {
