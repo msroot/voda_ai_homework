@@ -2,15 +2,25 @@
 
 This document explains how the multi-tenant asset service works end to end: components, data flow, security, patterns, and operational behavior. Reading it should give you the same mental model as walking through the codebase.
 
+**Mental model (30 seconds):**
+
+1. **Tenants** own **users** and **assets**. Every request is scoped to one tenant via JWT + Postgres RLS + Mongo/cache filters.
+2. **Users** and **tenant metadata** live in Postgres only — reads and writes are immediate and consistent.
+3. **Asset writes** go to Postgres first (`assets` row + embedded outbox, `status=pending`). The API responds from Postgres; sync fields may be null.
+4. **Listener** polls pending rows and enqueues BullMQ jobs. **Worker** upserts/deletes Mongo and marks Postgres `synced`.
+5. **Asset reads** (`GET /assets`, reports) use Mongo (+ Redis cache) — **eventual consistency** until the worker finishes.
+
+To run the app locally or in Docker, see [README.md](./README.md).
+
 ---
 
 ## Table of contents
 
-1. [System overview](#1-system-overview)
+1. [System overview](#1-system-overview) — includes [tools & libraries](#tools--libraries)
 2. [Process layout](#2-process-layout)
 3. [Write path (create / update / delete)](#3-write-path-create--update--delete) — includes [idempotency](#34-idempotency--asset-id-as-the-stable-key)
 4. [Read path (list / get)](#4-read-path-list--get)
-5. [Asset validation & dynamic metadata](#5-asset-validation--dynamic-metadata)
+5. [Asset validation & dynamic metadata](#5-asset-validation--dynamic-metadata) — includes [geospatial sync](#54-geospatial-sync-contract)
 6. [Patterns & why](#6-patterns--why)
 7. [Caching](#7-caching)
 8. [Security](#8-security)
@@ -31,6 +41,26 @@ The service manages **tenants**, **users**, and **assets**. Each tenant is fully
 | **PostgreSQL** | ACID writes — source of truth for tenants, users, and asset mutations (embedded outbox), RLS |
 | **MongoDB** | Asset **read model** — list/get, filters, aggregations (reports) |
 | **Redis** | Response cache, rate-limit counters, BullMQ job queue |
+
+### Tools & libraries
+
+| Category | Tool | Why |
+|----------|------|-----|
+| **Runtime** | Node.js 20, TypeScript | Single language for API, listener, and worker; typed domain and HTTP layers |
+| **HTTP** | Express | Thin routing and middleware; `createApp()` exported for supertest |
+| **Postgres** | `pg` | Connection pool; scoped transactions set `app.current_tenant_id` for RLS |
+| **Mongo** | `mongodb` driver | Read-model queries, aggregations, `$jsonSchema` collection validator |
+| **Redis** | `ioredis` | Shared cache, rate-limit store, BullMQ backend |
+| **Job queue** | BullMQ | Durable sync jobs with retries, `jobId = assetId` idempotency |
+| **HTTP validation** | Zod | Request body/query/params at the edge (`schemas.ts`) |
+| **Asset validation** | AJV + `ajv-formats` | Runtime JSON Schema from per-tenant `asset_schemas` rows |
+| **Auth** | `jsonwebtoken`, `bcryptjs` | JWT tenant sessions; hashed passwords |
+| **Rate limiting** | `express-rate-limit` + `rate-limit-redis` | Per-user/IP limits shared across API processes |
+| **Config** | `dotenv` | Env-based secrets and connection URLs |
+| **Process manager** | PM2 | One Docker container runs API + listener + worker |
+| **Containers** | Docker Compose | Local full stack with healthchecks and auto-seed |
+| **Tests** | Vitest, supertest | Unit + integration tests against real DBs |
+| **Build / dev** | `tsc`, `tsx` | Compile for production; watch mode locally |
 
 **Why two databases for assets?** Asset **writes** go to Postgres for **ACID** transactions (atomic writes, outbox polling, tenant onboarding). Asset **reads** (`GET /assets`, reports) go to Mongo for fast queries and aggregations on the synced projection. Postgres holds the write model; Mongo holds the read model, updated asynchronously by the worker.
 
@@ -94,6 +124,18 @@ flowchart LR
 
 The API never writes assets directly to Mongo on the request path. That keeps HTTP latency predictable and gives at-least-once sync with retries via the queue.
 
+### 2.1 Docker, PM2, seed, tests & defaults
+
+| Topic | How it works |
+|-------|----------------|
+| **Docker** | `docker compose up --build` — Postgres (healthcheck), Redis, Mongo, one `app` container. Image runs **PM2** (`pm2-runtime ecosystem.config.cjs`): API + listener + worker from `dist/src/*.js`. |
+| **PM2 / local** | Three processes: `server`, `listener`, `worker`. Locally: separate `npm run dev:*` terminals, or `npm run build && npm run start:pm2`. |
+| **Seed** | `npm run seed` (`seed/index.ts`) uses privileged `DATABASE_URL`: `reset.sql` → `schema.sql` → demo tenants/users/assets. Seeded assets are **`synced`** in Postgres and written to Mongo directly (skip outbox). Docker sets `SEED_ON_START=true`. Password: `SEED_PASSWORD` (default `password123`). |
+| **Default schema** | Base JSON Schema in `seed/schemas/default-asset.schema.json`. `POST /tenants` optional `asset_schema` `{ properties, required }` merges tenant fields into **`extra_fields`** (`buildTenantAssetSchema` in `lib/assetSchema.ts`); stored as `asset_schemas` version 1. |
+| **JWT** | Login issues Bearer token. Payload: `sub`, `tenant_id`, `email`, `role`. `JWT_SECRET` + `JWT_EXPIRES_IN` (default `24h`). |
+| **Tests** | Vitest + supertest. `createApp()` (`app.ts`) mounted in tests without binding a port. `tests/isolation.test.ts` runs `runSeed()` then checks auth, RBAC, tenant isolation. Unit tests: `validateAsset.test.ts`, `mergeAssetSchema.test.ts`. `npm test`. CI: `.github/workflows/ci.yml` (Postgres, Redis, Mongo service containers). |
+| **BullMQ** | Queue `sync-asset`, `jobId = assetId`, 5 attempts, exponential backoff from 2s, `removeOnFail: false`. |
+
 ---
 
 ## 3. Write path (create / update / delete)
@@ -110,22 +152,20 @@ sequenceDiagram
   participant W as Worker
   participant MG as Mongo
 
-  C->>API: POST/PATCH/DELETE /assets
+  C->>API: POST/PUT/DELETE /assets
   API->>API: JWT + RBAC + Zod validation
-  API->>API: AJV validate req.body / custom_fields
+  API->>API: AJV validate body → extra_fields
   API->>PG: INSERT/UPDATE assets row (sync status=pending)
   API-->>C: 201/200/204 (synced_* may be null)
 
   loop every poll interval
-    L->>PG: BEGIN — SELECT pending FOR UPDATE SKIP LOCKED
-    L->>PG: UPDATE status=processing
-    L->>Q: enqueueSyncAsset
-    L->>PG: COMMIT
+    L->>PG: SELECT pending FOR UPDATE SKIP LOCKED
+    L->>Q: enqueueSyncAsset (jobId=assetId)
   end
 
   W->>Q: take job
   W->>MG: upsert/delete — Mongo $jsonSchema validation
-  W->>PG: mark asset synced + synced_at
+  W->>PG: mark status=synced + synced_at
 ```
 
 ### 3.2 Postgres asset row
@@ -133,8 +173,8 @@ sequenceDiagram
 On write, Postgres stores:
 
 - `tenant_id`, `schema_version` — set on create, **immutable** (DB trigger)
-- `data` — JSON blob: core attributes at root + tenant extensions in `custom_fields`
-- `status` — **sync state**: `pending` → `processing` → `synced` (not business `ok/warning/critical`)
+- `data` — JSON blob: core attributes at root + tenant extensions in `extra_fields`
+- `status` — **outbox sync state**: `pending` (awaiting worker) or `synced` — not business `ok/warning/critical` (those live in `data.status`)
 - `action` — `upsert` or `delete` (delete tombstone flow)
 - `modified_by` — user who performed the write
 - `synced_at` — set when worker confirms Mongo sync
@@ -142,18 +182,9 @@ On write, Postgres stores:
 
 The `assets` table is both the **write model** and the **outbox control plane** — there is no separate outbox table.
 
-### 3.3 Outbox & concurrency-safe polling
+### 3.3 Outbox polling
 
-To guarantee high-throughput stability and zero processing duplication across scaled out-of-process instances, the listener treats the `assets` table as a strict **system control plane** utilizing **pessimistic concurrency control**.
-
-When polling for processing targets, the query locks records dynamically using a transaction-isolated cursor:
-
-- **`FOR UPDATE`** — places an immediate lock on the selected rows, preventing concurrent polling processes from mutating or re-reading them.
-- **`SKIP LOCKED`** — instructs parallel workers to immediately bypass locked records and process the next available rows in the stream without hanging.
-
-**Lifecycle:** within the same transaction block, the listener updates the sync `status` of these rows to `processing` and dispatches them to BullMQ via Redis before executing a `COMMIT`, freeing up resources cleanly.
-
-Poll query (conceptually):
+The listener polls `assets` where sync `status = 'pending'`:
 
 ```sql
 SELECT id, tenant_id, modified_by
@@ -164,7 +195,11 @@ SELECT id, tenant_id, modified_by
  FOR UPDATE SKIP LOCKED;
 ```
 
-Rows left in `processing` can be recovered by a future poll policy or ops tooling.
+- **`FOR UPDATE SKIP LOCKED`** — parallel listeners skip rows another poller has locked.
+- Each poll runs in a short Postgres transaction (`queryWithoutTenantContext`); locks are released on commit, then matching rows are enqueued to BullMQ (`enqueueSyncAsset`, `jobId = assetId`).
+- **Current demo:** rows stay `pending` until the worker marks them `synced` (no intermediate `processing` state). Duplicate enqueue for the same asset is safe — BullMQ replaces the job by `jobId`.
+
+Production hardening for stuck rows and a `processing`/`failed` lifecycle is in [§11](#11-production-improvements).
 
 ### 3.4 Idempotency — asset `id` as the stable key
 
@@ -213,7 +248,7 @@ sequenceDiagram
 
 - **List:** filters `type`, `status`, pagination; Mongo query always includes `tenant_id`.
 - **Get by id:** single document by `tenant_id` + `id`.
-- **Reports:** `GET /reports/overview` combines Postgres (tenant, users, schema metadata) with Mongo aggregations (counts by status, schema version).
+- **Reports:** `GET /reports/overview` — Postgres (tenant, users, schema) + Mongo (asset counts).
 
 Cache keys are tenant-scoped. Writes invalidate cache entries — see [Caching](#7-caching).
 
@@ -227,24 +262,16 @@ Validation is **data-driven at runtime** — tenant constraints live as JSON Sch
 
 Asset attributes are split into immutable system tracking properties and structural tenant extensions. Instead of maintaining compiling schema versions or long-running database migrations, schema configuration is treated as **pure database rows**.
 
-**Core attributes (root level):** Fields like `id`, `tenant_id`, `name`, `type`, `status`, `lat`, `lng`, and `installed_at` are strictly enforced by the core platform. They remain flat at the document surface in Postgres and API responses for simple filtering and indexing.
+**Core attributes (root level):** Fields like `id`, `tenant_id`, `name`, `type`, `status`, `lat`, `lng`, and `installed_at` are strictly enforced by the core platform. They remain flat at the document surface in Postgres and API responses for simple filtering and indexing. Geospatial indexing in Mongo is handled on sync — see [§5.4](#54-geospatial-sync-contract).
 
-**Geospatial sync:** On worker sync to Mongo, flat `lat` / `lng` are also mapped to a GeoJSON Point for native geospatial queries:
+**Extended fields (`extra_fields`):** Tenant-specific fields from onboarding are stored under `extra_fields` in `data`. The API accepts them at the top level or nested in `extra_fields`; `normalizeAssetData` / `mergeAssetData` normalize before storage.
 
-```json
-"location": { "type": "Point", "coordinates": [lng, lat] }
-```
-
-Longitude is first in `coordinates`. If either coordinate is missing, `location` is `null`. API responses still expose flat `lat` / `lng` only.
-
-**Extended fields sandbox (`custom_fields`):** All tenant-specific parameters defined during the onboarding phase are stored under a dedicated `custom_fields` sub-document mapping (API may accept them at the top level; the server normalizes them into `custom_fields` before storage).
-
-During tenant onboarding (`POST /tenants`), an enterprise’s structural validation constraints are stored directly as language-agnostic JSON Schema blocks in the **`tenant_asset_configs`** meta-table (implemented as `asset_schemas` in Postgres — one config row per tenant, insert-once).
+During tenant onboarding (`POST /tenants`), validation rules are stored as JSON Schema in **`asset_schemas`** (one row per tenant, version 1, insert-once).
 
 **Atomic onboarding transaction:** `createTenantWithAdmin()` wraps all provisioning in one Postgres transaction (`withBypassTransaction` in `tenantRepository.ts`):
 
 1. `INSERT` tenant row (`tenants`)
-2. `INSERT` JSON Schema config row (`asset_schemas` / `tenant_asset_configs`)
+2. `INSERT` JSON Schema row (`asset_schemas`)
 3. `INSERT` first admin user (`users`)
 
 If any step fails, the whole transaction rolls back — no orphaned tenant without a user or schema config. RLS is bypassed for this path only (no tenant context exists yet before the first user is created).
@@ -257,24 +284,22 @@ Rather than relying on application code changes, business validation is fully sc
 
 | Step | Function | Purpose |
 |------|----------|---------|
-| Load config | `findLatestAssetSchema()` / `findAssetSchemaByVersion()` | Read JSON Schema from `tenant_asset_configs` |
-| Normalize | `normalizeAssetData()` / `mergeAssetData()` | Server sets `id`, `tenant_id`; merges client fields into `custom_fields` |
+| Load config | `findLatestAssetSchema()` / `findAssetSchemaByVersion()` | Read JSON Schema from `asset_schemas` |
+| Normalize | `normalizeAssetData()` / `mergeAssetData()` | Server sets `id`, `tenant_id`; merges client fields into `extra_fields` |
 | Compile | `compileAssetValidator()` | Build AJV validator from stored JSON Schema |
 | Validate | `validateAssetData(schema, data)` | Runtime check against tenant rules |
 
-**Zero-trust input separation:** Client updates (`PATCH /assets/:id`) are strictly limited to the `custom_fields` sub-document payload. Core infrastructure fields are parsed out-of-band by the server context, eliminating the risk of cross-tenant data pollution or spatial index corruption.
-
 **Create (`POST /assets`)** — load current tenant config, normalize body, AJV validate, write Postgres with `status=pending`.
 
-**Update (`PATCH /assets/:id`)** — load asset’s bound config, merge `custom_fields` patch, AJV validate, write Postgres.
+**Update (`PUT /assets/:id`)** — load asset’s bound `schema_version` config, merge patch via `mergeAssetData`, AJV validate, write Postgres (`status=pending`, `synced_at` cleared).
 
 Failed validation → `400` with `{ "error": "Asset validation failed", "details": [...] }`.
 
 ```mermaid
 flowchart LR
-  BODY[req.body / custom_fields]
+  BODY[req.body / extra_fields]
   NORM[normalizeAssetData / mergeAssetData]
-  CFG[tenant_asset_configs JSON Schema]
+  CFG[asset_schemas JSON Schema]
   AJV[validateAssetData — AJV]
   PG[(Postgres assets)]
   W[Worker]
@@ -292,14 +317,45 @@ When the sync worker writes to Mongo, documents pass a **second validation** —
 
 | Layer | Where | What it checks |
 |-------|-------|----------------|
-| **1 — AJV (API)** | `POST` / `PATCH` handlers | Full tenant JSON Schema: core fields + `custom_fields` rules |
+| **1 — AJV (API)** | `POST` / `PUT` handlers | Full tenant JSON Schema: core fields + `extra_fields` rules |
 | **2 — Mongo `$jsonSchema`** | `upsertAssetDocument()` | Document shape: required keys, BSON types, `status` enum, `location` GeoJSON Point, no extra top-level properties |
 
-The Mongo validator is **structural** — it enforces that every synced document has the expected fields and types, but it does **not** re-run tenant-specific rules inside `custom_fields` (those are already enforced by AJV before Postgres accepts the write).
+The Mongo validator is **structural** — it enforces document shape and types, but does **not** re-run tenant-specific rules inside `extra_fields` (already enforced by AJV before Postgres accepts the write).
 
 If Mongo validation fails, the worker job errors and BullMQ retries. In normal operation, AJV on the API path prevents invalid data from reaching Postgres, so Mongo validation acts as a **safety net** on the read model.
 
 The end-to-end path is: **client payload → AJV (tenant config) → Postgres write model → worker → Mongo structural validator → read model.**
+
+### 5.4 Geospatial sync contract
+
+MongoDB **2dsphere** indexes require **GeoJSON**, not flat `lat` / `lng` fields. Postgres and the API keep coordinates flat; the **sync worker** (`assetMongoRepository.toDocument` / `buildGeoJsonPoint`) maps them when projecting to the read model.
+
+| Store | Coordinate shape | Notes |
+|-------|------------------|--------|
+| Postgres `assets.data` | Flat `lat`, `lng` | AJV-validated on write |
+| API `AssetResponse` | Flat `lat`, `lng` | No `location` in JSON responses |
+| Mongo `assets` collection | Flat `lat`, `lng` **plus** `location` GeoJSON | Set on every upsert |
+
+**Sync mapping** (`buildGeoJsonPoint` in `assetMongoRepository.ts`):
+
+```json
+"location": { "type": "Point", "coordinates": [lng, lat] }
+```
+
+- **Longitude first** in `coordinates` (GeoJSON convention).
+- If either `lat` or `lng` is missing → `location: null`.
+- Mongo **`$jsonSchema`** (§5.3) validates `location` as a Point object or `null`.
+- `location` is stripped from `MongoAssetRecord` / API mapping — internal to Mongo only.
+
+**Index** (created in `ensureAssetIndexes()`):
+
+```javascript
+{ tenant_id: 1, location: "2dsphere" }, { sparse: true, name: "tenant_location_2dsphere" }
+```
+
+Sparse so documents without coordinates do not bloat the geo index. Compound with `tenant_id` keeps geospatial queries tenant-scoped.
+
+There is **no** `GET /assets` radius or `$geoNear` endpoint yet — the index is ready when that API is added.
 
 ---
 
@@ -309,9 +365,8 @@ The end-to-end path is: **client payload → AJV (tenant config) → Postgres wr
 |---------|-------|-----|
 | **Repository** | `repositories/*` | Hide SQL/Mongo behind stable interfaces per store |
 | **Service layer** | `services/*` | Business rules, orchestration, error mapping |
-| **Outbox** | `assets` table + listener | Embedded control plane; `FOR UPDATE SKIP LOCKED` polling |
+| **Outbox** | `assets` table + listener | Embedded control plane; poll `pending` + BullMQ enqueue |
 | **Transactional onboarding** | `createTenantWithAdmin` | Tenant + schema config + admin user in one `BEGIN/COMMIT` |
-| **Pessimistic concurrency** | Listener transaction | No duplicate enqueue across parallel pollers |
 | **CQRS (light)** | PG write / Mongo read | Optimize each path independently |
 | **Read model sync** | Worker + BullMQ | Retryable projection updates; **idempotency** via `asset.id` → Mongo `_id` |
 | **AsyncLocalStorage context** | `authContext` | Tenant/user available deep in stack without parameter drilling |
@@ -382,8 +437,8 @@ Security is layered: authentication, authorization, tenant isolation, input vali
 | Credential storage | [§8.4](#84-credential-storage) | bcrypt passwords, secrets in env only |
 | Input validation | [§8.5](#85-input-validation) | Zod (HTTP), AJV (assets), Mongo `$jsonSchema` |
 | Database hardening | [§8.6](#86-database-hardening) | RLS, immutable triggers, least-privilege grants |
-| Rate limiting | [§8.7](#87-rate-limiting) | Redis-backed limits per user or IP |
-| Safe error responses | [§8.8](#88-safe-error-responses) | No stack traces in API JSON |
+| Rate limiting | [§8.2](#82-authentication) | `express-rate-limit` + Redis; per user/IP |
+| Safe error responses | [§8.7](#87-safe-error-responses) | No stack traces in API JSON |
 
 ```mermaid
 flowchart TB
@@ -458,6 +513,7 @@ flowchart TB
 - JWT middleware (`requireAuthUnlessPublic`) runs on every request except JWT-exempt paths in `middleware/auth.ts`.
 - Platform provisioning uses a shared secret header, separate from tenant JWTs — avoids needing a tenant before the first tenant exists (`middleware/platformAdmin.ts`).
 - Invalid or missing credentials → `401`. Tokens signed with `JWT_SECRET` (`lib/jwt.ts`).
+- **Rate limiting** — `express-rate-limit` + Redis (`middleware/rateLimit.ts`). Default 100 requests/minute; per user when authenticated, per IP on public routes. `/health` skipped → `429`.
 
 ### 8.3 Role-based access control (RBAC)
 
@@ -506,44 +562,107 @@ Invalid input → `400` with `{ error, details? }` — no write to Postgres.
   This keeps tenant scoping consistent deep in the stack without trusting client-supplied tenant ids.
 
 - **RLS** on tenant-scoped Postgres tables (see §8.1).
-- **Immutable columns (triggers)** — even if the API has a bug, Postgres rejects illegal changes:
 
-| Table | What cannot change after create | What can change |
-|-------|--------------------------------|-----------------|
-| **users** | `tenant_id` (user cannot move to another tenant) | `name`, `email`, `password_hash`, `role` (via API + RBAC) |
-| **assets** | `tenant_id`, `schema_version` | `data`, sync/outbox fields, `modified_by` |
-| **asset_schemas** | entire row (no UPDATE or DELETE at all) | nothing — insert once at tenant create |
-| **tenants** | `id` (implicit) | `name`, `slug` — **admins** can update via `PUT /tenants/current` |
+- **Immutable columns and triggers** — even if the API has a bug or a node is compromised, Postgres rejects illegal identity changes at the database layer. A bad deploy cannot rewrite `tenant_id` foreign keys to leak or migrate data across tenants.
 
-- **Mongo immutability** — `upsertAssetDocument` rejects changes to `tenant_id` or `schema_version` on existing documents.
+| Table | What cannot change after create | Enforcement | What can change |
+|-------|--------------------------------|-------------|-----------------|
+| **users** | `tenant_id` | Trigger `users_tenant_id_immutable` | `name`, `password_hash`, `role` (via API + RBAC). **Email is not updatable** via API. |
+| **assets** | `tenant_id`, `schema_version` | Trigger `assets_identity_immutable` | `data`, sync/outbox fields, `modified_by` |
+| **asset_schemas** | **Entire row** — no updates, no deletes | See below (triple lock) | nothing — insert-once at tenant onboarding |
+| **tenants** | `id` (implicit PK) | — | `name`, `slug` — **admins** via `PUT /tenants/current` |
+
+**`asset_schemas` immutability (triple lock)**
+
+Tenant validation config is a **strict insert-once reference** after onboarding:
+
+1. **Role grants** — `voda_app` cannot mutate schema rows:
+
+   ```sql
+   REVOKE UPDATE, DELETE ON asset_schemas FROM voda_app;
+   ```
+
+   The API role can `SELECT` its tenant’s config and cannot change or remove it through normal grants.
+
+2. **Triggers** — `asset_schemas_no_update` and `asset_schemas_no_delete` run `BEFORE UPDATE` / `BEFORE DELETE` and raise an exception for **any** row touch, including superuser sessions. Schema drift cannot happen via SQL even if grants were misconfigured.
+
+3. **RLS** — `asset_schemas_insert` allows `INSERT` only when `app.bypass_rls()` is true (platform onboarding transaction). Tenant-scoped JWT sessions can read (`asset_schemas_select`) but never insert a second config row through the app role.
+
+Together: onboarding writes the JSON Schema once; runtime validation always reads that frozen row.
+
+**Trigger defense against cross-tenant reassignment**
+
+- **`users.tenant_id_immutable`** — a user cannot be moved to another tenant after create. Even a compromised API process that skips application checks cannot `UPDATE users SET tenant_id = …` to access another tenant’s JWT context or user records.
+- **`assets_identity_immutable`** — `tenant_id` and `schema_version` on asset rows cannot change. An attacker cannot re-home assets into another tenant’s Mongo read model or re-bind them to a different validation config.
+
+Mongo mirrors this for synced assets: `upsertAssetDocument` rejects `tenant_id` and `schema_version` changes on existing documents.
+
 - **Least privilege (`voda_app` grants)** — not the same for every table:
 
 | Table | `voda_app` can UPDATE/DELETE? | Notes |
 |-------|------------------------------|--------|
-| `asset_schemas` | **No** (`REVOKE UPDATE, DELETE`) | Schemas provisioned only at tenant create (bypass RLS insert) |
+| `asset_schemas` | **No** (`REVOKE UPDATE, DELETE`) + triggers | Insert-once at tenant create (`withBypassTransaction` only) |
 | `tenants` | **Yes** (within RLS) | Tenant **metadata** (`name`, `slug`) — not the same as locking the row |
-| `users`, `assets` | **Yes** (within RLS) | Scoped to current tenant; `users.tenant_id` still immutable via trigger |
+| `users`, `assets` | **Yes** (within RLS) | Scoped to current tenant; `users.tenant_id` and asset identity still immutable via triggers |
 
-So: users **cannot** reassign themselves to another tenant (`users.tenant_id` trigger). Tenant **admins** **can** update their organization’s name/slug. Nobody can change `asset_schemas` after provisioning — that restriction is stricter than tenants.
+Tenant **admins** can update organization `name` / `slug`. Users cannot change `tenant_id`. Nobody can alter `asset_schemas` after provisioning — that table is the most tightly locked object in the schema.
 
-### 8.7 Rate limiting
+**Soft delete (users only)**
 
-`middleware/rateLimit.ts` uses **express-rate-limit** with a **Redis store** so limits are shared across all API processes (not per-process memory).
+`DELETE /users/:id` does **not** remove the Postgres row. It sets `deleted_at = NOW()` (`userRepository.deleteUser`). Only **users** use soft delete; assets are removed from Mongo by the worker and **hard-deleted** from Postgres after the delete tombstone is processed.
 
-| Setting | Default | Env var |
-|---------|---------|---------|
-| Window | 60 seconds | `RATE_LIMIT_WINDOW_MS` |
-| Max requests per window | 100 | `RATE_LIMIT_MAX` |
+**Why soft delete users?**
 
-- **`GET /health`** — skipped (not rate limited).
-- **Authenticated requests** — limited per **user + tenant** (`user:{tenantId}:{userId}`).
-- **Public routes** (e.g. `POST /auth/login`) — limited per **client IP**.
-- Over limit → `429` with `{ "error": "Too many requests, please try again later" }`.
-- Response includes `RateLimit-*` headers (`standardHeaders: draft-7`).
+| Reason | Detail |
+|--------|--------|
+| **Referential integrity** | `assets.created_by`, `assets.modified_by`, and sync metadata (`synced_by`) reference `users(id)`. Hard-deleting a user would break FK constraints or force `ON DELETE CASCADE`, wiping audit history on asset rows. |
+| **Audit trail** | Deleted users remain in the database so you still know who created or modified assets and who triggered a sync. |
+| **Auth boundary** | Login and all reads filter `deleted_at IS NULL` — a soft-deleted user cannot authenticate or appear in `GET /users`. |
+| **Email reuse** | Partial unique index `idx_users_email_active` applies only to active users (`WHERE deleted_at IS NULL`), so the same email can be assigned to a new user after the old account is soft-deleted. |
 
-Protects against brute-force login attempts and noisy clients without blocking an entire tenant when one user is active.
+Soft-deleted users are excluded from list, get, login, reports (`countUsersByRole`), and the partial indexes above. There is no “undelete” API in the demo; production might add admin restore or a retention job to purge rows after N years.
 
-### 8.8 Safe error responses
+**Indexes (Postgres and Mongo)**
+
+Indexes match the queries the API, listener, and worker actually run. Primary keys and `UNIQUE` constraints (`tenants.slug`, `asset_schemas.tenant_id`, `users.email` among active rows) provide implicit lookup paths.
+
+**PostgreSQL** (`seed/schema.sql`)
+
+| Index | Table | Columns / predicate | Serves |
+|-------|-------|---------------------|--------|
+| PK / `UNIQUE` | `tenants` | `id`, `slug` | Tenant lookup, slug conflict checks |
+| PK / `UNIQUE` | `asset_schemas` | `(tenant_id, version)`, `tenant_id` | `findLatestAssetSchema`, `findAssetSchemaByVersion` |
+| PK | `users`, `assets` | `id` | `GET /users/:id`, `findAssetById`, asset updates |
+| `idx_users_email_active` | `users` | `email` WHERE `deleted_at IS NULL` | Login (`findUserByEmail`), unique active email |
+| `idx_users_tenant_id` | `users` | `tenant_id` | RLS tenant scans (legacy; composite indexes below are preferred) |
+| `idx_users_tenant_created` | `users` | `(tenant_id, created_at)` | User list ordering |
+| `idx_users_tenant_active_created` | `users` | `(tenant_id, created_at)` WHERE `deleted_at IS NULL` | `GET /users` list, report `countUsersByRole` |
+| `idx_assets_tenant_id` | `assets` | `tenant_id` | RLS on write path (reads are Mongo) |
+| `idx_assets_pending` | `assets` | `created_at` WHERE `status = 'pending'` | Outbox listener poll (`ORDER BY created_at`, `FOR UPDATE SKIP LOCKED`) |
+
+Asset **reads** are not indexed in Postgres beyond PK — the Mongo read model carries query indexes.
+
+**MongoDB** (`assetMongoRepository.ensureAssetIndexes()`)
+
+| Index | Keys | Serves |
+|-------|------|--------|
+| `tenant_created_at` | `{ tenant_id: 1, created_at: -1 }` | `GET /assets` default list sort |
+| `tenant_type` | `{ tenant_id: 1, type: 1 }` | `GET /assets?type=…` |
+| `tenant_status` | `{ tenant_id: 1, status: 1 }` | `GET /assets?status=…`, report status aggregates |
+| `tenant_location_2dsphere` | `{ tenant_id: 1, location: "2dsphere" }` sparse | Geospatial queries per tenant (§5.4); no search API yet |
+| `_id` (default) | asset UUID | `GET /assets/:id` |
+
+Report aggregations (`$group` by `status`, `schema_version`) use `tenant_id` `$match` — covered by the compound indexes above; at very large scale consider `{ tenant_id: 1, schema_version: 1 }`.
+
+**Not indexed today (acceptable for demo scale)**
+
+| Query | Why it is OK now | Production follow-up |
+|-------|------------------|----------------------|
+| `assets` by `tenant_id` only in Postgres | Writes by PK; reads in Mongo | Keep as-is unless Postgres fallback reads grow |
+| Mongo geo radius search | Index exists (§5.4); no HTTP API | `GET /assets?near=…` or `$geoWithin` endpoint |
+| `processing` rows stuck recovery | Low volume | See [§11](#11-production-improvements) |
+
+### 8.7 Safe error responses
 
 Unhandled errors log server-side but return a generic `500` message — no stack traces or internal details in JSON responses (`app.ts` error handler).
 
@@ -582,7 +701,7 @@ src/
   repositories/         One repository per store / aggregate
                           assetRepository.ts      Postgres write model + outbox polling
                           assetMongoRepository.ts Mongo read model + $jsonSchema validator
-                          tenantRepository.ts     tenants + tenant_asset_configs
+                          tenantRepository.ts     tenants + asset_schemas
                           userRepository.ts       users (RLS-scoped)
   routes/               Thin HTTP handlers: auth, tenants, users, assets, reports
   services/             Business logic: auth, tenant, user, asset, report
@@ -595,9 +714,9 @@ src/
 
 **Data flow summary:**
 
-1. **Tenant onboarding** (`POST /tenants`) — single transaction: tenant + `tenant_asset_configs` + admin user (rollback on any failure; RLS bypass).
+1. **Tenant onboarding** (`POST /tenants`) — single transaction: tenant + `asset_schemas` + admin user (rollback on any failure; RLS bypass).
 2. **User CRUD** → Postgres only (RLS + triggers).
-3. **Asset write** → Zod → AJV (`custom_fields`) → Postgres `assets` (`pending`) → listener (`FOR UPDATE SKIP LOCKED`, `processing`) → BullMQ → worker → Mongo `$jsonSchema` → `synced`.
+3. **Asset write** → Zod → AJV (`extra_fields`) → Postgres `assets` (`pending`) → listener poll → BullMQ → worker → Mongo `$jsonSchema` → `synced`.
 4. **Asset read** → Redis cache → Mongo (tenant-scoped query).
 5. **Report** → Postgres metadata + Mongo aggregations.
 
@@ -618,110 +737,25 @@ This is **eventual consistency** between Postgres write model and Mongo read mod
 
 ## 11. Production improvements
 
-The current design is intentionally lean for a homework / demo scope: one Postgres outbox on `assets`, a polling listener, BullMQ on Redis, and Mongo as the read model. For a **production** deployment, the following changes would be priorities.
+Demo scope only — not implemented. A production deployment would likely add:
 
-### 11.1 Processing dead-letter trap
-
-§3.3 notes that rows left in `processing` can be recovered by a future poll. That is incomplete for production.
-
-If a **malformed payload** or persistent Mongo validation error crashes the worker on every attempt, rows can sit in `processing` forever while BullMQ keeps retrying the same job. The asset never reaches `synced`, and the read model drifts permanently.
-
-**Production changes:**
-
-- **Max processing retry threshold** — after N worker failures for the same `assetId`, mark the Postgres row `failed` (or move to a `dead_letter` status) and stop enqueueing.
-- **Automated cleanup policy** — scheduled job to detect `processing` rows older than a TTL and either requeue (`pending`) or escalate to ops.
-- **Dead-letter queue (DLQ)** — failed BullMQ jobs land in a separate queue/topic with payload, error, and tenant context for manual replay or fix.
-- **Alerting** — metrics on `pending` age, `processing` stuck count, and DLQ depth.
-
-### 11.2 Geospatial sync contract (implemented)
-
-Flat `lat` / `lng` remain in Postgres and API responses. The sync worker maps them to Mongo `location` GeoJSON (`[lng, lat]`) and a sparse compound **2dsphere** index (`tenant_id` + `location`) supports tenant-scoped geospatial queries.
-
-Future production work: expose radius / `$geoWithin` search endpoints using that index.
-
-### 11.3 Redis `SCAN` clustering hazard
-
-§7 invalidates cache keys with `SCAN` + `DEL` on a pattern like `tenant:{tenantId}:assets:*`.
-
-On a **single Redis node**, this is acceptable at moderate scale. On **Redis Cluster**, keys for one tenant may live on different hash slots; a global `SCAN` can cause high CPU, incomplete deletes, or failures when scripts touch cross-slot keys.
-
-**Production changes:**
-
-- **Track cache keys explicitly** — maintain a Redis `SET` per tenant/resource of known keys at write time; invalidate with pipelined `DEL` (no scan).
-- **Hash tags** — use keys like `tenant:{tenantId}:assets:{hash}` with `{tenantId}` in the hash tag so related keys share a slot in cluster mode.
-- **TTL-only fallback** — for low-risk reads, rely on short TTL instead of broad invalidation under load.
-- **Separate Redis instance** for cache vs BullMQ/rate-limit (already partially separated by connection, but worth isolating in prod).
-
-### 11.4 Replace the outbox poller with Kafka (or an event bus)
-
-The listener polls Postgres on a fixed interval (`OUTBOX_POLL_INTERVAL_MS`). That is simple but adds latency, wastes DB round-trips when idle, and couples sync throughput to poll batch size.
-
-**Production changes:**
-
-- **Skip the poller** — after a successful Postgres write, publish an `asset.sync` event (same transaction via transactional outbox to a `outbox_events` table, or CDC from Postgres with Debezium).
-- **Kafka (or Pulsar / SNS+SQS)** as the durable log — consumers scale horizontally; partitions keyed by `tenant_id` or `asset_id` preserve ordering per asset.
-- **Idempotency unchanged** — still use `asset.id` as the message key and Mongo `_id` so consumers remain safe under at-least-once delivery.
-- **Listener becomes optional** — only for backfill / reconciliation, not the primary path.
-
-Rough flow:
-
-```text
-POST /assets → Postgres (ACID) → publish to Kafka → consumer upserts Mongo → mark synced
-```
-
-### 11.5 Logs and monitoring
-
-Today the API, listener, and worker mostly use **console output** (`console.log` / `console.error`). That is enough for local dev but not for production — you cannot debug sync lag, tenant isolation issues, or worker failures at scale without structured **logs**, **metrics**, and **tracing**.
-
-**Structured logging**
-
-- JSON logs with a stable schema: `timestamp`, `level`, `service` (`api` | `listener` | `worker`), `requestId`, `tenantId`, `userId`, `assetId`, `durationMs`, `error`.
-- **Correlation id** — propagate from `Authorization` request through listener enqueue and worker sync (same id in all three processes).
-- Never log passwords, JWTs, or `PLATFORM_ADMIN_KEY`; redact PII where policy requires it.
-- Central aggregation (e.g. CloudWatch Logs, Loki, Datadog Logs, Elasticsearch) with retention and search.
-
-**Metrics (RED + domain)**
-
-| Category | Examples |
-|----------|----------|
-| **API** | Request rate, latency (p50/p95/p99), 4xx/5xx by route, rate-limit 429 count |
-| **Sync pipeline** | `pending` / `processing` / `synced` row counts, **sync lag** (time from write to `synced_at`), BullMQ queue depth, job success/fail rate |
-| **Data stores** | Postgres pool wait time, Mongo query latency, Redis cache hit ratio |
-| **Security** | Failed login attempts, 401/403 spikes per tenant |
-
-Export via **Prometheus** scrape endpoints or OTLP; dashboards in Grafana (or vendor UI).
-
-**Distributed tracing**
-
-- **OpenTelemetry** spans on HTTP handlers, Postgres/Mongo/Redis calls, BullMQ job processing.
-- One trace from `POST /assets` → enqueue → worker → Mongo upsert → `markAssetSynced` to see where latency or errors occur.
-
-**Alerting (examples)**
-
-- Sync lag p95 &gt; SLO (e.g. 30s) for 5 minutes.
-- `processing` rows older than threshold (ties to §11.1 dead-letter trap).
-- DLQ depth &gt; 0.
-- API error rate &gt; 1% or readiness check failing (Postgres / Mongo / Redis down).
-
-**Health vs readiness**
-
-- Keep `GET /health` as **liveness** (process up).
-- Add **readiness** — can reach Postgres, Mongo, Redis, and worker consumer is not stalled.
-
-### 11.6 Additional production hardening
-
-| Area | Current (demo) | Production direction |
-|------|----------------|---------------------|
-| **Read-your-writes** | `GET /assets/:id` reads Mongo only; may 404 until sync | Postgres fallback when row exists but Mongo doc missing |
-| **Secrets** | Env vars in compose | Secret manager, rotation for `JWT_SECRET`, `PLATFORM_ADMIN_KEY`, DB URLs |
-| **Mongo reads** | Single primary | Read replicas + secondaryPreferred for list/report queries |
-| **API scale** | Single PM2 stack | Horizontally scaled API pods; shared Redis for cache/rate limits |
-| **Tenant tiers** | One global rate limit | Per-tenant or per-plan limits in Redis |
-| **Backups & DR** | Not covered | PITR for Postgres, Mongo backup schedule, replay procedure from Postgres if Mongo is rebuilt |
-| **Schema config** | Insert-once `asset_schemas` | Versioned config with explicit migration path if tenant rules change (still validate old assets against bound version) |
-| **Health checks** | `/health` liveness only | Readiness: Postgres, Mongo, Redis, queue consumer lag (see [§11.5](#115-logs-and-monitoring)) |
-
-These items are **documented intent**, not implemented in this repository.
+- Atomic outbox (poll + enqueue in one transaction, or `processing`/`failed` states)
+- DLQ and failed-job alerting for stuck syncs
+- Sync lag SLOs and alerts (pending age, queue depth, failed jobs)
+- Kafka or event bus instead of polling outbox
+- Production observability beyond basic logs (metrics, tracing, alerting)
+- Readiness probes beyond `/health` (Postgres, Mongo, Redis, worker lag)
+- Separate Kubernetes deployments for API, listener, and worker (scale independently)
+- Connection pool limits across replicas (Postgres `max_connections` budget)
+- Graceful shutdown on pod rollouts (drain HTTP, close pools, finish jobs)
+- Horizontal scaling on Kubernetes (replicas, sharding where needed)
+- Postgres read-your-writes fallback for unsynced assets
+- Secret management and tested backups/DR runbooks
+- Idempotency keys on write APIs (safe client retries)
+- Cursor pagination for large asset lists
+- More exhaustive test coverage (chaos / failure paths)
+- OAuth, SSO, or external identity provider
+- …and many more
 
 ---
 

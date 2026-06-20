@@ -63,6 +63,10 @@ CREATE INDEX IF NOT EXISTS idx_assets_tenant_id ON assets(tenant_id);
 -- Paginated user listing: tenant scope + created_at ordering.
 CREATE INDEX IF NOT EXISTS idx_users_tenant_created ON users(tenant_id, created_at);
 
+-- Active users only (list + report GROUP BY role): smaller than idx_users_tenant_created.
+CREATE INDEX IF NOT EXISTS idx_users_tenant_active_created
+  ON users(tenant_id, created_at) WHERE deleted_at IS NULL;
+
 -- Note: login looks up an active user by email (bypasses RLS). The partial
 -- unique index idx_users_email_active above already provides the backing index,
 -- so no separate one is needed here.

@@ -16,27 +16,98 @@ For system design, patterns, security, and flows see [ARCHITECTURE.md](./ARCHITE
 docker compose up --build
 ```
 
+Wait until logs show the API is listening (e.g. `Server running on http://localhost:3000`).
+
+**Verify:**
+
+```bash
+curl http://localhost:3000/health
+
+curl -s -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"amelia@northwind.test","password":"password123"}'
+```
+
 - API: `http://localhost:3000`
-- Seeds Postgres + Mongo on startup
+- Seeds Postgres + Mongo on startup (`SEED_ON_START=true`)
 - Runs API, outbox listener, and sync worker via PM2 inside the `app` container
+- Seeded tenants are ready to use; `POST /tenants` needs `PLATFORM_ADMIN_KEY` (not set in compose by default — add to `docker-compose.yml` if you need platform provisioning)
 
 ### Local development
 
-**Prerequisites:** Node 20+, Postgres 16, Redis 7, Mongo 7.
+**Prerequisites:** Node 20+, Postgres 16, Redis 7, Mongo 7 (running locally or via compose for infra only).
+
+**1. Environment** — export vars or put them in a `.env` file in the project root (`dotenv` loads it automatically):
+
+```bash
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/voda_ai_homework
+APP_DATABASE_URL=postgres://voda_app:voda_app@localhost:5432/voda_ai_homework
+REDIS_URL=redis://localhost:6379
+MONGO_URL=mongodb://localhost:27017
+MONGO_DB=voda_assets
+JWT_SECRET=dev-secret-change-me
+PLATFORM_ADMIN_KEY=dev-platform-key
+```
+
+`DATABASE_URL` must be a superuser — seed creates the schema and `voda_app` role. `APP_DATABASE_URL` is what the API uses (RLS enforced).
+
+**2. Install and seed**
 
 ```bash
 npm install
-npm run seed          # reset DB + seed data
-npm run dev           # API on :3000
-npm run dev:listener  # outbox poller (separate terminal)
-npm run dev:worker    # Mongo sync worker (separate terminal)
+npm run seed    # reset DB, create schema, demo data — run before first API start
 ```
 
-**Tests**
+**3. Run all three processes** (listener + worker required for asset sync to Mongo):
+
+```bash
+npm run dev           # terminal 1 — API on :3000
+npm run dev:listener  # terminal 2 — outbox poller
+npm run dev:worker    # terminal 3 — Mongo sync worker
+```
+
+**Verify** (same as Docker):
+
+```bash
+curl http://localhost:3000/health
+curl -s -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"amelia@northwind.test","password":"password123"}'
+```
+
+**Tip:** Run only Postgres, Redis, and Mongo in Docker while developing the API locally:
+
+```bash
+docker compose up postgres redis mongo
+```
+
+Then use the env vars above with `localhost` hosts.
+
+### Seeding
+
+Resets and repopulates Postgres + Mongo with demo tenants, users, and assets.
+
+```bash
+npm run seed
+```
+
+**Requires:** running Postgres and Mongo; `DATABASE_URL` (superuser — creates schema and `voda_app` role).
+
+**What it does:** runs `seed/reset.sql` and `seed/schema.sql`, inserts 3 tenants with users and sample assets, mirrors seeded assets into Mongo immediately (`synced` — no outbox wait).
+
+Docker Compose sets `SEED_ON_START=true` so the API seeds on first boot. Override seeded user passwords with `SEED_PASSWORD` (default `password123`).
+
+### Tests
 
 ```bash
 npm test
 ```
+
+**Requires (local):** Postgres, Redis, and Mongo running with the same connection env vars as dev (`DATABASE_URL`, `APP_DATABASE_URL`, `MONGO_URL`, `REDIS_URL`, `JWT_SECRET`, `PLATFORM_ADMIN_KEY`).
+
+**What runs:** Vitest — integration tests in `tests/isolation.test.ts` (auth, RBAC, cross-tenant isolation via supertest + `createApp()`), plus unit tests for AJV schema merge/validation. The suite calls `runSeed()` in `beforeAll`, so each run resets the database.
+
+CI (`.github/workflows/ci.yml`) runs `npm run build` and `npm test` on GitHub Actions with Postgres, Redis, and Mongo service containers — no local DB setup needed for PR checks.
 
 **Production build**
 
@@ -67,7 +138,13 @@ All seeded users use password `password123` (or `SEED_PASSWORD` if set).
 | `MONGO_URL`, `MONGO_DB` | Yes | Mongo connection |
 | `REDIS_URL` | Yes | Cache + rate limit + job queue |
 | `JWT_SECRET` | Yes | Bearer token signing |
-| `PLATFORM_ADMIN_KEY` | For `POST /tenants` | Platform provisioning header |
+| `JWT_EXPIRES_IN` | Optional | Token lifetime (default `24h`) |
+| `PLATFORM_ADMIN_KEY` | For `POST /tenants` | Platform provisioning header (`x-admin-key`) |
+| `CACHE_TTL_SECONDS` | Optional | Redis cache TTL (default `60`) |
+| `OUTBOX_POLL_INTERVAL_MS` | Optional | Listener poll interval (default `2000`) |
+| `OUTBOX_BATCH_SIZE` | Optional | Max assets per poll (default `50`) |
+| `RATE_LIMIT_WINDOW_MS` | Optional | Rate limit window (default `60000`) |
+| `RATE_LIMIT_MAX` | Optional | Max requests per window (default `100`) |
 | `SEED_ON_START` | Optional | `true` to seed when API starts |
 | `SEED_PASSWORD` | Optional | Password for seeded users |
 
@@ -512,6 +589,6 @@ After create/update, `synced_at`, `synced_by`, and `updated_at` are `null` until
 
 Data merged from Postgres (tenant, users, schema) and Mongo (asset aggregates).
 
----
+**Errors:** `401`, `404`, `500`.
 
-**Author:** [Yannis Kolovos](https://msroot.me/) · June 2026**Errors:** `401`, `404`, `500`.
+**Author:** [Yannis Kolovos](https://msroot.me/) · June 2026
