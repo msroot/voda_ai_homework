@@ -6,6 +6,7 @@ import { closeSeedConnections, runSeed } from "../seed/index.js";
 import pool from "../src/db.js";
 import { closeMongo } from "../src/mongo.js";
 import { closeCache } from "../src/cache/cache.js";
+import { closeRateLimiter } from "../src/middleware/rateLimit.js";
 
 const app = createApp();
 
@@ -55,6 +56,7 @@ afterAll(async () => {
     closeSeedConnections(),
     closeMongo(),
     closeCache(),
+    closeRateLimiter(),
   ]);
 });
 
