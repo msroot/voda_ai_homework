@@ -21,7 +21,7 @@ export interface Tenant {
 // Tenant plus its current (latest) asset schema and version, as returned by the
 // tenant self-management endpoints.
 export interface TenantWithSchema extends Tenant {
-  schema_version: number;
+  schema_version: string;
   asset_schema: Record<string, unknown>;
 }
 

@@ -1,5 +1,5 @@
 import { Worker, type ConnectionOptions } from "bullmq";
-import { createRedisConnection } from "../redis.js";
+import { createRedisConnection } from "../clients/redis.js";
 import { runWithAuthContext } from "../context/authContext.js";
 import {
   findAssetById,

@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { createRedisConnection } from "../redis.js";
+import { createRedisConnection } from "../clients/redis.js";
 
 const TTL_SECONDS = Number(process.env.CACHE_TTL_SECONDS ?? 60);
 

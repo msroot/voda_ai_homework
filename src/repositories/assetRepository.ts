@@ -1,5 +1,5 @@
 import { getTenantId } from "../context/authContext.js";
-import { query, queryWithoutTenantContext } from "../db.js";
+import { query, queryWithoutTenantContext } from "../clients/postgres.js";
 import type { Asset } from "../types.js";
 
 interface PendingAsset {

@@ -3,7 +3,7 @@ import { join } from "path";
 import pg from "pg";
 import { hashPassword } from "../src/auth/password.js";
 import { normalizeAssetData } from "../src/assets/assetData.js";
-import { closeMongo } from "../src/mongo.js";
+import { closeMongo } from "../src/clients/mongo.js";
 import {
   ensureAssetIndexes,
   replaceAssetDocuments,

@@ -1,6 +1,6 @@
 import { ipKeyGenerator, rateLimit } from "express-rate-limit";
 import { RedisStore, type RedisReply } from "rate-limit-redis";
-import { createRedisConnection } from "../redis.js";
+import { createRedisConnection } from "../clients/redis.js";
 import { tryGetTenantId, tryGetUserId } from "../context/authContext.js";
 
 const WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60_000);

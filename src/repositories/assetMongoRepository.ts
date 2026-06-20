@@ -1,6 +1,6 @@
 import type { MongoAssetRecord } from "../api/assetResponse.js";
 import { getTenantId } from "../context/authContext.js";
-import { getMongoDb } from "../mongo.js";
+import { getMongoDb } from "../clients/mongo.js";
 import type { AssetFilter } from "../schemas.js";
 import type { Asset } from "../types.js";
 
@@ -175,6 +175,27 @@ export async function aggregateAssetStatusCounts(
     .toArray();
 
   return results.map((row) => ({ status: row._id, count: row.count }));
+}
+
+export async function aggregateAssetSchemaVersionCounts(
+  tenantId: string
+): Promise<Array<{ schema_version: number; count: number }>> {
+  const db = await getMongoDb();
+
+  const results = await db
+    .collection<AssetDocument>(COLLECTION)
+    .aggregate<{ _id: number; count: number }>([
+      { $match: { tenant_id: tenantId } },
+      { $group: { _id: "$schema_version", count: { $sum: 1 } } },
+    ])
+    .toArray();
+
+  return results.map((row) => ({ schema_version: row._id, count: row.count }));
+}
+
+export async function countTenantAssets(tenantId: string): Promise<number> {
+  const db = await getMongoDb();
+  return db.collection<AssetDocument>(COLLECTION).countDocuments({ tenant_id: tenantId });
 }
 
 export async function findAssetDocumentById(

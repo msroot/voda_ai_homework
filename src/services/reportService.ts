@@ -1,18 +1,59 @@
+import { formatSchemaVersion } from "../api/schemaVersion.js";
 import { getTenantId } from "../context/authContext.js";
 import { AppError } from "../errors/appError.js";
-import { aggregateAssetStatusCounts } from "../repositories/assetMongoRepository.js";
-import { findTenantById } from "../repositories/tenantRepository.js";
+import {
+  aggregateAssetSchemaVersionCounts,
+  aggregateAssetStatusCounts,
+  countTenantAssets,
+} from "../repositories/assetMongoRepository.js";
+import {
+  findTenantAssetSchemaSummary,
+  findTenantById,
+} from "../repositories/tenantRepository.js";
+import { countUsersByRole } from "../repositories/userRepository.js";
 
-interface AssetStatusReport {
+export interface TenantOverviewReport {
   tenant: { id: string; name: string; slug: string };
-  total: number;
-  by_status: Record<string, number>;
+  users: {
+    total: number;
+    by_role: Record<string, number>;
+  };
+  asset_schema: {
+    versions_count: number;
+    versions: string[];
+    current_version: string;
+  };
+  assets: {
+    total: number;
+    by_status: Record<string, number>;
+    by_schema_version: Record<string, number>;
+  };
   generated_at: string;
 }
 
-// Cross-store report: tenant metadata from Postgres joined with asset status
-// counts from MongoDB, scoped to the caller's tenant.
-export async function getAssetStatusReport(): Promise<AssetStatusReport> {
+function statusCountMap(
+  rows: Array<{ status: string | null; count: number }>
+): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const row of rows) {
+    map[row.status ?? "unknown"] = row.count;
+  }
+  return map;
+}
+
+function schemaVersionCountMap(
+  rows: Array<{ schema_version: number; count: number }>
+): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const row of rows) {
+    map[formatSchemaVersion(row.schema_version)] = row.count;
+  }
+  return map;
+}
+
+// Cross-store overview: tenant + users + schema metadata from Postgres,
+// asset aggregates from MongoDB, scoped to the caller's tenant.
+export async function getTenantOverviewReport(): Promise<TenantOverviewReport> {
   const tenantId = getTenantId();
 
   const tenant = await findTenantById(tenantId);
@@ -20,19 +61,36 @@ export async function getAssetStatusReport(): Promise<AssetStatusReport> {
     throw new AppError(404, "Tenant not found");
   }
 
-  const counts = await aggregateAssetStatusCounts(tenantId);
+  const [users, schemaSummary, statusCounts, schemaVersionCounts, assetTotal] =
+    await Promise.all([
+      countUsersByRole(),
+      findTenantAssetSchemaSummary(),
+      aggregateAssetStatusCounts(tenantId),
+      aggregateAssetSchemaVersionCounts(tenantId),
+      countTenantAssets(tenantId),
+    ]);
 
-  const by_status: Record<string, number> = {};
-  let total = 0;
-  for (const { status, count } of counts) {
-    by_status[status ?? "unknown"] = count;
-    total += count;
+  if (!schemaSummary) {
+    throw new AppError(500, "Tenant asset schema missing");
   }
+
+  const versions = schemaSummary.versions.map((row) => formatSchemaVersion(row.version));
 
   return {
     tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug },
-    total,
-    by_status,
+    users,
+    asset_schema: {
+      versions_count: versions.length,
+      versions,
+      current_version: formatSchemaVersion(
+        Math.max(...schemaSummary.versions.map((row) => row.version))
+      ),
+    },
+    assets: {
+      total: assetTotal,
+      by_status: statusCountMap(statusCounts),
+      by_schema_version: schemaVersionCountMap(schemaVersionCounts),
+    },
     generated_at: new Date().toISOString(),
   };
 }

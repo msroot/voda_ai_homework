@@ -1,5 +1,5 @@
 import { Queue, type ConnectionOptions } from "bullmq";
-import { createRedisConnection } from "../redis.js";
+import { createRedisConnection } from "../clients/redis.js";
 
 export const ASSET_SYNC_QUEUE = "asset-sync";
 const ASSET_SYNC_JOB = "sync";

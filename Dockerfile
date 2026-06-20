@@ -12,5 +12,5 @@ RUN npm install -g pm2
 
 EXPOSE 3000
 
-# Runs the server, event listener, and worker as three PM2 processes.
+# Runs the server, listener, and worker as three PM2 processes.
 CMD ["pm2-runtime", "ecosystem.config.cjs"]

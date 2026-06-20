@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { hashPassword } from "../auth/password.js";
+import { formatSchemaVersion } from "../api/schemaVersion.js";
 import { userToResponse, type UserResponse } from "../api/userResponse.js";
 import { getTenantId, getUserId } from "../context/authContext.js";
 import {
@@ -69,7 +70,7 @@ export async function getCurrentTenant(): Promise<TenantWithSchema> {
     throw new AppError(500, "Tenant asset schema missing");
   }
 
-  return { ...tenant, schema_version: latest.version, asset_schema: latest.schema };
+  return { ...tenant, schema_version: formatSchemaVersion(latest.version), asset_schema: latest.schema };
 }
 
 // Onboarding: creates the tenant, version-1 asset schema, and first admin user
@@ -102,7 +103,7 @@ export async function createTenant(
     return {
       tenant: {
         ...tenant,
-        schema_version: 1,
+        schema_version: formatSchemaVersion(1),
         asset_schema: assetSchema,
       },
       user: userToResponse(user),
@@ -151,5 +152,5 @@ export async function updateCurrentTenant(
     throw new AppError(500, "Tenant asset schema missing");
   }
 
-  return { ...tenant, schema_version: latest.version, asset_schema: latest.schema };
+  return { ...tenant, schema_version: formatSchemaVersion(latest.version), asset_schema: latest.schema };
 }

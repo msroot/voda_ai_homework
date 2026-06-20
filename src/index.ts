@@ -1,5 +1,5 @@
 import "dotenv/config";
-import pool from "./db.js";
+import pool from "./clients/postgres.js";
 import { createApp } from "./app.js";
 import { ensureAssetIndexes } from "./repositories/assetMongoRepository.js";
 import { runSeed } from "../seed/index.js";

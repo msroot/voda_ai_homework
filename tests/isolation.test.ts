@@ -3,8 +3,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 import { closeSeedConnections, runSeed } from "../seed/index.js";
-import pool from "../src/db.js";
-import { closeMongo } from "../src/mongo.js";
+import pool from "../src/clients/postgres.js";
+import { closeMongo } from "../src/clients/mongo.js";
 import { closeCache } from "../src/cache/cache.js";
 import { closeRateLimiter } from "../src/middleware/rateLimit.js";
 
@@ -147,27 +147,37 @@ describe("asset filtering", () => {
 });
 
 describe("tenant isolation - report", () => {
-  it("reports only the caller's tenant metadata and counts", async () => {
-    const res = await request(app).get("/reports/asset-status").set(auth(adminA));
+  it("reports tenant overview with users, schema, and asset aggregates", async () => {
+    const res = await request(app).get("/reports/overview").set(auth(adminA));
     expect(res.status).toBe(200);
     expect(res.body.tenant.id).toBe(TENANT_A);
-    expect(res.body.total).toBeGreaterThan(0);
-    expect(typeof res.body.by_status).toBe("object");
+    expect(res.body.users.total).toBeGreaterThan(0);
+    expect(typeof res.body.users.by_role).toBe("object");
+    expect(res.body.asset_schema.versions_count).toBeGreaterThan(0);
+    expect(res.body.asset_schema.current_version).toBe("v_1");
+    expect(res.body.assets.total).toBeGreaterThan(0);
+    expect(typeof res.body.assets.by_status).toBe("object");
+    expect(typeof res.body.assets.by_schema_version).toBe("object");
 
-    const statusSum = Object.values(res.body.by_status as Record<string, number>).reduce(
-      (a, b) => a + b,
-      0
-    );
-    expect(statusSum).toBe(res.body.total);
+    const statusSum = Object.values(
+      res.body.assets.by_status as Record<string, number>
+    ).reduce((a, b) => a + b, 0);
+    expect(statusSum).toBe(res.body.assets.total);
+
+    const versionSum = Object.values(
+      res.body.assets.by_schema_version as Record<string, number>
+    ).reduce((a, b) => a + b, 0);
+    expect(versionSum).toBe(res.body.assets.total);
   });
 
   it("scopes report counts to each tenant separately", async () => {
-    const resA = await request(app).get("/reports/asset-status").set(auth(adminA));
-    const resB = await request(app).get("/reports/asset-status").set(auth(adminB));
+    const resA = await request(app).get("/reports/overview").set(auth(adminA));
+    const resB = await request(app).get("/reports/overview").set(auth(adminB));
     expect(resA.body.tenant.id).toBe(TENANT_A);
     expect(resB.body.tenant.id).toBe(TENANT_B);
-    expect(resA.body.total).toBeGreaterThan(0);
-    expect(resB.body.total).toBeGreaterThan(0);
+    expect(resA.body.assets.total).toBeGreaterThan(0);
+    expect(resB.body.assets.total).toBeGreaterThan(0);
+    expect(resA.body.users.total).not.toBe(resB.body.users.total);
   });
 });
 
@@ -291,7 +301,7 @@ describe("platform provisioning (x-admin-key)", () => {
       expect(res.status, JSON.stringify(res.body)).toBe(201);
       expect(res.body.tenant).toBeDefined();
       expect(res.body.user).toBeDefined();
-      expect(res.body.tenant.schema_version).toBe(1);
+      expect(res.body.tenant.schema_version).toBe("v_1");
       expect(res.body.tenant.asset_schema).toBeDefined();
       expect(res.body.tenant.asset_schema.required).toContain("tenant_id");
       expect(res.body.tenant.asset_schema.required).toContain("status");

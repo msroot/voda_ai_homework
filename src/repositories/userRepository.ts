@@ -1,5 +1,5 @@
 import { getTenantId } from "../context/authContext.js";
-import { query, queryWithoutTenantContext } from "../db.js";
+import { query, queryWithoutTenantContext } from "../clients/postgres.js";
 import type { User, UserRole } from "../types.js";
 
 const userColumns = "id, tenant_id, name, email, role, created_at";
@@ -91,4 +91,25 @@ export async function deleteUser(id: string): Promise<boolean> {
     [id]
   );
   return (rowCount ?? 0) > 0;
+}
+
+export async function countUsersByRole(): Promise<{
+  total: number;
+  by_role: Record<string, number>;
+}> {
+  const { rows } = await query<{ role: UserRole; count: number }>(
+    `SELECT role, COUNT(*)::int AS count
+       FROM users
+      WHERE deleted_at IS NULL
+      GROUP BY role`
+  );
+
+  const by_role: Record<string, number> = {};
+  let total = 0;
+  for (const row of rows) {
+    by_role[row.role] = row.count;
+    total += row.count;
+  }
+
+  return { total, by_role };
 }

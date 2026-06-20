@@ -1,10 +1,11 @@
 import type { Asset } from "../types.js";
+import { formatSchemaVersion } from "./schemaVersion.js";
 
 /** Public asset shape returned by every asset endpoint (create, update, get, list). */
 export interface AssetResponse {
   id: string;
   tenant_id: string;
-  schema_version: number;
+  schema_version: string;
   name: string;
   type: string;
   status: string;
@@ -43,7 +44,7 @@ export function assetRecordToResponse(
   return {
     id,
     tenant_id: record.tenant_id,
-    schema_version: record.schema_version,
+    schema_version: formatSchemaVersion(record.schema_version),
     name: record.name,
     type: record.type,
     status: record.status ?? "",
@@ -62,7 +63,7 @@ export function postgresAssetToResponse(asset: Asset): AssetResponse {
   return {
     id: asset.id,
     tenant_id: asset.tenant_id,
-    schema_version: asset.schema_version,
+    schema_version: formatSchemaVersion(asset.schema_version),
     name: typeof data.name === "string" ? data.name : "",
     type: typeof data.type === "string" ? data.type : "",
     status: typeof data.status === "string" ? data.status : "",

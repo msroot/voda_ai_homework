@@ -1,5 +1,5 @@
 import { getTenantId } from "../context/authContext.js";
-import { query, withBypassTransaction } from "../db.js";
+import { query, withBypassTransaction } from "../clients/postgres.js";
 import type { Tenant, User, UserRole } from "../types.js";
 
 const tenantColumns = "id, name, slug, created_at";
@@ -25,6 +25,23 @@ export async function findLatestAssetSchema(): Promise<AssetSchemaVersion | null
     [getTenantId()]
   );
   return rows[0] ?? null;
+}
+
+export async function findTenantAssetSchemaSummary(): Promise<{
+  versions: Array<{ version: number }>;
+} | null> {
+  const { rows } = await query<{ version: number }>(
+    `SELECT version FROM asset_schemas
+      WHERE tenant_id = $1
+      ORDER BY version`,
+    [getTenantId()]
+  );
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return { versions: rows };
 }
 
 // A specific historical schema version. Used to re-validate edits to an existing
