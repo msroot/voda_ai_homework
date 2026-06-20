@@ -56,6 +56,21 @@ CREATE TABLE IF NOT EXISTS assets (
         REFERENCES asset_schemas(tenant_id, version)
 );
 
+-- Client idempotency keys: unique per tenant (POST /assets required; POST /users optional).
+CREATE TABLE IF NOT EXISTS idempotency_keys (
+    tenant_id       UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    key             TEXT NOT NULL,
+    request_hash    TEXT NOT NULL,
+    status_code     INT,
+    response_body   JSONB,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at      TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (tenant_id, key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_idempotency_keys_expires
+    ON idempotency_keys (expires_at);
+
 -- Tenant scoping (RLS filters every query by tenant_id).
 CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_assets_tenant_id ON assets(tenant_id);
@@ -147,6 +162,8 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users FORCE ROW LEVEL SECURITY;
 ALTER TABLE assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assets FORCE ROW LEVEL SECURITY;
+ALTER TABLE idempotency_keys ENABLE ROW LEVEL SECURITY;
+ALTER TABLE idempotency_keys FORCE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS tenants_tenant_isolation ON tenants;
 CREATE POLICY tenants_tenant_isolation ON tenants
@@ -172,6 +189,12 @@ CREATE POLICY users_tenant_isolation ON users
 
 DROP POLICY IF EXISTS assets_tenant_isolation ON assets;
 CREATE POLICY assets_tenant_isolation ON assets
+  FOR ALL
+  USING (app_bypass_rls() OR tenant_id = app_current_tenant_id())
+  WITH CHECK (app_bypass_rls() OR tenant_id = app_current_tenant_id());
+
+DROP POLICY IF EXISTS idempotency_keys_tenant_isolation ON idempotency_keys;
+CREATE POLICY idempotency_keys_tenant_isolation ON idempotency_keys
   FOR ALL
   USING (app_bypass_rls() OR tenant_id = app_current_tenant_id())
   WITH CHECK (app_bypass_rls() OR tenant_id = app_current_tenant_id());

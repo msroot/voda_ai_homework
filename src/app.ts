@@ -7,6 +7,7 @@ import reportRoutes from "./routes/reports.js";
 import { requireAuthUnlessPublic } from "./middleware/auth.js";
 import { rateLimiter } from "./middleware/rateLimit.js";
 import { AppError } from "./lib/appError.js";
+import { finalizeIdempotencyOnError } from "./middleware/idempotency.js";
 
 // Builds the Express app without starting a server, so it can be mounted both by
 // the real entry point (src/index.ts) and by integration tests (supertest).
@@ -28,12 +29,14 @@ export function createApp() {
   app.use("/reports", reportRoutes);
 
   app.use(
-    (
+    async (
       err: unknown,
-      _req: express.Request,
+      req: express.Request,
       res: express.Response,
       _next: express.NextFunction
     ) => {
+      await finalizeIdempotencyOnError(req, err);
+
       if (err instanceof AppError) {
         res.status(err.statusCode).json(
           err.details !== undefined

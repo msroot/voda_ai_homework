@@ -145,6 +145,7 @@ All seeded users use password `password123` (or `SEED_PASSWORD` if set).
 | `OUTBOX_BATCH_SIZE` | Optional | Max assets per poll (default `50`) |
 | `RATE_LIMIT_WINDOW_MS` | Optional | Rate limit window (default `60000`) |
 | `RATE_LIMIT_MAX` | Optional | Max requests per window (default `100`) |
+| `IDEMPOTENCY_TTL_SECONDS` | Optional | Cached idempotency response TTL (default `86400`) |
 | `SEED_ON_START` | Optional | `true` to seed when API starts |
 | `SEED_PASSWORD` | Optional | Password for seeded users |
 
@@ -157,6 +158,52 @@ All seeded users use password `password123` (or `SEED_PASSWORD` if set).
 | Tenant routes | `Authorization: Bearer <jwt>` from `POST /auth/login` |
 | Platform `POST /tenants` | `x-admin-key: <PLATFORM_ADMIN_KEY>` (no JWT) |
 | Public | `/health`, `/auth/login` — no auth |
+
+See [Idempotency](#idempotency) for the `Idempotency-Key` header on creates.
+
+---
+
+## Idempotency
+
+Clients can retry creates safely using the `Idempotency-Key` header. The server stores the first response and replays it when the same key and body are sent again.
+
+| Endpoint | `Idempotency-Key` | Stored in |
+|----------|-------------------|-----------|
+| `POST /assets` | **Required** | Postgres — unique per `(tenant_id, key)` |
+| `POST /users` | Optional | Postgres (same table) |
+| `POST /tenants` | Optional | Redis (platform scope) |
+
+**Recommendation:** keep the header **required on `POST /assets` only** — that is the main async write path where duplicate retries hurt most. Optional on user/tenant creates is sufficient for this service.
+
+- Format: 1–255 characters (`letters`, `digits`, `_`, `-`).
+- Same key + same JSON body → same response (no duplicate resource).
+- Same key + different body → `409`.
+- Missing on `POST /assets` → `400`.
+
+**Example — create asset**
+
+```bash
+curl -s -X POST http://localhost:3000/assets \
+  -H "Authorization: Bearer <token>" \
+  -H "Idempotency-Key: 7f3a9c2e-b1c2-4d3e-8f4a-9b0c1d2e3f4a" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "NWU-S-0001",
+    "type": "sensor",
+    "status": "ok",
+    "lat": 42.1,
+    "lng": -71.1,
+    "installed_at": "2020-01-01",
+    "material": "copper",
+    "diameter_mm": 100
+  }'
+```
+
+Retry the same curl after a timeout — you get the same `201` and the same `id`, not a second asset.
+
+Optional body field `id` (UUID) is separate: it sets the asset id up front. `Idempotency-Key` protects the whole HTTP request on retry.
+
+Details: [ARCHITECTURE.md §3.7](./ARCHITECTURE.md#37-http-idempotency-key-header).
 
 ---
 
@@ -469,6 +516,8 @@ Create/update request bodies are flat fields at the top level (like users). The 
 
 **Auth:** admin or editor.
 
+**Headers:** `Idempotency-Key` — **required** (see [Idempotency](#idempotency)).
+
 **Body**
 
 ```json
@@ -507,7 +556,7 @@ Optional `id` (UUID). Tenant-specific fields can be sent at the top level (as ab
 }
 ```
 
-**Errors:** `400` validation, `409` duplicate id, `403`.
+**Errors:** `400` validation or missing/invalid `Idempotency-Key`, `409` duplicate id or idempotency conflict, `403`.
 
 ---
 

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { validateRequest } from "../middleware/validateRequest.js";
 import { requireWrite } from "../middleware/authorize.js";
+import { idempotency } from "../middleware/idempotency.js";
 import {
   assetFilterSchema,
   assetUpdateSchema,
@@ -39,6 +40,7 @@ router.post(
   "/",
   requireWrite,
   validateRequest(assetWriteSchema),
+  idempotency("tenant", { required: true }),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createAsset(req.body));
   })

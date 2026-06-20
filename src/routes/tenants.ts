@@ -2,6 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { validateRequest } from "../middleware/validateRequest.js";
 import { requirePlatformAdmin } from "../middleware/platformAdmin.js";
+import { idempotency } from "../middleware/idempotency.js";
 import { requireAdmin } from "../middleware/authorize.js";
 import { createTenantSchema, updateTenantSchema } from "../schemas.js";
 import {
@@ -17,6 +18,7 @@ router.post(
   "/",
   requirePlatformAdmin,
   validateRequest(createTenantSchema),
+  idempotency("platform"),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createTenant(req.body));
   })

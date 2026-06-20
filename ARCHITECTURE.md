@@ -18,7 +18,7 @@ To run the app locally or in Docker, see [README.md](./README.md).
 
 1. [System overview](#1-system-overview) — includes [tools & libraries](#tools--libraries)
 2. [Process layout](#2-process-layout)
-3. [Write path (create / update / delete)](#3-write-path-create--update--delete) — includes [idempotency](#34-idempotency--asset-id-as-the-stable-key)
+3. [Write path (create / update / delete)](#3-write-path-create--update--delete) — includes [sync idempotency](#34-sync-idempotency--asset-id-as-the-stable-key) and [Idempotency-Key header](#37-http-idempotency-key-header)
 4. [Read path (list / get)](#4-read-path-list--get)
 5. [Asset validation & dynamic metadata](#5-asset-validation--dynamic-metadata) — includes [geospatial sync](#54-geospatial-sync-contract)
 6. [Patterns & why](#6-patterns--why)
@@ -201,7 +201,7 @@ SELECT id, tenant_id, modified_by
 
 Production hardening for stuck rows and a `processing`/`failed` lifecycle is in [§11](#11-production-improvements).
 
-### 3.4 Idempotency — asset `id` as the stable key
+### 3.4 Sync idempotency — asset `id` as the stable key
 
 Sync jobs can be retried (worker crash, BullMQ backoff, duplicate enqueue). The system stays correct because **idempotency** is built into the pipeline: the Postgres **asset `id`** (UUID) is the single deduplication key from queue to Mongo.
 
@@ -219,6 +219,35 @@ Delete sets `action=delete` and sync `status=pending`. Worker removes the Mongo 
 ### 3.6 API response timing
 
 Create/update responses are built from Postgres immediately. Fields `synced_at`, `synced_by`, and `updated_at` are **null** until the worker completes. Clients that need the read model should poll `GET /assets/:id` or wait briefly.
+
+### 3.7 HTTP `Idempotency-Key` header
+
+Safe **client retries** on create endpoints: if the network drops after the server handled a request, the client can retry with the same key and body and get the **original response** instead of creating a duplicate row.
+
+Implemented in `middleware/idempotency.ts`.
+
+| Endpoint | `Idempotency-Key` | Storage |
+|----------|-------------------|---------|
+| `POST /assets` | **Required** | Postgres `idempotency_keys` — `PRIMARY KEY (tenant_id, key)` |
+| `POST /users` | Optional | same table (tenant-scoped, RLS) |
+| `POST /tenants` | Optional | Redis `idempotency:platform:{key}` (no tenant yet) |
+
+**Postgres table** (`idempotency_keys`): one row per tenant + key; stores `request_hash`, `status_code`, `response_body`, `expires_at`. Enforces uniqueness per tenant at the database level. Expired rows are ignored and deleted on read.
+
+**Why required only on assets** — asset creates are the high-volume, retry-prone write path (Postgres + outbox + Mongo). User/tenant creates are rare; optional idempotency is enough there.
+
+**Rules**
+
+- Header format: 1–255 characters, `[\w-]` (letters, digits, `_`, `-`).
+- Missing on `POST /assets` → `400` `Missing Idempotency-Key header`.
+- Invalid format → `400` `Invalid Idempotency-Key`.
+- Same key + **same body** → replay cached response (including cached `4xx` validation errors).
+- Same key + **different body** → `409` `Idempotency key reused with different request body`.
+- Concurrent duplicate while first request is running → `409` `Idempotency request in progress`.
+
+**Not the same as optional `id` in the body** — `Idempotency-Key` is an HTTP header for retry safety; optional `id` on `POST /assets` lets the client choose the asset UUID. Both can be used together.
+
+**Sync pipeline idempotency** (BullMQ `jobId`, Mongo `_id`) is separate — see [§3.4](#34-sync-idempotency--asset-id-as-the-stable-key).
 
 ---
 
@@ -514,6 +543,7 @@ flowchart TB
 - Platform provisioning uses a shared secret header, separate from tenant JWTs — avoids needing a tenant before the first tenant exists (`middleware/platformAdmin.ts`).
 - Invalid or missing credentials → `401`. Tokens signed with `JWT_SECRET` (`lib/jwt.ts`).
 - **Rate limiting** — `express-rate-limit` + Redis (`middleware/rateLimit.ts`). Default 100 requests/minute; per user when authenticated, per IP on public routes. `/health` skipped → `429`.
+- **Idempotency keys** — see [§3.7](#37-http-idempotency-key-header).
 
 ### 8.3 Role-based access control (RBAC)
 
@@ -697,12 +727,13 @@ src/
   lib/                  Cross-cutting: jwt, authContext, password, cache,
                         assetSchema (AJV), responses, appError
   middleware/           auth, authorize, validateRequest (Zod), rateLimit,
-                        platformAdmin, asyncHandler
+                        platformAdmin, idempotency, asyncHandler
   repositories/         One repository per store / aggregate
                           assetRepository.ts      Postgres write model + outbox polling
                           assetMongoRepository.ts Mongo read model + $jsonSchema validator
                           tenantRepository.ts     tenants + asset_schemas
                           userRepository.ts       users (RLS-scoped)
+                          idempotencyRepository.ts tenant idempotency keys (Postgres)
   routes/               Thin HTTP handlers: auth, tenants, users, assets, reports
   services/             Business logic: auth, tenant, user, asset, report
   worker/
@@ -751,7 +782,6 @@ Demo scope only — not implemented. A production deployment would likely add:
 - Horizontal scaling on Kubernetes (replicas, sharding where needed)
 - Postgres read-your-writes fallback for unsynced assets
 - Secret management and tested backups/DR runbooks
-- Idempotency keys on write APIs (safe client retries)
 - Cursor pagination for large asset lists
 - More exhaustive test coverage (chaos / failure paths)
 - OAuth, SSO, or external identity provider

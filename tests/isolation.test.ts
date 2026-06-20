@@ -1,12 +1,14 @@
 import "dotenv/config";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
+import { randomUUID } from "crypto";
 import { createApp } from "../src/app.js";
 import { closeSeedConnections, runSeed } from "../seed/index.js";
 import pool from "../src/clients/postgres.js";
 import { closeMongo } from "../src/clients/mongo.js";
 import { closeCache } from "../src/lib/cache.js";
 import { closeRateLimiter } from "../src/middleware/rateLimit.js";
+import { closeIdempotency } from "../src/middleware/idempotency.js";
 
 const app = createApp();
 
@@ -57,6 +59,7 @@ afterAll(async () => {
     closeMongo(),
     closeCache(),
     closeRateLimiter(),
+    closeIdempotency(),
   ]);
 });
 
@@ -194,6 +197,7 @@ describe("RBAC - asset writes", () => {
     const res = await request(app)
       .post("/assets")
       .set(auth(editorA))
+      .set("Idempotency-Key", randomUUID())
       .send({
         name: `TEST-${Date.now()}`,
         type: "sensor",
@@ -218,6 +222,7 @@ describe("RBAC - asset writes", () => {
     const createRes = await request(app)
       .post("/assets")
       .set(auth(editorA))
+      .set("Idempotency-Key", randomUUID())
       .send({
         name: assetName,
         type: "sensor",
@@ -372,6 +377,7 @@ describe("platform provisioning (x-admin-key)", () => {
       const assetRes = await request(app)
         .post("/assets")
         .set(auth(token))
+        .set("Idempotency-Key", randomUUID())
         .send({
           name: `TEST-${Date.now()}`,
           type: "sensor",
