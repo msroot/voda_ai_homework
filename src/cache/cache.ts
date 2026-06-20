@@ -33,6 +33,15 @@ export function cacheKey(
   return `tenant:${tenantId}:${resource}:${hashParams(params)}`;
 }
 
+// Closes the cache connection. Used by tests (and any graceful shutdown) so the
+// process can exit without a dangling Redis handle.
+export async function closeCache(): Promise<void> {
+  if (client) {
+    await client.quit();
+    client = null;
+  }
+}
+
 export async function getCached<T>(key: string): Promise<T | null> {
   const raw = await cache().get(key);
   return raw ? (JSON.parse(raw) as T) : null;

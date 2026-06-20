@@ -11,7 +11,9 @@
     "start:listener": "node dist/src/listener.js",
     "start:worker": "node dist/src/worker.js",
     "start:pm2": "pm2-runtime ecosystem.config.cjs",
-    "seed": "tsx seed/index.ts"
+    "seed": "tsx seed/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "ajv": "^8.20.0",
@@ -32,7 +34,10 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.10.2",
     "@types/pg": "^8.20.0",
+    "@types/supertest": "^7.2.0",
+    "supertest": "^7.2.2",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.9"
   }
 }

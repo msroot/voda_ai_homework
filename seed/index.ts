@@ -141,6 +141,12 @@ async function seedAssets() {
   return assets.length;
 }
 
+// Closes the privileged seed connection. Used by tests after seeding so the
+// process can exit cleanly (the shared Mongo client is closed via closeMongo).
+export async function closeSeedConnections() {
+  await adminPool.end();
+}
+
 export async function runSeed() {
   await resetDatabase();
   await createSchema();

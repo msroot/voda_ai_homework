@@ -1,7 +1,10 @@
-import Ajv, { type ErrorObject } from "ajv";
+import Ajv2020 from "ajv/dist/2020.js";
+import { type ErrorObject } from "ajv";
 import addFormats from "ajv-formats";
 
-const ajv = new Ajv({ allErrors: true, strict: false });
+// The asset schemas declare JSON Schema draft 2020-12, so we need the matching
+// Ajv build (the default Ajv class only knows draft-07).
+const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
 
 function formatErrors(errors: ErrorObject[] | null | undefined): string[] {
