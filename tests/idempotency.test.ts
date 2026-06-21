@@ -147,14 +147,16 @@ describe("POST /assets idempotency key", () => {
         lng: -71.1,
         installed_at: "2020-01-01",
         material: "copper",
+        diameter_mm: 100,
       });
-    expect(first.status).toBe(201);
+    expect(first.status, JSON.stringify(first.body)).toBe(201);
 
     const reordered = await request(app)
       .post("/assets")
       .set(auth(editorToken))
       .set("Idempotency-Key", key)
       .send({
+        diameter_mm: 100,
         material: "copper",
         installed_at: "2020-01-01",
         lng: -71.1,
