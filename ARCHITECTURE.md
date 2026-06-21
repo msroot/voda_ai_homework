@@ -42,6 +42,12 @@ The service manages **tenants**, **users**, and **assets**. Each tenant is fully
 | **MongoDB** | Asset **read model** — list/get, filters, aggregations (reports) |
 | **Redis** | Response cache, rate-limit counters, BullMQ job queue |
 
+**Tables / collections:**
+
+- **Postgres:** `tenants`, `asset_schemas`, `users`, `assets` (write model + outbox).
+- **MongoDB:** `assets` (read-model mirror).
+- **Redis:** no schema — cache keys, rate-limit counters, BullMQ queue keys.
+
 ### Tools & libraries
 
 | Category | Tool | Why |
