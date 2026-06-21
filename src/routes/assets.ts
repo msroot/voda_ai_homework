@@ -2,7 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { validateRequest } from "../middleware/validateRequest.js";
 import { requireWrite } from "../middleware/authorize.js";
-import { idempotency } from "../middleware/idempotency.js";
+import { AppError } from "../lib/appError.js";
 import {
   assetFilterSchema,
   assetUpdateSchema,
@@ -19,6 +19,9 @@ import {
 } from "../services/assetService.js";
 
 const router = Router();
+
+// Client idempotency key supplied per request. 1–255 chars: letters, digits, _ , -.
+const IDEMPOTENCY_KEY_PATTERN = /^[\w-]{1,255}$/;
 
 router.get(
   "/",
@@ -40,9 +43,21 @@ router.post(
   "/",
   requireWrite,
   validateRequest(assetWriteSchema),
-  idempotency("tenant", { required: true }),
   asyncHandler(async (req, res) => {
-    res.status(201).json(await createAsset(req.body));
+    const clientKey = req.header("Idempotency-Key");
+    if (!clientKey) {
+      throw new AppError(400, "Missing Idempotency-Key header");
+    }
+    if (!IDEMPOTENCY_KEY_PATTERN.test(clientKey)) {
+      throw new AppError(400, "Invalid Idempotency-Key");
+    }
+
+    const asset = await createAsset(req.body, {
+      clientKey,
+      method: req.method,
+      path: req.originalUrl.split("?")[0],
+    });
+    res.status(201).json(asset);
   })
 );
 

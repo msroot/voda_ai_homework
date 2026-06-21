@@ -5,8 +5,9 @@ import {
   type AssetResponse,
 } from "../lib/responses.js";
 import { mergeAssetData, normalizeAssetData, validateAssetData } from "../lib/assetSchema.js";
+import { computeIdempotencyKey } from "../lib/idempotencyKey.js";
 import { getTenantId, getUserId } from "../lib/authContext.js";
-import { AppError, isUniqueViolation } from "../lib/appError.js";
+import { AppError, isUniqueViolation, uniqueViolationConstraint } from "../lib/appError.js";
 import {
   createAsset as createAssetRecord,
   markAssetForDeletion,
@@ -70,7 +71,16 @@ export async function getAsset(id: string): Promise<AssetResponse> {
   return response;
 }
 
-export async function createAsset(input: AssetWriteInput): Promise<AssetResponse> {
+export interface IdempotencyRequest {
+  clientKey: string;
+  method: string;
+  path: string;
+}
+
+export async function createAsset(
+  input: AssetWriteInput,
+  idempotency: IdempotencyRequest
+): Promise<AssetResponse> {
   const userId = getUserId();
   const tenantId = getTenantId();
 
@@ -87,17 +97,33 @@ export async function createAsset(input: AssetWriteInput): Promise<AssetResponse
     throw new AppError(400, "Asset validation failed", validation.errors);
   }
 
+  const idempotencyKey = computeIdempotencyKey({
+    tenantId,
+    userId,
+    method: idempotency.method,
+    path: idempotency.path,
+    clientKey: idempotency.clientKey,
+    body: input,
+  });
+
   try {
     const created = await createAssetRecord(
       assetId,
       "pending",
       latest.version,
       assetData,
+      idempotencyKey,
       userId
     );
     await invalidateTenantAssets(tenantId);
     return postgresAssetToResponse(created);
   } catch (err) {
+    if (uniqueViolationConstraint(err) === "assets_tenant_idempotency_key_unique") {
+      throw new AppError(
+        409,
+        "Duplicate request: this Idempotency-Key has already been used for an identical request"
+      );
+    }
     if (isUniqueViolation(err)) {
       throw new AppError(409, "Asset id already exists");
     }
@@ -127,6 +153,7 @@ export async function updateAsset(
     throw new AppError(400, "Asset validation failed", validation.errors);
   }
 
+  // idempotency_key is set once at create and left untouched on update.
   const asset = await updateAssetRecord(id, JSON.stringify(nextData), getUserId());
 
   if (!asset) {

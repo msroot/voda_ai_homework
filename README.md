@@ -97,7 +97,7 @@ npm run seed
 
 **Requires:** running Postgres and Mongo; `DATABASE_URL` (superuser — creates schema and `voda_app` role).
 
-**What it does:** runs `seed/reset.sql` and `seed/schema.sql`, inserts 3 tenants with users and sample assets, mirrors seeded assets into Mongo immediately (`synced` — no outbox wait). Also **flushes Redis** (cache, rate-limit counters, BullMQ jobs, platform idempotency keys) so nothing stale survives the reset.
+**What it does:** runs `seed/reset.sql` and `seed/schema.sql`, inserts 3 tenants with users and sample assets, mirrors seeded assets into Mongo immediately (`synced` — no outbox wait). Also **flushes Redis** (cache, rate-limit counters, BullMQ jobs) so nothing stale survives the reset.
 
 Docker Compose sets `SEED_ON_START=true` so the API seeds on first boot. Override seeded user passwords with `SEED_PASSWORD` (default `password123`).
 
@@ -114,7 +114,7 @@ npm test
 | File | Coverage |
 |------|----------|
 | `tests/isolation.test.ts` | Auth, RBAC, cross-tenant isolation, reports |
-| `tests/idempotency.test.ts` | `Idempotency-Key` on `POST /assets` |
+| `tests/idempotency.test.ts` | Required `Idempotency-Key` header on `POST /assets` |
 | `tests/outbox.test.ts` | Atomic outbox claim, recovery, `synced` / `failed` states |
 | `tests/validateAsset.test.ts` | AJV asset validation (unit) |
 | `tests/mergeAssetSchema.test.ts` | Tenant schema merge (unit) |
@@ -149,8 +149,6 @@ All seeded users use password `password123` (or `SEED_PASSWORD` if set).
 | `OUTBOX_PROCESSING_STALE_SECONDS` | Optional | Reset stuck `processing` rows after this age (default `300`) |
 | `RATE_LIMIT_WINDOW_MS` | Optional | Rate limit window (default `60000`) |
 | `RATE_LIMIT_MAX` | Optional | Max requests per window (default `100`) |
-| `IDEMPOTENCY_TTL_SECONDS` | Optional | Cached idempotency response TTL (default `86400`) |
-| `IDEMPOTENCY_PROCESSING_TTL_SECONDS` | Optional | In-flight idempotency lock TTL (default `60`) |
 | `SEED_ON_START` | Optional | `true` to seed when API starts |
 | `SEED_PASSWORD` | Optional | Password for seeded users |
 
@@ -164,28 +162,22 @@ All seeded users use password `password123` (or `SEED_PASSWORD` if set).
 | Platform `POST /tenants` | `x-admin-key: <PLATFORM_ADMIN_KEY>` (no JWT) |
 | Public | `/health`, `/auth/login` — no auth |
 
-See [Idempotency](#idempotency) for the `Idempotency-Key` header on creates.
+See [Idempotency](#idempotency) for the required `Idempotency-Key` header on `POST /assets`.
 
 ---
 
 ## Idempotency
 
-Clients can retry creates safely using the `Idempotency-Key` header. The server stores the first response and replays it when the same key and body are sent again.
+`POST /assets` requires an **`Idempotency-Key`** header. The server stores a SHA-256 `idempotency_key` derived from `tenant_id + user_id + method + path + the client key + a hash of the request body`, with a database `UNIQUE (tenant_id, idempotency_key)` constraint. Replaying the same key with the same request is rejected with `409`.
 
-| Endpoint | `Idempotency-Key` | Stored in |
-|----------|-------------------|-----------|
-| `POST /assets` | **Required** | Postgres — unique per `(tenant_id, key)` |
-| `POST /users` | Optional | Postgres (same table) |
-| `POST /tenants` | Optional | Redis (platform scope) |
+- Header format: 1–255 characters (`letters`, `digits`, `_`, `-`). Missing → `400`, invalid → `400`.
+- Same key + **same body** → `409` (the duplicate is rejected).
+- Same key + **different body** → allowed (the body hash differs, so the key differs).
+- Different key + same body → allowed.
+- Request body order does not matter — the body hash is computed over a canonical (key-sorted) form.
+- Enforced at the database level, so it holds even under concurrent requests.
 
-**Recommendation:** keep the header **required on `POST /assets` only** — that is the main async write path where duplicate retries hurt most. Optional on user/tenant creates is sufficient for this service.
-
-- Format: 1–255 characters (`letters`, `digits`, `_`, `-`).
-- Same key + same JSON body → same response (no duplicate resource).
-- Same key + different body → `409`.
-- Missing on `POST /assets` → `400`.
-
-**Example — create asset**
+**Example**
 
 ```bash
 curl -s -X POST http://localhost:3000/assets \
@@ -204,11 +196,11 @@ curl -s -X POST http://localhost:3000/assets \
   }'
 ```
 
-Retry the same curl after a timeout — you get the same `201` and the same `id`, not a second asset.
+Sending the exact same request again returns `409 { "error": "Duplicate request: this Idempotency-Key has already been used for an identical request" }`.
 
-Optional body field `id` (UUID) is separate: it sets the asset id up front. `Idempotency-Key` protects the whole HTTP request on retry.
+Optional body field `id` (UUID) lets the client choose the asset UUID; it is part of the request body, so it is included in the body hash.
 
-Details: [ARCHITECTURE.md §3.7](./ARCHITECTURE.md#37-http-idempotency-key-header).
+Details: [ARCHITECTURE.md §3.7](./ARCHITECTURE.md#37-request-idempotency-post-assets).
 
 ---
 
@@ -561,7 +553,7 @@ Optional `id` (UUID). Tenant-specific fields can be sent at the top level (as ab
 }
 ```
 
-**Errors:** `400` validation or missing/invalid `Idempotency-Key`, `409` duplicate id or idempotency conflict, `403`.
+**Errors:** `400` validation or missing/invalid `Idempotency-Key`, `409` duplicate id or duplicate request (idempotency), `403`.
 
 ---
 

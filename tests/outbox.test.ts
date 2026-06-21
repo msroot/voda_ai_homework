@@ -8,7 +8,6 @@ import pool, { queryWithoutTenantContext } from "../src/clients/postgres.js";
 import { closeMongo } from "../src/clients/mongo.js";
 import { closeCache } from "../src/lib/cache.js";
 import { closeRateLimiter } from "../src/middleware/rateLimit.js";
-import { closeIdempotency } from "../src/middleware/idempotency.js";
 import { runWithAuthContext } from "../src/lib/authContext.js";
 import {
   claimPendingAssets,
@@ -78,7 +77,6 @@ afterAll(async () => {
     closeMongo(),
     closeCache(),
     closeRateLimiter(),
-    closeIdempotency(),
   ]);
 });
 

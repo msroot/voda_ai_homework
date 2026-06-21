@@ -2,7 +2,6 @@ import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { validateRequest } from "../middleware/validateRequest.js";
 import { requireAdmin } from "../middleware/authorize.js";
-import { idempotency } from "../middleware/idempotency.js";
 import {
   createUserSchema,
   idParamSchema,
@@ -40,7 +39,6 @@ router.post(
   "/",
   requireAdmin,
   validateRequest(createUserSchema),
-  idempotency("tenant"),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createUser(req.body));
   })

@@ -51,28 +51,20 @@ CREATE TABLE IF NOT EXISTS assets (
     -- Asset schema version this asset was validated against (always 1).
     schema_version INT NOT NULL,
     data        JSONB NOT NULL,
+    -- Request idempotency key for POST /assets: SHA-256 of
+    -- tenant_id + user_id + method + path + client Idempotency-Key header + request body hash.
+    -- Replaying the same key with an identical request collides here and is rejected (409).
+    idempotency_key TEXT NOT NULL,
     created_by  UUID NOT NULL REFERENCES users(id),
     modified_by UUID NOT NULL REFERENCES users(id),
     synced_at   TIMESTAMPTZ,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     FOREIGN KEY (tenant_id, schema_version)
-        REFERENCES asset_schemas(tenant_id, version)
+        REFERENCES asset_schemas(tenant_id, version),
+    -- The (tenant_id, idempotency_key) pair is unique across the whole table, so a
+    -- replayed POST /assets request (same key + same body) is rejected.
+    CONSTRAINT assets_tenant_idempotency_key_unique UNIQUE (tenant_id, idempotency_key)
 );
-
--- Client idempotency keys: unique per tenant (POST /assets required; POST /users optional).
-CREATE TABLE IF NOT EXISTS idempotency_keys (
-    tenant_id       UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    key             TEXT NOT NULL,
-    request_hash    TEXT NOT NULL,
-    status_code     INT,
-    response_body   JSONB,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    expires_at      TIMESTAMPTZ NOT NULL,
-    PRIMARY KEY (tenant_id, key)
-);
-
-CREATE INDEX IF NOT EXISTS idx_idempotency_keys_expires
-    ON idempotency_keys (expires_at);
 
 -- Tenant scoping (RLS filters every query by tenant_id).
 CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON users(tenant_id);
@@ -125,7 +117,8 @@ CREATE TRIGGER asset_schemas_no_delete
   BEFORE DELETE ON asset_schemas
   FOR EACH ROW EXECUTE FUNCTION asset_schemas_immutable();
 
--- assets.tenant_id and assets.schema_version are set at creation and never change.
+-- assets.tenant_id, assets.schema_version, and assets.idempotency_key are set at
+-- creation and never change.
 CREATE OR REPLACE FUNCTION assets_identity_immutable()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -135,6 +128,9 @@ BEGIN
   IF NEW.schema_version IS DISTINCT FROM OLD.schema_version THEN
     RAISE EXCEPTION 'assets.schema_version is immutable';
   END IF;
+  IF NEW.idempotency_key IS DISTINCT FROM OLD.idempotency_key THEN
+    RAISE EXCEPTION 'assets.idempotency_key is immutable';
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -143,6 +139,21 @@ DROP TRIGGER IF EXISTS assets_identity_immutable ON assets;
 CREATE TRIGGER assets_identity_immutable
   BEFORE UPDATE ON assets
   FOR EACH ROW EXECUTE FUNCTION assets_identity_immutable();
+
+-- Tenants are never deleted (even by superusers). Deleting one would cascade-destroy
+-- all of its users, assets, and schema; tenant lifecycle is insert + update only.
+-- Updates remain allowed (PUT /tenants/current).
+CREATE OR REPLACE FUNCTION tenants_no_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+  RAISE EXCEPTION 'tenants cannot be deleted';
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tenants_no_delete ON tenants;
+CREATE TRIGGER tenants_no_delete
+  BEFORE DELETE ON tenants
+  FOR EACH ROW EXECUTE FUNCTION tenants_no_delete();
 
 -- users.tenant_id is set at creation and never changes.
 CREATE OR REPLACE FUNCTION users_tenant_id_immutable()
@@ -168,8 +179,6 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users FORCE ROW LEVEL SECURITY;
 ALTER TABLE assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assets FORCE ROW LEVEL SECURITY;
-ALTER TABLE idempotency_keys ENABLE ROW LEVEL SECURITY;
-ALTER TABLE idempotency_keys FORCE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS tenants_tenant_isolation ON tenants;
 CREATE POLICY tenants_tenant_isolation ON tenants
@@ -199,12 +208,6 @@ CREATE POLICY assets_tenant_isolation ON assets
   USING (app_bypass_rls() OR tenant_id = app_current_tenant_id())
   WITH CHECK (app_bypass_rls() OR tenant_id = app_current_tenant_id());
 
-DROP POLICY IF EXISTS idempotency_keys_tenant_isolation ON idempotency_keys;
-CREATE POLICY idempotency_keys_tenant_isolation ON idempotency_keys
-  FOR ALL
-  USING (app_bypass_rls() OR tenant_id = app_current_tenant_id())
-  WITH CHECK (app_bypass_rls() OR tenant_id = app_current_tenant_id());
-
 -- Dedicated non-superuser application role. RLS is bypassed by superusers and by
 -- BYPASSRLS/owner roles, so the app must connect as a plain role for the policies
 -- above to actually take effect.
@@ -219,3 +222,4 @@ $$;
 GRANT USAGE ON SCHEMA public TO voda_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO voda_app;
 REVOKE UPDATE, DELETE ON asset_schemas FROM voda_app;
+REVOKE DELETE ON tenants FROM voda_app;

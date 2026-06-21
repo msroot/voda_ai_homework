@@ -18,7 +18,7 @@ To run the app locally or in Docker, see [README.md](./README.md).
 
 1. [System overview](#1-system-overview) — includes [tools & libraries](#tools--libraries)
 2. [Process layout](#2-process-layout)
-3. [Write path (create / update / delete)](#3-write-path-create--update--delete) — includes [sync idempotency](#34-sync-idempotency--asset-id-as-the-stable-key) and [Idempotency-Key header](#37-http-idempotency-key-header)
+3. [Write path (create / update / delete)](#3-write-path-create--update--delete) — includes [sync idempotency](#34-sync-idempotency--asset-id-as-the-stable-key) and [request idempotency](#37-request-idempotency-post-assets)
 4. [Read path (list / get)](#4-read-path-list--get)
 5. [Asset validation & dynamic metadata](#5-asset-validation--dynamic-metadata) — includes [geospatial sync](#54-geospatial-sync-contract)
 6. [Patterns & why](#6-patterns--why)
@@ -133,7 +133,7 @@ The API never writes assets directly to Mongo on the request path. That keeps HT
 | **Seed** | `npm run seed` (`seed/index.ts`) uses privileged `DATABASE_URL`: `reset.sql` → **Redis `FLUSHDB`** → `schema.sql` → demo tenants/users/assets. Seeded assets are **`synced`** in Postgres and written to Mongo directly (skip outbox). Docker sets `SEED_ON_START=true`. Password: `SEED_PASSWORD` (default `password123`). |
 | **Default schema** | Base JSON Schema in `seed/schemas/default-asset.schema.json`. `POST /tenants` optional `asset_schema` `{ properties, required }` merges tenant fields into **`extra_fields`** (`buildTenantAssetSchema` in `lib/assetSchema.ts`); stored as `asset_schemas` version 1. |
 | **JWT** | Login issues Bearer token. Payload: `sub`, `tenant_id`, `email`, `role`. `JWT_SECRET` + `JWT_EXPIRES_IN` (default `24h`). |
-| **Tests** | Vitest + supertest. `createApp()` (`app.ts`) mounted in tests without binding a port. Integration: `isolation.test.ts` (auth, RBAC, tenant isolation), `idempotency.test.ts`, `outbox.test.ts` (atomic outbox). Unit: `validateAsset.test.ts`, `mergeAssetSchema.test.ts`. Each integration file runs `runSeed()` in `beforeAll`. `npm test`. CI: `.github/workflows/ci.yml` (Postgres, Redis, Mongo service containers). |
+| **Tests** | Vitest + supertest. `createApp()` (`app.ts`) mounted in tests without binding a port. Integration: `isolation.test.ts` (auth, RBAC, tenant isolation), `idempotency.test.ts` (required `Idempotency-Key` on `POST /assets`), `outbox.test.ts` (atomic outbox). Unit: `validateAsset.test.ts`, `mergeAssetSchema.test.ts`. Each integration file runs `runSeed()` in `beforeAll`. `npm test`. CI: `.github/workflows/ci.yml` (Postgres, Redis, Mongo service containers). |
 | **BullMQ** | Queue `sync-asset`, `jobId = assetId`, 5 attempts, exponential backoff from 2s, `removeOnFail: false`. |
 
 ---
@@ -154,6 +154,7 @@ sequenceDiagram
 
   C->>API: POST/PUT/DELETE /assets
   API->>API: JWT + RBAC + Zod validation
+  API->>API: require Idempotency-Key header (POST)
   API->>API: AJV validate body → extra_fields
   API->>PG: INSERT/UPDATE assets row (sync status=pending)
   API-->>C: 201/200/204 (synced_* may be null)
@@ -175,6 +176,7 @@ On write, Postgres stores:
 
 - `tenant_id`, `schema_version` — set on create, **immutable** (DB trigger)
 - `data` — JSON blob: core attributes at root + tenant extensions in `extra_fields`
+- `idempotency_key` — set on create, **immutable** (DB trigger); SHA-256 binding the create request (`tenant_id`+`user_id`+method+path+client key+body hash); backs `UNIQUE (tenant_id, idempotency_key)` for request idempotency (see [§3.7](#37-request-idempotency-post-assets))
 - `status` — **outbox sync state**: `pending` (awaiting listener), `processing` (claimed / job in flight), `synced`, or `failed` — not business `ok/warning/critical` (those live in `data.status`)
 - `action` — `upsert` or `delete` (delete tombstone flow)
 - `modified_by` — user who performed the write
@@ -232,34 +234,29 @@ Delete sets `action=delete` and sync `status=pending`. Worker removes the Mongo 
 
 Create/update responses are built from Postgres immediately. Fields `synced_at`, `synced_by`, and `updated_at` are **null** until the worker completes. Clients that need the read model should poll `GET /assets/:id` or wait briefly.
 
-### 3.7 HTTP `Idempotency-Key` header
+### 3.7 Request idempotency (POST /assets)
 
-Safe **client retries** on create endpoints: if the network drops after the server handled a request, the client can retry with the same key and body and get the **original response** instead of creating a duplicate row.
+`POST /assets` requires a client **`Idempotency-Key`** header so a safely-retried create cannot produce two assets. Enforcement is at the **database**, not the application layer.
 
-Implemented in `middleware/idempotency.ts`.
+- The route (`routes/assets.ts`) requires the `Idempotency-Key` header (1–255 chars, `[\w-]`); missing → `400 Missing Idempotency-Key header`, malformed → `400 Invalid Idempotency-Key`.
+- `services/assetService.ts` computes a SHA-256 **`idempotency_key`** via `lib/idempotencyKey.ts` binding the full request identity: `tenant_id + user_id + method + path + client key + request-body hash`. The body hash uses a canonical (recursively key-sorted) JSON encoding, so property order does not change it.
+- The `assets` table stores `idempotency_key` and enforces `CONSTRAINT assets_tenant_idempotency_key_unique UNIQUE (tenant_id, idempotency_key)`.
+- A unique violation on that constraint is mapped to `409 Duplicate request…` (`lib/appError.ts#uniqueViolationConstraint` distinguishes it from an `id` primary-key clash, which stays `409 Asset id already exists`).
 
-| Endpoint | `Idempotency-Key` | Storage |
-|----------|-------------------|---------|
-| `POST /assets` | **Required** | Postgres `idempotency_keys` — `PRIMARY KEY (tenant_id, key)` |
-| `POST /users` | Optional | same table (tenant-scoped, RLS) |
-| `POST /tenants` | Optional | Redis `idempotency:platform:{key}` (no tenant yet) |
+| Scenario | Behavior |
+|----------|----------|
+| Same key + **same body** (a retry) | `409` duplicate request |
+| Same key + **different body** | Allowed (body hash differs → different `idempotency_key`) |
+| Different key + same body | Allowed |
+| Same key + same body under a **different** tenant/user | Allowed (key includes `tenant_id` + `user_id`) |
 
-**Postgres table** (`idempotency_keys`): one row per tenant + key; stores `request_hash`, `status_code`, `response_body`, `expires_at`. Enforces uniqueness per tenant at the database level. Expired rows are ignored and deleted on read.
+`idempotency_key` is set once at create and **immutable** — `PUT /assets/:id` does not touch it, and the `assets_identity_immutable` trigger rejects any attempt to change it (even via raw SQL).
 
-**Why required only on assets** — asset creates are the high-volume, retry-prone write path (Postgres + outbox + Mongo). User/tenant creates are rare; optional idempotency is enough there.
+**Why DB-level** — enforcing uniqueness in Postgres makes the guarantee hold under concurrent retries with no application-side locking: two simultaneous identical creates race on the unique index and exactly one wins; the other gets `409`.
 
-**Rules**
+**Note** — this is a uniqueness guard, not a response cache: a retry is rejected with `409` rather than replaying the original `201` body.
 
-- Header format: 1–255 characters, `[\w-]` (letters, digits, `_`, `-`).
-- Missing on `POST /assets` → `400` `Missing Idempotency-Key header`.
-- Invalid format → `400` `Invalid Idempotency-Key`.
-- Same key + **same body** → replay cached response (including cached `4xx` validation errors).
-- Same key + **different body** → `409` `Idempotency key reused with different request body`.
-- Concurrent duplicate while first request is running → `409` `Idempotency request in progress`.
-
-**Not the same as optional `id` in the body** — `Idempotency-Key` is an HTTP header for retry safety; optional `id` on `POST /assets` lets the client choose the asset UUID. Both can be used together.
-
-**Sync pipeline idempotency** (BullMQ `jobId`, Mongo `_id`) is separate — see [§3.4](#34-sync-idempotency--asset-id-as-the-stable-key).
+**Sync pipeline idempotency** (BullMQ `jobId`, Mongo `_id`) is a separate concern — see [§3.4](#34-sync-idempotency--asset-id-as-the-stable-key).
 
 ---
 
@@ -555,7 +552,7 @@ flowchart TB
 - Platform provisioning uses a shared secret header, separate from tenant JWTs — avoids needing a tenant before the first tenant exists (`middleware/platformAdmin.ts`).
 - Invalid or missing credentials → `401`. Tokens signed with `JWT_SECRET` (`lib/jwt.ts`).
 - **Rate limiting** — `express-rate-limit` + Redis (`middleware/rateLimit.ts`). Default 100 requests/minute; per user when authenticated, per IP on public routes. `/health` skipped → `429`.
-- **Idempotency keys** — see [§3.7](#37-http-idempotency-key-header).
+- **Request idempotency** (`Idempotency-Key` on `POST /assets`) — see [§3.7](#37-request-idempotency-post-assets).
 
 ### 8.3 Role-based access control (RBAC)
 
@@ -610,9 +607,9 @@ Invalid input → `400` with `{ error, details? }` — no write to Postgres.
 | Table | What cannot change after create | Enforcement | What can change |
 |-------|--------------------------------|-------------|-----------------|
 | **users** | `tenant_id` | Trigger `users_tenant_id_immutable` | `name`, `password_hash`, `role` (via API + RBAC). **Email is not updatable** via API. |
-| **assets** | `tenant_id`, `schema_version` | Trigger `assets_identity_immutable` | `data`, sync/outbox fields, `modified_by` |
+| **assets** | `tenant_id`, `schema_version`, `idempotency_key` | Trigger `assets_identity_immutable` | `data`, sync/outbox fields, `modified_by` |
 | **asset_schemas** | **Entire row** — no updates, no deletes | See below (triple lock) | nothing — insert-once at tenant onboarding |
-| **tenants** | `id` (implicit PK) | — | `name`, `slug` — **admins** via `PUT /tenants/current` |
+| **tenants** | `id` (implicit PK); **row cannot be deleted** | Trigger `tenants_no_delete` (`BEFORE DELETE`, even superusers) + `REVOKE DELETE ON tenants FROM voda_app` | `name`, `slug` — **admins** via `PUT /tenants/current` |
 
 **`asset_schemas` immutability (triple lock)**
 
@@ -635,7 +632,7 @@ Together: onboarding writes the JSON Schema once; runtime validation always read
 **Trigger defense against cross-tenant reassignment**
 
 - **`users.tenant_id_immutable`** — a user cannot be moved to another tenant after create. Even a compromised API process that skips application checks cannot `UPDATE users SET tenant_id = …` to access another tenant’s JWT context or user records.
-- **`assets_identity_immutable`** — `tenant_id` and `schema_version` on asset rows cannot change. An attacker cannot re-home assets into another tenant’s Mongo read model or re-bind them to a different validation config.
+- **`assets_identity_immutable`** — `tenant_id`, `schema_version`, and `idempotency_key` on asset rows cannot change. An attacker cannot re-home assets into another tenant’s Mongo read model, re-bind them to a different validation config, or rewrite the idempotency key to bypass duplicate-request protection.
 
 Mongo mirrors this for synced assets: `upsertAssetDocument` rejects `tenant_id` and `schema_version` changes on existing documents.
 
@@ -644,10 +641,10 @@ Mongo mirrors this for synced assets: `upsertAssetDocument` rejects `tenant_id` 
 | Table | `voda_app` can UPDATE/DELETE? | Notes |
 |-------|------------------------------|--------|
 | `asset_schemas` | **No** (`REVOKE UPDATE, DELETE`) + triggers | Insert-once at tenant create (`withBypassTransaction` only) |
-| `tenants` | **Yes** (within RLS) | Tenant **metadata** (`name`, `slug`) — not the same as locking the row |
+| `tenants` | **UPDATE only** (`REVOKE DELETE`) + `tenants_no_delete` trigger | Tenant **metadata** (`name`, `slug`); the row can never be deleted (even by superusers) |
 | `users`, `assets` | **Yes** (within RLS) | Scoped to current tenant; `users.tenant_id` and asset identity still immutable via triggers |
 
-Tenant **admins** can update organization `name` / `slug`. Users cannot change `tenant_id`. Nobody can alter `asset_schemas` after provisioning — that table is the most tightly locked object in the schema.
+Tenant **admins** can update organization `name` / `slug`, but **no tenant row can ever be deleted** (`tenants_no_delete` trigger + `REVOKE DELETE`). Users cannot change `tenant_id`. Nobody can alter `asset_schemas` after provisioning — that table is the most tightly locked object in the schema.
 
 **Soft delete (users only)**
 
@@ -738,15 +735,14 @@ src/
 
   clients/              Database connections (postgres, mongo, redis)
   lib/                  Cross-cutting: jwt, authContext, password, cache,
-                        assetSchema (AJV), responses, appError
+                        assetSchema (AJV), idempotencyKey, responses, appError
   middleware/           auth, authorize, validateRequest (Zod), rateLimit,
-                        platformAdmin, idempotency, asyncHandler
+                        platformAdmin, asyncHandler
   repositories/         One repository per store / aggregate
                           assetRepository.ts      Postgres write model + outbox polling
                           assetMongoRepository.ts Mongo read model + $jsonSchema validator
                           tenantRepository.ts     tenants + asset_schemas
                           userRepository.ts       users (RLS-scoped)
-                          idempotencyRepository.ts tenant idempotency keys (Postgres)
   routes/               Thin HTTP handlers: auth, tenants, users, assets, reports
   services/             Business logic: auth, tenant, user, asset, report
   worker/

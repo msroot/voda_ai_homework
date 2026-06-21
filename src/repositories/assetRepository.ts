@@ -24,14 +24,15 @@ export async function createAsset(
   status: string,
   schemaVersion: number,
   data: Record<string, unknown>,
+  idempotencyKey: string,
   createdBy: string
 ): Promise<Asset> {
   const tenantId = getTenantId();
   const { rows } = await query<Asset>(
-    `INSERT INTO assets (id, tenant_id, status, action, schema_version, data, created_by, modified_by)
-     VALUES ($1, $2, $3, 'upsert', $4, $5, $6, $6)
+    `INSERT INTO assets (id, tenant_id, status, action, schema_version, data, idempotency_key, created_by, modified_by)
+     VALUES ($1, $2, $3, 'upsert', $4, $5, $6, $7, $7)
      RETURNING ${assetColumns}`,
-    [id, tenantId, status, schemaVersion, JSON.stringify(data), createdBy]
+    [id, tenantId, status, schemaVersion, JSON.stringify(data), idempotencyKey, createdBy]
   );
   return rows[0];
 }

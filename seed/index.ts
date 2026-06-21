@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import pg from "pg";
 import { hashPassword } from "../src/lib/password.js";
+import { createHash } from "crypto";
 import { normalizeAssetData } from "../src/lib/assetSchema.js";
 import { closeMongo } from "../src/clients/mongo.js";
 import { createRedisConnection } from "../src/clients/redis.js";
@@ -111,17 +112,23 @@ async function seedAssets() {
     }
 
     const normalizedAsset = normalizeAssetData(asset, asset.tenant_id, asset.id);
+    // Seeded rows are not created via the HTTP idempotent path, so synthesize a
+    // unique key per asset to satisfy the NOT NULL + UNIQUE(tenant_id, idempotency_key).
+    const idempotencyKey = createHash("sha256")
+      .update(`seed:${asset.tenant_id}:${asset.id}`)
+      .digest("hex");
 
     // Seeded rows are written directly to Mongo below, so they start as
     // 'synced' and are not re-processed by the outbox/worker.
     await adminPool.query(
-      `INSERT INTO assets (id, tenant_id, status, schema_version, data, created_by, modified_by, synced_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $6, NOW())
+      `INSERT INTO assets (id, tenant_id, status, schema_version, data, idempotency_key, created_by, modified_by, synced_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $7, NOW())
        ON CONFLICT (id) DO UPDATE SET
          tenant_id = EXCLUDED.tenant_id,
          status = EXCLUDED.status,
          schema_version = EXCLUDED.schema_version,
          data = EXCLUDED.data,
+         idempotency_key = EXCLUDED.idempotency_key,
          created_by = EXCLUDED.created_by,
          modified_by = EXCLUDED.modified_by,
          synced_at = EXCLUDED.synced_at`,
@@ -131,6 +138,7 @@ async function seedAssets() {
         "synced",
         1,
         JSON.stringify(normalizedAsset),
+        idempotencyKey,
         createdBy,
       ]
     );
