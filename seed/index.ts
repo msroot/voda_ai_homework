@@ -4,6 +4,7 @@ import pg from "pg";
 import { hashPassword } from "../src/lib/password.js";
 import { normalizeAssetData } from "../src/lib/assetSchema.js";
 import { closeMongo } from "../src/clients/mongo.js";
+import { createRedisConnection } from "../src/clients/redis.js";
 import {
   ensureAssetIndexes,
   replaceAssetDocuments,
@@ -28,6 +29,12 @@ interface AssetSeed {
 async function resetDatabase() {
   const sql = readFileSync(join(SEED_DIR, "reset.sql"), "utf-8");
   await adminPool.query(sql);
+}
+
+async function flushRedis() {
+  const redis = createRedisConnection();
+  await redis.flushdb();
+  await redis.quit();
 }
 
 async function createSchema() {
@@ -157,6 +164,7 @@ export async function closeSeedConnections() {
 
 export async function runSeed() {
   await resetDatabase();
+  await flushRedis();
   await createSchema();
   await seedTenants();
   await seedUsers();

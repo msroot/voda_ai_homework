@@ -130,7 +130,7 @@ The API never writes assets directly to Mongo on the request path. That keeps HT
 |-------|----------------|
 | **Docker** | `docker compose up --build` — Postgres (healthcheck), Redis, Mongo, one `app` container. Image runs **PM2** (`pm2-runtime ecosystem.config.cjs`): API + listener + worker from `dist/src/*.js`. |
 | **PM2 / local** | Three processes: `server`, `listener`, `worker`. Locally: separate `npm run dev:*` terminals, or `npm run build && npm run start:pm2`. |
-| **Seed** | `npm run seed` (`seed/index.ts`) uses privileged `DATABASE_URL`: `reset.sql` → `schema.sql` → demo tenants/users/assets. Seeded assets are **`synced`** in Postgres and written to Mongo directly (skip outbox). Docker sets `SEED_ON_START=true`. Password: `SEED_PASSWORD` (default `password123`). |
+| **Seed** | `npm run seed` (`seed/index.ts`) uses privileged `DATABASE_URL`: `reset.sql` → **Redis `FLUSHDB`** → `schema.sql` → demo tenants/users/assets. Seeded assets are **`synced`** in Postgres and written to Mongo directly (skip outbox). Docker sets `SEED_ON_START=true`. Password: `SEED_PASSWORD` (default `password123`). |
 | **Default schema** | Base JSON Schema in `seed/schemas/default-asset.schema.json`. `POST /tenants` optional `asset_schema` `{ properties, required }` merges tenant fields into **`extra_fields`** (`buildTenantAssetSchema` in `lib/assetSchema.ts`); stored as `asset_schemas` version 1. |
 | **JWT** | Login issues Bearer token. Payload: `sub`, `tenant_id`, `email`, `role`. `JWT_SECRET` + `JWT_EXPIRES_IN` (default `24h`). |
 | **Tests** | Vitest + supertest. `createApp()` (`app.ts`) mounted in tests without binding a port. `tests/isolation.test.ts` runs `runSeed()` then checks auth, RBAC, tenant isolation. Unit tests: `validateAsset.test.ts`, `mergeAssetSchema.test.ts`. `npm test`. CI: `.github/workflows/ci.yml` (Postgres, Redis, Mongo service containers). |
@@ -770,16 +770,18 @@ This is **eventual consistency** between Postgres write model and Mongo read mod
 
 Demo scope only — not implemented. A production deployment would likely add:
 
+- Kafka or event bus instead of polling outbox (transactional outbox or CDC → durable log)
+- Managed job queue instead of BullMQ on Redis (e.g. AWS SQS + Lambda/ECS workers, Google Cloud Tasks, Azure Service Bus)
 - Atomic outbox (poll + enqueue in one transaction, or `processing`/`failed` states)
 - DLQ and failed-job alerting for stuck syncs
 - Sync lag SLOs and alerts (pending age, queue depth, failed jobs)
-- Kafka or event bus instead of polling outbox
 - Production observability beyond basic logs (metrics, tracing, alerting)
 - Readiness probes beyond `/health` (Postgres, Mongo, Redis, worker lag)
-- Separate Kubernetes deployments for API, listener, and worker (scale independently)
+- Kubernetes: separate Deployments for API, listener, and worker
+- Kubernetes: horizontal scaling — scale replicas per Deployment independently
+- Kubernetes: DB sharding where needed (Postgres, Mongo, Redis)
 - Connection pool limits across replicas (Postgres `max_connections` budget)
 - Graceful shutdown on pod rollouts (drain HTTP, close pools, finish jobs)
-- Horizontal scaling on Kubernetes (replicas, sharding where needed)
 - Postgres read-your-writes fallback for unsynced assets
 - Secret management and tested backups/DR runbooks
 - Cursor pagination for large asset lists

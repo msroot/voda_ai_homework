@@ -10,7 +10,7 @@ For system design, patterns, security, and flows see [ARCHITECTURE.md](./ARCHITE
 
 ## How to run
 
-### Docker (easiest)
+### Docker
 
 ```bash
 docker compose up --build
@@ -93,7 +93,7 @@ npm run seed
 
 **Requires:** running Postgres and Mongo; `DATABASE_URL` (superuser — creates schema and `voda_app` role).
 
-**What it does:** runs `seed/reset.sql` and `seed/schema.sql`, inserts 3 tenants with users and sample assets, mirrors seeded assets into Mongo immediately (`synced` — no outbox wait).
+**What it does:** runs `seed/reset.sql` and `seed/schema.sql`, inserts 3 tenants with users and sample assets, mirrors seeded assets into Mongo immediately (`synced` — no outbox wait). Also **flushes Redis** (cache, rate-limit counters, BullMQ jobs, platform idempotency keys) so nothing stale survives the reset.
 
 Docker Compose sets `SEED_ON_START=true` so the API seeds on first boot. Override seeded user passwords with `SEED_PASSWORD` (default `password123`).
 
@@ -108,16 +108,6 @@ npm test
 **What runs:** Vitest — integration tests in `tests/isolation.test.ts` (auth, RBAC, cross-tenant isolation via supertest + `createApp()`), plus unit tests for AJV schema merge/validation. The suite calls `runSeed()` in `beforeAll`, so each run resets the database.
 
 CI (`.github/workflows/ci.yml`) runs `npm run build` and `npm test` on GitHub Actions with Postgres, Redis, and Mongo service containers — no local DB setup needed for PR checks.
-
-**Production build**
-
-```bash
-npm run build
-npm start
-npm run start:listener
-npm run start:worker
-# or: npm run start:pm2
-```
 
 ### Seed logins
 
