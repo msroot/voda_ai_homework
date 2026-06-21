@@ -7,7 +7,7 @@ This document explains how the multi-tenant asset service works end to end: comp
 1. **Tenants** own **users** and **assets**. Every request is scoped to one tenant via JWT + Postgres RLS + Mongo/cache filters.
 2. **Users** and **tenant metadata** live in Postgres only — reads and writes are immediate and consistent.
 3. **Asset writes** go to Postgres first (`assets` row + embedded outbox, `status=pending`). The API responds from Postgres; sync fields may be null.
-4. **Listener** polls pending rows and enqueues BullMQ jobs. **Worker** upserts/deletes Mongo and marks Postgres `synced`.
+4. **Listener** runs the **atomic outbox** (claim `pending` → `processing`, enqueue jobs, recover stuck claims). **Worker** upserts/deletes Mongo and marks Postgres `synced` (or `failed` after retries).
 5. **Asset reads** (`GET /assets`, reports) use Mongo (+ Redis cache) — **eventual consistency** until the worker finishes.
 
 To run the app locally or in Docker, see [README.md](./README.md).
@@ -159,13 +159,14 @@ sequenceDiagram
   API-->>C: 201/200/204 (synced_* may be null)
 
   loop every poll interval
-    L->>PG: SELECT pending FOR UPDATE SKIP LOCKED
+    L->>PG: recover stuck processing → pending
+    L->>PG: claim pending → processing (one transaction)
     L->>Q: enqueueSyncAsset (jobId=assetId)
   end
 
   W->>Q: take job
   W->>MG: upsert/delete — Mongo $jsonSchema validation
-  W->>PG: mark status=synced + synced_at
+  W->>PG: mark synced (+ synced_at) or failed after max retries
 ```
 
 ### 3.2 Postgres asset row
@@ -174,32 +175,43 @@ On write, Postgres stores:
 
 - `tenant_id`, `schema_version` — set on create, **immutable** (DB trigger)
 - `data` — JSON blob: core attributes at root + tenant extensions in `extra_fields`
-- `status` — **outbox sync state**: `pending` (awaiting worker) or `synced` — not business `ok/warning/critical` (those live in `data.status`)
+- `status` — **outbox sync state**: `pending` (awaiting listener), `processing` (claimed / job in flight), `synced`, or `failed` — not business `ok/warning/critical` (those live in `data.status`)
 - `action` — `upsert` or `delete` (delete tombstone flow)
 - `modified_by` — user who performed the write
 - `synced_at` — set when worker confirms Mongo sync
+- `claimed_at` — set when the listener claims a row (`status` → `processing`); used for stuck-job recovery
 - `created_at` — row creation time
 
 The `assets` table is both the **write model** and the **outbox control plane** — there is no separate outbox table.
 
-### 3.3 Outbox polling
+### 3.3 Atomic outbox (listener poll)
 
-The listener polls `assets` where sync `status = 'pending'`:
+The **atomic outbox** pattern here uses the `assets` row as the outbox entry (no separate outbox table). **Atomic** means the listener **claims** work in one Postgres transaction — lock pending rows and set `status = 'processing'` together — so parallel pollers cannot claim the same row. Enqueue to BullMQ happens **after** commit (Redis is not in the Postgres transaction). If enqueue fails, `releasePendingClaim` resets the row to `pending`.
+
+Each poll also runs **stuck recovery**: rows stuck in `processing` longer than `OUTBOX_PROCESSING_STALE_SECONDS` (default 300s) are reset to `pending`.
 
 ```sql
+BEGIN;
 SELECT id, tenant_id, modified_by
   FROM assets
  WHERE status = 'pending'
  ORDER BY created_at
  LIMIT $batch
  FOR UPDATE SKIP LOCKED;
+
+UPDATE assets
+   SET status = 'processing',
+       claimed_at = NOW()
+ WHERE id = ANY($claimed_ids);
+COMMIT;
 ```
 
-- **`FOR UPDATE SKIP LOCKED`** — parallel listeners skip rows another poller has locked.
-- Each poll runs in a short Postgres transaction (`queryWithoutTenantContext`); locks are released on commit, then matching rows are enqueued to BullMQ (`enqueueSyncAsset`, `jobId = assetId`).
-- **Current demo:** rows stay `pending` until the worker marks them `synced` (no intermediate `processing` state). Duplicate enqueue for the same asset is safe — BullMQ replaces the job by `jobId`.
+After commit, each claimed row is enqueued (`enqueueSyncAsset`, `jobId = assetId`).
 
-Production hardening for stuck rows and a `processing`/`failed` lifecycle is in [§11](#11-production-improvements).
+- **`FOR UPDATE SKIP LOCKED`** — parallel listeners skip rows another poller has locked inside the claim transaction.
+- **Enqueue failure** — listener calls `releasePendingClaim` (row back to `pending`).
+- **Stuck recovery** — `recoverStuckProcessing` on each poll (old `processing` → `pending`).
+- **Terminal failure** — after BullMQ exhausts retries (5 attempts), the worker sets `status = 'failed'` so the listener stops re-enqueueing.
 
 ### 3.4 Sync idempotency — asset `id` as the stable key
 
@@ -394,7 +406,7 @@ There is **no** `GET /assets` radius or `$geoNear` endpoint yet — the index is
 |---------|-------|-----|
 | **Repository** | `repositories/*` | Hide SQL/Mongo behind stable interfaces per store |
 | **Service layer** | `services/*` | Business rules, orchestration, error mapping |
-| **Outbox** | `assets` table + listener | Embedded control plane; poll `pending` + BullMQ enqueue |
+| **Atomic outbox** | `assets` table + `listener.ts` | Claim `pending` → `processing` in one Postgres transaction; enqueue to BullMQ after commit; `synced` / `failed` lifecycle + stuck recovery |
 | **Transactional onboarding** | `createTenantWithAdmin` | Tenant + schema config + admin user in one `BEGIN/COMMIT` |
 | **CQRS (light)** | PG write / Mongo read | Optimize each path independently |
 | **Read model sync** | Worker + BullMQ | Retryable projection updates; **idempotency** via `asset.id` → Mongo `_id` |
@@ -668,7 +680,8 @@ Indexes match the queries the API, listener, and worker actually run. Primary ke
 | `idx_users_tenant_created` | `users` | `(tenant_id, created_at)` | User list ordering |
 | `idx_users_tenant_active_created` | `users` | `(tenant_id, created_at)` WHERE `deleted_at IS NULL` | `GET /users` list, report `countUsersByRole` |
 | `idx_assets_tenant_id` | `assets` | `tenant_id` | RLS on write path (reads are Mongo) |
-| `idx_assets_pending` | `assets` | `created_at` WHERE `status = 'pending'` | Outbox listener poll (`ORDER BY created_at`, `FOR UPDATE SKIP LOCKED`) |
+| `idx_assets_pending` | `assets` | `created_at` WHERE `status = 'pending'` | Outbox claim poll (`ORDER BY created_at`, `FOR UPDATE SKIP LOCKED`) |
+| `idx_assets_processing_claimed` | `assets` | `claimed_at` WHERE `status = 'processing'` | Stuck `processing` recovery |
 
 Asset **reads** are not indexed in Postgres beyond PK — the Mongo read model carries query indexes.
 
@@ -690,7 +703,7 @@ Report aggregations (`$group` by `status`, `schema_version`) use `tenant_id` `$m
 |-------|------------------|----------------------|
 | `assets` by `tenant_id` only in Postgres | Writes by PK; reads in Mongo | Keep as-is unless Postgres fallback reads grow |
 | Mongo geo radius search | Index exists (§5.4); no HTTP API | `GET /assets?near=…` or `$geoWithin` endpoint |
-| `processing` rows stuck recovery | Low volume | See [§11](#11-production-improvements) |
+| `processing` rows stuck recovery | Low volume | Implemented via `recoverStuckProcessing` on each poll |
 
 ### 8.7 Safe error responses
 
@@ -719,7 +732,7 @@ Lean, store-native layout — each process has a single entry file; data access 
 ```
 src/
   index.ts              API server entry
-  listener.ts           Concurrency-safe outbox poller (assets FOR UPDATE SKIP LOCKED)
+  listener.ts           Atomic outbox poller (claim pending → processing, enqueue)
   worker.ts             Mongo sync consumer (BullMQ)
   app.ts                Express wiring + global middleware
 
@@ -772,7 +785,6 @@ Demo scope only — not implemented. A production deployment would likely add:
 
 - Kafka or event bus instead of polling outbox (transactional outbox or CDC → durable log)
 - Managed job queue instead of BullMQ on Redis (e.g. AWS SQS + Lambda/ECS workers, Google Cloud Tasks, Azure Service Bus)
-- Atomic outbox (poll + enqueue in one transaction, or `processing`/`failed` states)
 - DLQ and failed-job alerting for stuck syncs
 - Sync lag SLOs and alerts (pending age, queue depth, failed jobs)
 - Production observability beyond basic logs (metrics, tracing, alerting)

@@ -7,6 +7,7 @@ import { closeMongo } from "./clients/mongo.js";
 import {
   findAssetById,
   hardDeleteAsset,
+  markAssetFailed,
   markAssetSynced,
 } from "./repositories/assetRepository.js";
 import {
@@ -50,8 +51,22 @@ worker.on("completed", (job) => {
   console.log(`sync-asset job ${job.id} completed`);
 });
 
-worker.on("failed", (job, err) => {
+worker.on("failed", async (job, err) => {
   console.error(`sync-asset job ${job?.id} failed:`, err.message);
+
+  if (!job) {
+    return;
+  }
+
+  const maxAttempts = job.opts.attempts ?? 1;
+  if (job.attemptsMade < maxAttempts) {
+    return;
+  }
+
+  const { assetId, tenantId, userId } = job.data;
+  await runWithAuthContext({ userId, tenantId, role: "admin" }, async () => {
+    await markAssetFailed(assetId);
+  });
 });
 
 console.log("Sync asset worker started");

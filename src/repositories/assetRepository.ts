@@ -1,5 +1,5 @@
 import { getTenantId, getUserId } from "../lib/authContext.js";
-import { query, queryWithoutTenantContext } from "../clients/postgres.js";
+import { query, queryWithoutTenantContext, withBypassTransaction } from "../clients/postgres.js";
 import type { Asset } from "../types.js";
 
 interface PendingAsset {
@@ -47,7 +47,8 @@ export async function updateAsset(
          status = 'pending',
          action = 'upsert',
          modified_by = $3,
-         synced_at = NULL
+         synced_at = NULL,
+         claimed_at = NULL
      WHERE id = $1
      RETURNING ${assetColumns}`,
     [id, data, modifiedBy]
@@ -61,7 +62,8 @@ export async function markAssetForDeletion(id: string, modifiedBy: string): Prom
         SET status = 'pending',
             action = 'delete',
             modified_by = $2,
-            synced_at = NULL
+            synced_at = NULL,
+            claimed_at = NULL
       WHERE id = $1`,
     [id, modifiedBy]
   );
@@ -74,20 +76,76 @@ export async function hardDeleteAsset(id: string): Promise<void> {
 
 export async function markAssetSynced(id: string): Promise<void> {
   await query(
-    "UPDATE assets SET status = 'synced', synced_at = NOW() WHERE id = $1 AND action = 'upsert'",
+    `UPDATE assets
+        SET status = 'synced',
+            synced_at = NOW(),
+            claimed_at = NULL
+      WHERE id = $1
+        AND action = 'upsert'
+        AND status = 'processing'`,
     [id]
   );
 }
 
-export async function findPendingAssets(limit: number): Promise<PendingAsset[]> {
-  const { rows } = await queryWithoutTenantContext<PendingAsset>(
-    `SELECT id, tenant_id, modified_by
-       FROM assets
-      WHERE status = 'pending'
-      ORDER BY created_at
-      LIMIT $1
-      FOR UPDATE SKIP LOCKED`,
-    [limit]
+export async function markAssetFailed(id: string): Promise<void> {
+  await query(
+    `UPDATE assets
+        SET status = 'failed',
+            claimed_at = NULL
+      WHERE id = $1
+        AND status = 'processing'`,
+    [id]
   );
-  return rows;
+}
+
+export async function releasePendingClaim(id: string): Promise<void> {
+  await queryWithoutTenantContext(
+    `UPDATE assets
+        SET status = 'pending',
+            claimed_at = NULL
+      WHERE id = $1
+        AND status = 'processing'`,
+    [id]
+  );
+}
+
+export async function claimPendingAssets(limit: number): Promise<PendingAsset[]> {
+  return withBypassTransaction(async (client) => {
+    const { rows } = await client.query<PendingAsset>(
+      `SELECT id, tenant_id, modified_by
+         FROM assets
+        WHERE status = 'pending'
+        ORDER BY created_at
+        LIMIT $1
+        FOR UPDATE SKIP LOCKED`,
+      [limit]
+    );
+
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const ids = rows.map((row) => row.id);
+    await client.query(
+      `UPDATE assets
+          SET status = 'processing',
+              claimed_at = NOW()
+        WHERE id = ANY($1::uuid[])`,
+      [ids]
+    );
+
+    return rows;
+  });
+}
+
+export async function recoverStuckProcessing(staleSeconds: number): Promise<number> {
+  const { rowCount } = await queryWithoutTenantContext(
+    `UPDATE assets
+        SET status = 'pending',
+            claimed_at = NULL
+      WHERE status = 'processing'
+        AND claimed_at < NOW() - ($1::int * interval '1 second')`,
+    [staleSeconds]
+  );
+  return rowCount ?? 0;
 }

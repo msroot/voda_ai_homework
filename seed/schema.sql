@@ -37,10 +37,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_active
 CREATE TABLE IF NOT EXISTS assets (
     id          UUID PRIMARY KEY,
     tenant_id   UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    -- Outbox sync state for the read model: 'pending' (awaiting the worker) or
-    -- 'synced'. The row is the outbox entry, so the write and the sync marker
-    -- commit together in one transaction.
-    status      TEXT NOT NULL DEFAULT 'pending',
+    -- Outbox sync state for the read model: 'pending' (awaiting listener),
+    -- 'processing' (claimed / job in flight), 'synced', or 'failed'. The row
+    -- is the outbox entry, so the write and the sync marker commit together.
+    status      TEXT NOT NULL DEFAULT 'pending'
+                CHECK (status IN ('pending', 'processing', 'synced', 'failed')),
+    -- Set when the listener claims a row (status -> processing) for stuck-job recovery.
+    claimed_at  TIMESTAMPTZ,
     -- Operation the worker must apply to MongoDB: 'upsert' (create/update) or
     -- 'delete' (a tombstone; the worker removes the Mongo doc, then hard-deletes
     -- this row).
@@ -90,6 +93,9 @@ CREATE INDEX IF NOT EXISTS idx_users_tenant_active_created
 -- it tiny since most rows are already 'synced'.
 CREATE INDEX IF NOT EXISTS idx_assets_pending
     ON assets(created_at) WHERE status = 'pending';
+
+CREATE INDEX IF NOT EXISTS idx_assets_processing_claimed
+    ON assets(claimed_at) WHERE status = 'processing';
 
 CREATE OR REPLACE FUNCTION app_current_tenant_id()
 RETURNS UUID AS $$

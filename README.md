@@ -133,6 +133,7 @@ All seeded users use password `password123` (or `SEED_PASSWORD` if set).
 | `CACHE_TTL_SECONDS` | Optional | Redis cache TTL (default `60`) |
 | `OUTBOX_POLL_INTERVAL_MS` | Optional | Listener poll interval (default `2000`) |
 | `OUTBOX_BATCH_SIZE` | Optional | Max assets per poll (default `50`) |
+| `OUTBOX_PROCESSING_STALE_SECONDS` | Optional | Reset stuck `processing` rows after this age (default `300`) |
 | `RATE_LIMIT_WINDOW_MS` | Optional | Rate limit window (default `60000`) |
 | `RATE_LIMIT_MAX` | Optional | Max requests per window (default `100`) |
 | `IDEMPOTENCY_TTL_SECONDS` | Optional | Cached idempotency response TTL (default `86400`) |
