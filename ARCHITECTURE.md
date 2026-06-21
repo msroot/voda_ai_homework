@@ -133,7 +133,7 @@ The API never writes assets directly to Mongo on the request path. That keeps HT
 | **Seed** | `npm run seed` (`seed/index.ts`) uses privileged `DATABASE_URL`: `reset.sql` → **Redis `FLUSHDB`** → `schema.sql` → demo tenants/users/assets. Seeded assets are **`synced`** in Postgres and written to Mongo directly (skip outbox). Docker sets `SEED_ON_START=true`. Password: `SEED_PASSWORD` (default `password123`). |
 | **Default schema** | Base JSON Schema in `seed/schemas/default-asset.schema.json`. `POST /tenants` optional `asset_schema` `{ properties, required }` merges tenant fields into **`extra_fields`** (`buildTenantAssetSchema` in `lib/assetSchema.ts`); stored as `asset_schemas` version 1. |
 | **JWT** | Login issues Bearer token. Payload: `sub`, `tenant_id`, `email`, `role`. `JWT_SECRET` + `JWT_EXPIRES_IN` (default `24h`). |
-| **Tests** | Vitest + supertest. `createApp()` (`app.ts`) mounted in tests without binding a port. `tests/isolation.test.ts` runs `runSeed()` then checks auth, RBAC, tenant isolation. Unit tests: `validateAsset.test.ts`, `mergeAssetSchema.test.ts`. `npm test`. CI: `.github/workflows/ci.yml` (Postgres, Redis, Mongo service containers). |
+| **Tests** | Vitest + supertest. `createApp()` (`app.ts`) mounted in tests without binding a port. Integration: `isolation.test.ts` (auth, RBAC, tenant isolation), `idempotency.test.ts`, `outbox.test.ts` (atomic outbox). Unit: `validateAsset.test.ts`, `mergeAssetSchema.test.ts`. Each integration file runs `runSeed()` in `beforeAll`. `npm test`. CI: `.github/workflows/ci.yml` (Postgres, Redis, Mongo service containers). |
 | **BullMQ** | Queue `sync-asset`, `jobId = assetId`, 5 attempts, exponential backoff from 2s, `removeOnFail: false`. |
 
 ---
@@ -794,6 +794,7 @@ Demo scope only — not implemented. A production deployment would likely add:
 - Kubernetes: DB sharding where needed (Postgres, Mongo, Redis)
 - Connection pool limits across replicas (Postgres `max_connections` budget)
 - Graceful shutdown on pod rollouts (drain HTTP, close pools, finish jobs)
+- HTTP hardening: Helmet (security headers), CORS policy, `trust proxy` for correct rate-limit IPs behind load balancers
 - Postgres read-your-writes fallback for unsynced assets
 - Secret management and tested backups/DR runbooks
 - Cursor pagination for large asset lists

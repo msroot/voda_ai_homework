@@ -83,6 +83,6 @@ export type AssetUpdateInput = z.infer<typeof assetUpdateSchema>;
 
 export const assetFilterSchema = paginationSchema.extend({
   type: z.string().min(1).optional(),
-  status: z.string().min(1).optional(),
+  status: z.enum(["ok", "warning", "critical"]).optional(),
 });
 export type AssetFilter = z.infer<typeof assetFilterSchema>;

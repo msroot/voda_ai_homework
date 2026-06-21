@@ -19,6 +19,7 @@ services:
       JWT_EXPIRES_IN: 24h
       SEED_ON_START: "true"
       SEED_PASSWORD: password123
+      PLATFORM_ADMIN_KEY: dev-platform-key-change-me
     ports:
       - "3000:3000"
 

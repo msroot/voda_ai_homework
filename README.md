@@ -31,15 +31,19 @@ curl -s -X POST http://localhost:3000/auth/login \
 - API: `http://localhost:3000`
 - Seeds Postgres + Mongo on startup (`SEED_ON_START=true`)
 - Runs API, outbox listener, and sync worker via PM2 inside the `app` container
-- Seeded tenants are ready to use; `POST /tenants` needs `PLATFORM_ADMIN_KEY` (not set in compose by default — add to `docker-compose.yml` if you need platform provisioning)
+- Seeded tenants are ready to use; `POST /tenants` uses `PLATFORM_ADMIN_KEY` (`dev-platform-key-change-me` in compose — change for production)
 
 ### Local development
 
 **Prerequisites:** Node 20+, Postgres 16, Redis 7, Mongo 7 (running locally or via compose for infra only).
 
-**1. Environment** — export vars or put them in a `.env` file in the project root (`dotenv` loads it automatically):
+**1. Environment** — copy `.env.example` to `.env` and adjust (`dotenv` loads it automatically):
 
 ```bash
+cp .env.example .env
+```
+
+Or export vars manually — minimum for local dev:
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/voda_ai_homework
 APP_DATABASE_URL=postgres://voda_app:voda_app@localhost:5432/voda_ai_homework
 REDIS_URL=redis://localhost:6379
@@ -105,9 +109,17 @@ npm test
 
 **Requires (local):** Postgres, Redis, and Mongo running with the same connection env vars as dev (`DATABASE_URL`, `APP_DATABASE_URL`, `MONGO_URL`, `REDIS_URL`, `JWT_SECRET`, `PLATFORM_ADMIN_KEY`).
 
-**What runs:** Vitest — integration tests in `tests/isolation.test.ts` (auth, RBAC, cross-tenant isolation via supertest + `createApp()`), plus unit tests for AJV schema merge/validation. The suite calls `runSeed()` in `beforeAll`, so each run resets the database.
+**What runs:** Vitest via `npm test` — integration tests use supertest + `createApp()` (no bound port). Each integration file calls `runSeed()` in `beforeAll`, so the database is reset per file.
 
-CI (`.github/workflows/ci.yml`) runs `npm run build` and `npm test` on GitHub Actions with Postgres, Redis, and Mongo service containers — no local DB setup needed for PR checks.
+| File | Coverage |
+|------|----------|
+| `tests/isolation.test.ts` | Auth, RBAC, cross-tenant isolation, reports |
+| `tests/idempotency.test.ts` | `Idempotency-Key` on `POST /assets` |
+| `tests/outbox.test.ts` | Atomic outbox claim, recovery, `synced` / `failed` states |
+| `tests/validateAsset.test.ts` | AJV asset validation (unit) |
+| `tests/mergeAssetSchema.test.ts` | Tenant schema merge (unit) |
+
+CI (`.github/workflows/ci.yml`) runs `npm run build` and `npm test` on GitHub Actions with Postgres, Redis, and Mongo service containers (`MONGO_DB=voda_homework_test` in CI). No local DB setup needed for PR checks.
 
 ### Seed logins
 
@@ -123,6 +135,7 @@ All seeded users use password `password123` (or `SEED_PASSWORD` if set).
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `PORT` | Optional | API listen port (default `3000`) |
 | `DATABASE_URL` | Yes | Postgres superuser URL (schema + seed) |
 | `APP_DATABASE_URL` | Yes | Postgres `voda_app` role (RLS-enforced API) |
 | `MONGO_URL`, `MONGO_DB` | Yes | Mongo connection |
@@ -137,6 +150,7 @@ All seeded users use password `password123` (or `SEED_PASSWORD` if set).
 | `RATE_LIMIT_WINDOW_MS` | Optional | Rate limit window (default `60000`) |
 | `RATE_LIMIT_MAX` | Optional | Max requests per window (default `100`) |
 | `IDEMPOTENCY_TTL_SECONDS` | Optional | Cached idempotency response TTL (default `86400`) |
+| `IDEMPOTENCY_PROCESSING_TTL_SECONDS` | Optional | In-flight idempotency lock TTL (default `60`) |
 | `SEED_ON_START` | Optional | `true` to seed when API starts |
 | `SEED_PASSWORD` | Optional | Password for seeded users |
 
